@@ -1,0 +1,59 @@
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/paper-header-panel/paper-header-panel.html">
+<link rel="import" href="/bower_components/paper-input/paper-input.html">
+<link rel="import" href="/bower_components/paper-input/paper-textarea.html">
+<link rel="import" href="/bower_components/paper-button/paper-button.html">
+<link rel="import" href="/bower_components/paper-spinner/paper-spinner-lite.html">
+
+<dom-module id="login-component">
+    <template>
+        <style>
+            paper-header-panel {
+                margin-top: 100px;
+                box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
+            }
+            paper-header-panel .content {
+                padding: 10px;
+            }
+            paper-header-panel .paper-header {
+                padding: 10px;
+            }
+            paper-button {
+                float:right;
+            }
+            paper-button.indigo {
+                background-color: var(--paper-indigo-500);
+                color: white;
+                --paper-button-raised-keyboard-focus: {
+                    color: white !important;
+                };
+            }
+            paper-spinner-lite {
+                --paper-spinner-stroke-width: 1px;
+                --paper-spinner-color: var(--google-green-500);
+                margin-left: 5px;
+            }
+        </style>
+        <div style="height: 250px;">
+            <paper-header-panel mode="standard">
+                <div class="paper-header">
+                    <h4>Login</h4>
+                </div>
+                <div class="content">
+                    <paper-input label="text input"></paper-input>
+                    <paper-input label="password input" type="password"></paper-input>
+                </div>
+                <paper-button raised class="custom indigo">
+                    Login
+                    <paper-spinner-lite class="green" active></paper-spinner-lite>
+                </paper-button>
+            </paper-header-panel>
+        </div>
+
+    </template>
+    <script>
+        Polymer({
+            is: 'login-component',
+        });
+    </script>
+</dom-module>

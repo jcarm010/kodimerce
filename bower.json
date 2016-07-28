@@ -1,0 +1,30 @@
+{
+  "name": "kodimerce",
+  "homepage": "https://github.com/jcarm010/kodimerce",
+  "description": "Koditex Ecomerce Platform",
+  "main": "",
+  "keywords": [
+    "ecomerce",
+    "platform"
+  ],
+  "authors": [
+    "Javier Carmona"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "vaadin-grid": "^1.1.1",
+    "paper-header-panel": "PolymerElements/paper-header-panel#^1.1.6",
+    "paper-styles": "PolymerElements/paper-styles#^1.1.4",
+    "bootstrap": "^3.3.7",
+    "paper-input": "PolymerElements/paper-input#^1.1.15",
+    "paper-button": "PolymerElements/paper-button#^1.0.12",
+    "paper-spinner": "PolymerElements/paper-spinner#^1.2.0"
+  }
+}
