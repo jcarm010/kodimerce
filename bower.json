@@ -25,6 +25,7 @@
     "bootstrap": "^3.3.7",
     "paper-input": "PolymerElements/paper-input#^1.1.15",
     "paper-button": "PolymerElements/paper-button#^1.0.12",
-    "paper-spinner": "PolymerElements/paper-spinner#^1.2.0"
+    "paper-spinner": "PolymerElements/paper-spinner#^1.2.0",
+    "iron-ajax": "PolymerElements/iron-ajax#^1.4.3"
   }
 }

@@ -4,6 +4,7 @@
 <link rel="import" href="/bower_components/paper-input/paper-textarea.html">
 <link rel="import" href="/bower_components/paper-button/paper-button.html">
 <link rel="import" href="/bower_components/paper-spinner/paper-spinner-lite.html">
+<link rel="import" href="/bower_components/iron-ajax/iron-request.html">
 
 <dom-module id="login-component">
     <template>
@@ -17,9 +18,12 @@
             }
             paper-header-panel .paper-header {
                 padding: 10px;
+                background-color: var(--paper-indigo-500);
+                color: white;
             }
             paper-button {
-                float:right;
+                width: 100%;
+                margin: 0;
             }
             paper-button.indigo {
                 background-color: var(--paper-indigo-500);
@@ -33,20 +37,24 @@
                 --paper-spinner-color: var(--google-green-500);
                 margin-left: 5px;
             }
+            *[hidden] {
+                visibility: hidden;
+            }
         </style>
         <div style="height: 250px;">
+            <iron-request id="xhr"></iron-request>
             <paper-header-panel mode="standard">
                 <div class="paper-header">
-                    <h4>Login</h4>
+                    <h5>Login</h5>
                 </div>
                 <div class="content">
-                    <paper-input label="text input"></paper-input>
-                    <paper-input label="password input" type="password"></paper-input>
+                    <paper-input label="Email"></paper-input>
+                    <paper-input label="Password" type="password"></paper-input>
+                    <paper-button raised class="custom indigo" on-click="submitLogin" disabled="{{loading}}">
+                        <span hidden="{{loading}}">Login</span>
+                        <paper-spinner-lite class="green" hidden="{{!loading}}" active></paper-spinner-lite>
+                    </paper-button>
                 </div>
-                <paper-button raised class="custom indigo">
-                    Login
-                    <paper-spinner-lite class="green" active></paper-spinner-lite>
-                </paper-button>
             </paper-header-panel>
         </div>
 
@@ -54,6 +62,27 @@
     <script>
         Polymer({
             is: 'login-component',
+            properties: {
+                loading: {
+                    type: Boolean,
+                    value: false
+                }
+            },
+            submitLogin: function(){
+                var self = this;
+                console.log("Submitting Login");
+                self.loading = true;
+                self.$.xhr.send({url: "/"}).then(function(req){
+                    console.log("success");
+                    console.log(req);
+                }).catch(function(err) {
+                    console.log("error");
+                    console.log(err);
+                }).then(function() {
+                    self.loading = false;
+                    self.$.xhr.abort();
+                });
+            }
         });
     </script>
 </dom-module>
