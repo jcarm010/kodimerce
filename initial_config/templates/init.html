@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Configuration</title>
+
+    <link rel="stylesheet" href="/bower_components/bootstrap/dist/css/bootstrap.min.css">
+    <script src="/bower_components/webcomponentsjs/webcomponents.js"></script>
+
+    <link rel="import" href="/bower_components/polymer/polymer.html">
+    <link rel="import" href="/bower_components/paper-header-panel/paper-header-panel.html">
+    <link rel="import" href="/bower_components/iron-form/iron-form.html">
+    <link rel="import" href="/bower_components/paper-input/paper-input.html">
+    <link rel="import" href="/bower_components/paper-input/paper-textarea.html">
+    <link rel="import" href="/bower_components/paper-button/paper-button.html">
+    <link rel="import" href="/bower_components/paper-spinner/paper-spinner-lite.html">
+    <link rel="import" href="/bower_components/iron-ajax/iron-request.html">
+    <link rel="import" href="/bower_components/paper-toast/paper-toast.html">
+</head>
+<body>
+
+<dom-module id="server-init-form">
+    <template>
+        <style>
+            paper-header-panel {
+                box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
+            }
+            paper-header-panel .content {
+                padding: 10px;
+            }
+            paper-header-panel .paper-header {
+                padding: 10px;
+                background-color: var(--paper-indigo-500);
+                color: white;
+            }
+            paper-button {
+                width: 100%;
+                margin: 20px 0 0;
+            }
+            paper-button.indigo {
+                background-color: var(--paper-indigo-500);
+                color: white;
+                --paper-button-raised-keyboard-focus: {
+                    color: white !important;
+                };
+            }
+            paper-spinner-lite {
+                --paper-spinner-stroke-width: 1px;
+                --paper-spinner-color: var(--google-green-500);
+                margin-left: 5px;
+            }
+            #errorToast {
+                --paper-toast-background-color: #d58512;
+                --paper-toast-color: white;
+            }
+            *[hidden] {
+                visibility: hidden;
+            }
+        </style>
+        <div style="height: 520px;">
+            <iron-request id="xhr"></iron-request>
+            <paper-header-panel id="formPanel" mode="standard">
+                <div class="paper-header">
+                    <h5>Initial Configuration</h5>
+                </div>
+                <div class="content">
+                    <form is="iron-form" method="post" action="/init" with-credentials="true" id="submitOptions" on-iron-form-response="submissionDone" on-iron-form-error="submissionDone">
+                        <paper-input name="company_name" label="Company Name" value="" required auto-validate></paper-input> <!-- required -->
+                        <paper-input name="name" label="First Name" value="" required auto-validate></paper-input> <!-- required -->
+                        <paper-input name="last_name" label="Last Name" value="" required  auto-validate></paper-input>
+                        <paper-input name="email" label="Email" value="" type="email" required  auto-validate></paper-input>
+                        <paper-input id="password" name="password" label="Password" type="password" on-change="resetPasswordError" required auto-validate></paper-input>
+                        <paper-input id="re_password" name="re_password" label="Retype Password" type="password" error-message="{{rePasswordError}}" invalid="{{!rePasswordValid}}" on-change="resetPasswordError" required auto-validate></paper-input>
+                        <paper-button raised class="custom indigo" on-click="submit" disabled="{{loading}}">
+                            <span hidden="{{loading}}">Configure!</span>
+                            <paper-spinner-lite class="green" hidden="{{!loading}}" active></paper-spinner-lite>
+                        </paper-button>
+                    </form>
+                </div>
+            </paper-header-panel>
+            <paper-toast id="errorToast" class="fit-bottom" text="[[errorMessage]]"></paper-toast>
+        </div>
+    </template>
+    <script>
+        Polymer({
+            is: 'server-init-form',
+            properties: {
+                loading: {
+                    type: Boolean,
+                    value: false
+                },
+                rePasswordError: {
+                    type: String,
+                    value: ""
+                },
+                rePasswordValid: {
+                    type: Boolean,
+                    value: true
+                },
+                errorMessage: {
+                    type: String,
+                    value: ""
+                }
+            },
+            submissionDone: function(req){
+                if(req.detail.succeeded){
+                    console.log("Succeeded!");
+                    document.location = "/";
+                }else{
+                    var response = req.detail.request.response;
+                    console.log("Failed: " + response);
+                    if(response === null){
+                        response = "Unexpected error, please try again later.";
+                    }
+                    this.errorMessage = response;
+                    this.$.errorToast.open();
+                }
+            },
+            submit: function(event) {
+                this.rePasswordValid = true;
+                var form = Polymer.dom(event).localTarget.parentElement;
+                var validForm = form.validate();
+                if(!validForm){
+                    form.submit();
+                    this.rePasswordError = "";
+                    return;
+                }
+
+                var values = form.serialize();
+                console.log(values);
+                if(values.password !== values.re_password) {
+                    this.rePasswordValid = false;
+                    this.rePasswordError = "Does not match password";
+                    return;
+                }
+                form.submit();
+            },
+            resetPasswordError: function(){
+                console.log("Resetting message");
+                this.rePasswordError = "";
+            },
+            ready: function(){
+                this.$.errorToast.fitInto=this.$.formPanel;
+            }
+        });
+    </script>
+</dom-module>
+
+<server-init-form></server-init-form>
+
+
+
+<script src="/bower_components/jquery/dist/jquery.min.js"></script>
+<script src="/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+</body>
+</html>

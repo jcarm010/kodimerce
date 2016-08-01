@@ -4,17 +4,18 @@ import (
 	"github.com/gocraft/web"
 	"net/http"
 	"login"
+	"entities"
+	"initial_config"
 )
 
-type ServerContext struct {
-
-}
-
 func init() {
-	router := web.New(ServerContext{}).
+	router := web.New(entities.ServerContext{}).
 		Middleware(web.LoggerMiddleware).
 		Middleware(web.ShowErrorsMiddleware).
-		Get("/login", login.Login)
+		Get("/init", initial_config.ServerInit).
+		Post("/init", initial_config.SetupServerInit).
+		Middleware((*entities.ServerContext).SetServerConfiguration).
+		Get("/login", login.LoginView)
 
 	http.Handle("/", router)
 }
