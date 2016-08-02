@@ -5,12 +5,13 @@
 <link rel="import" href="/bower_components/paper-button/paper-button.html">
 <link rel="import" href="/bower_components/paper-spinner/paper-spinner-lite.html">
 <link rel="import" href="/bower_components/iron-ajax/iron-request.html">
+<link rel="import" href="/bower_components/iron-form/iron-form.html">
+<link rel="import" href="/bower_components/paper-toast/paper-toast.html">
 
 <dom-module id="login-component">
     <template>
         <style>
             paper-header-panel {
-                margin-top: 100px;
                 box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
             }
             paper-header-panel .content {
@@ -37,24 +38,31 @@
                 --paper-spinner-color: var(--google-green-500);
                 margin-left: 5px;
             }
+            #errorToast {
+                --paper-toast-background-color: #d58512;
+                --paper-toast-color: white;
+            }
             *[hidden] {
                 visibility: hidden;
             }
         </style>
         <div style="height: 250px;">
             <iron-request id="xhr"></iron-request>
-            <paper-header-panel mode="standard">
+            <paper-header-panel id="formPanel" mode="standard">
                 <div class="paper-header">
                     <h5>Login</h5>
                 </div>
                 <div class="content">
-                    <paper-input label="Email"></paper-input>
-                    <paper-input label="Password" type="password"></paper-input>
-                    <paper-button raised class="custom indigo" on-click="submitLogin" disabled="{{loading}}">
-                        <span hidden="{{loading}}">Login</span>
-                        <paper-spinner-lite class="green" hidden="{{!loading}}" active></paper-spinner-lite>
-                    </paper-button>
+                    <form is="iron-form" method="post" action="/login" with-credentials="true" on-iron-form-response="submissionDone" on-iron-form-error="submissionDone">
+                        <paper-input type="email" name="email" label="Email" required auto-validate></paper-input>
+                        <paper-input name="password" label="Password" type="password" required auto-validate></paper-input>
+                        <paper-button raised class="custom indigo" on-click="submit" disabled="{{loading}}">
+                            <span hidden="{{loading}}">Login</span>
+                            <paper-spinner-lite class="green" hidden="{{!loading}}" active></paper-spinner-lite>
+                        </paper-button>
+                    </form>
                 </div>
+                <paper-toast id="errorToast" class="fit-bottom" text="[[errorMessage]]"></paper-toast>
             </paper-header-panel>
         </div>
 
@@ -66,22 +74,38 @@
                 loading: {
                     type: Boolean,
                     value: false
+                },
+                errorMessage: {
+                    type: String,
+                    value: ""
                 }
             },
-            submit: function(){
+            submissionDone: function(req){
+                if(req.detail.succeeded){
+                    console.log("Succeeded!");
+                }else{
+                    var response = req.detail.request.response;
+                    console.log("Failed: " + response);
+                    if(response === null){
+                        response = "Unexpected error, please try again later.";
+                    }
+                    this.errorMessage = response;
+                    this.$.errorToast.open();
+                }
+                this.loading = false;
+            },
+            submit: function(event){
                 var self = this;
                 console.log("Submitting Login");
-                self.loading = true;
-                self.$.xhr.send({url: "/"}).then(function(req){
-                    console.log("success");
-                    console.log(req);
-                }).catch(function(err) {
-                    console.log("error");
-                    console.log(err);
-                }).then(function() {
-                    self.loading = false;
-                    self.$.xhr.abort();
-                });
+                console.log(event);
+                var form = Polymer.dom(event).localTarget.parentElement;
+                if(form.validate()){
+                    self.loading = true;
+                }
+                form.submit();
+            },
+            ready: function(){
+                this.$.errorToast.fitInto=this.$.formPanel;
             }
         });
     </script>

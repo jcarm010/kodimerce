@@ -109,3 +109,12 @@ func CreateUser(ctx context.Context, user *User) error {
 	}
 	return nil
 }
+
+func GetUser(ctx context.Context, email string) (*User, error) {
+	user := &User{}
+	err := datastore.Get(ctx, datastore.NewKey(ctx, "User", email, 0, nil), user)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}

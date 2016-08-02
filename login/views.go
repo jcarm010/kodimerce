@@ -17,6 +17,8 @@ func LoginView(c *entities.ServerContext, w web.ResponseWriter, r *web.Request) 
 	if err != nil {
 		log.Errorf(context, "Error parsing login template: %+v", err)
 	}
-	p := Person{UserName: "Astaxie"}
-	t.Execute(w, p)
+	data := map[string] interface{}{
+		"Server": c.Config,
+	}
+	t.Execute(w, data)
 }

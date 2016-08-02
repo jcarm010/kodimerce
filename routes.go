@@ -15,7 +15,8 @@ func init() {
 		Get("/init", initial_config.ServerInit).
 		Post("/init", initial_config.SetupServerInit).
 		Middleware((*entities.ServerContext).SetServerConfiguration).
-		Get("/login", login.LoginView)
+		Get("/login", login.LoginView).
+		Post("/login", login.Login)
 
 	http.Handle("/", router)
 }

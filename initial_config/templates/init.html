@@ -105,7 +105,7 @@
             submissionDone: function(req){
                 if(req.detail.succeeded){
                     console.log("Succeeded!");
-                    document.location = "/";
+                    document.location = "/login";
                 }else{
                     var response = req.detail.request.response;
                     console.log("Failed: " + response);

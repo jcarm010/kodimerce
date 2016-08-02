@@ -37,7 +37,6 @@ func SetupServerInit(w web.ResponseWriter, r *web.Request) {
 		return
 	}
 
-	log.Infof(context, "Form: %+v", r.Form)
 	companyName := r.FormValue("company_name")
 	if companyName == "" {
 		log.Errorf(context, "Missing company name")
