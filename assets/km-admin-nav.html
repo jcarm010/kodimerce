@@ -1,0 +1,42 @@
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/iron-resizable-behavior/iron-resizable-behavior.html">
+
+<dom-module id="admin-nav">
+    <template>
+        <style>
+            *[hidden] {
+                visibility: hidden;
+            }
+            .nav-container{
+                height: 100%;
+            }
+        </style>
+        <div class="nav-container">
+            Navs
+            <iron-list items="[[navs]]" as="nav">
+                <template>
+                    <div>
+                        Name: [[nav.name]]
+                    </div>
+                </template>
+            </iron-list>
+        </div>
+    </template>
+    <script>
+        Polymer({
+            is: 'admin-nav',
+            behaviors:[
+                Polymer.IronResizableBehavior
+            ],
+            properties: {
+                navs: Array
+            },
+            ready: function(){
+                this.push("navs", {
+                    name: "Dashboard1",
+                    value: "/dashboard"
+                });
+            }
+        });
+    </script>
+</dom-module>

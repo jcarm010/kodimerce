@@ -6,6 +6,7 @@ import (
 	"login"
 	"entities"
 	"initial_config"
+	"admin"
 )
 
 func init() {
@@ -16,7 +17,13 @@ func init() {
 		Post("/init", initial_config.SetupServerInit).
 		Middleware((*entities.ServerContext).SetServerConfiguration).
 		Get("/login", login.LoginView).
-		Post("/login", login.Login)
+		Post("/login", login.Login).
+		Get("/login/landing", login.UserLanding)
+
+	router.Subrouter(entities.ServerContext{}, "/admin").
+		Middleware((*entities.ServerContext).ValidateAdminUser).
+		Get("/", admin.AdminView).
+		Get("/:", admin.AdminView)
 
 	http.Handle("/", router)
 }

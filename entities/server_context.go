@@ -15,6 +15,8 @@ type ServerContext struct {
 	w web.ResponseWriter
 	r *web.Request
 	Config ServerConfig
+	SessionToken *SessionToken
+	User *User
 }
 
 func (c *ServerContext) SetServerConfiguration(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc){
@@ -40,6 +42,39 @@ func (c *ServerContext) SetServerConfiguration(w web.ResponseWriter, r *web.Requ
 	c.Config = serverConfig
 
 	next(w, r)
+}
+
+func (c *ServerContext) ValidateAdminUser(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
+	err := c.SetUserContext()
+	if err != nil {
+		c.ServeJson(http.StatusUnauthorized, "Not Authorizard")
+		return
+	}
+	next(w,r)
+}
+
+func (c *ServerContext) SetUserContext() error {
+	cookie, err := c.r.Cookie("session")
+	if err != nil {
+		return err
+	}
+
+	token := cookie.Value
+	sessionToken, err := GetSessionToken(c.Context, token)
+	if err != nil {
+		return err
+	}
+
+	c.SessionToken = sessionToken
+
+	user, err := GetUser(c.Context, sessionToken.Email)
+	if err != nil {
+		return err
+	}
+
+	c.User = user
+
+	return nil
 }
 
 func (c *ServerContext) ServeJson(status int, value interface{}){

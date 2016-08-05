@@ -18,7 +18,6 @@ func Login(c *entities.ServerContext, w web.ResponseWriter, r *web.Request) {
 		return
 	}
 
-	log.Infof(c.Context, "Form: %+v", r.Form)
 	email := r.FormValue("email")
 	if email == "" {
 		log.Errorf(c.Context, "Missing email.")
@@ -52,6 +51,13 @@ func Login(c *entities.ServerContext, w web.ResponseWriter, r *web.Request) {
 	}
 
 	cookieToken := uuid.NewV4().String()
+	err = entities.StoreSessionToken(c.Context, entities.NewSessionToken(email, cookieToken))
+	if err != nil {
+		log.Errorf(c.Context, "Error creating session: %+v", err)
+		c.ServeJson(http.StatusBadRequest, "Unexpected error creating session.")
+		return
+	}
+
 	cookie := http.Cookie{Name: "session", Value: cookieToken}
 	http.SetCookie(w, &cookie)
 }

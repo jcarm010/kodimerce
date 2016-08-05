@@ -83,7 +83,7 @@ func SetupServerInit(w web.ResponseWriter, r *web.Request) {
 		return
 	}
 
-	user := entities.NewUser(email, name, lastName, string(passwordBytes))
+	user := entities.NewUser(email, name, lastName, entities.USER_TYPE_OWNER, string(passwordBytes))
 	err = entities.CreateUser(context, user)
 	if err != nil {
 		log.Errorf(context, "Error creating first user: %+v", err)

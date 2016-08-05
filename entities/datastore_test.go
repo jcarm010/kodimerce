@@ -79,7 +79,7 @@ func TestGetUser(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer done()
-	user := NewUser(TEST_USER_EMAIL, TEST_USER_FIRST_NAME, TEST_USER_LAST_NAME, TEST_PASSWORD_HASH)
+	user := NewUser(TEST_USER_EMAIL, TEST_USER_FIRST_NAME, TEST_USER_LAST_NAME, USER_TYPE_OWNER, TEST_PASSWORD_HASH)
 	err = CreateUser(ctx, user)
 	if err != nil {
 		t.Errorf("Failed to create user %+v", err)
@@ -107,7 +107,7 @@ func TestCreateUser(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer done()
-	user := NewUser(TEST_USER_EMAIL, TEST_USER_FIRST_NAME, TEST_USER_LAST_NAME, TEST_PASSWORD_HASH)
+	user := NewUser(TEST_USER_EMAIL, TEST_USER_FIRST_NAME, TEST_USER_LAST_NAME, USER_TYPE_OWNER, TEST_PASSWORD_HASH)
 	err = CreateUser(ctx, user)
 	if err != nil {
 		t.Errorf("Failed to create user %+v", err)

@@ -1,10 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-
-    <title>{{.Server.CompanyName}} - Login</title>
-
+    <meta charset="UTF-8">
+    <title>{{.Server.CompanyName}} - Admin</title>
     <script>
 
         // setup Polymer options
@@ -24,19 +22,29 @@
             }
         })();
 
+        var km_service = {
+            company: {
+                name: {{.Server.CompanyName}},
+                address: {{.Server.CompanyAddress}},
+                email: {{.Server.CompanyEmail}},
+                phone: {{.Server.CompanyPhone}},
+            }
+        };
     </script>
-
-    <link rel="import" href="/assets/km-login.html?v=1">
+    <link rel="import" href="/assets/admin-app/admin-app.html">
 
     <link rel="stylesheet" href="/bower_components/bootstrap/dist/css/bootstrap.min.css">
 
+    <style is="custom-style">
+        body {
+            margin: 0;
+            font-family: 'Roboto', 'Noto', sans-serif;
+            background-color: #eee;
+        }
+    </style>
 </head>
-<body class="fullbleed layout vertical">
-    <div class="row" style="margin-top: 100px;">
-        <div class="col-md-offset-5 col-md-2">
-            <login-component></login-component>
-        </div>
-    </div>
+<body>
+    <admin-app></admin-app>
 
     <script src="/bower_components/jquery/dist/jquery.min.js"></script>
     <script src="/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>

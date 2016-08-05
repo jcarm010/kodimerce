@@ -5,7 +5,26 @@
     <title>Configuration</title>
 
     <link rel="stylesheet" href="/bower_components/bootstrap/dist/css/bootstrap.min.css">
-    <script src="/bower_components/webcomponentsjs/webcomponents.js"></script>
+    <script>
+
+        // setup Polymer options
+        window.Polymer = {lazyRegister: true, dom: 'shadow'};
+
+        // load webcomponents polyfills
+        (function() {
+            if ('registerElement' in document
+                    && 'import' in document.createElement('link')
+                    && 'content' in document.createElement('template')) {
+                // browser has web components
+            } else {
+                // polyfill web components
+                var e = document.createElement('script');
+                e.src = '/bower_components/webcomponentsjs/webcomponents-lite.min.js';
+                document.head.appendChild(e);
+            }
+        })();
+
+    </script>
 
     <link rel="import" href="/bower_components/polymer/polymer.html">
     <link rel="import" href="/bower_components/paper-header-panel/paper-header-panel.html">

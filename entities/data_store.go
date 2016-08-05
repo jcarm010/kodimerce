@@ -7,32 +7,35 @@ import (
 	"google.golang.org/appengine/memcache"
 	"google.golang.org/appengine/log"
 	"github.com/dustin/gojson"
+	"time"
 )
 
 const SERVER_CONFIG_KEY = "sck"
 var ENTITY_NOT_FOUND_ERROR = errors.New("Entity not found")
 
-type ServerConfig struct {
-	ConfigKey string
-	CompanyName string `datastore:",noindex"`
-	CompanyAddress string `datastore:",noindex"`
-	CompanyEmail string `datastore:",noindex"`
-	CompanyPhone string `datastore:",noindex"`
+const (
+	ENTITY_SERVER_CONFIG = "ServerConfig"
+	ENTITY_USER = "User"
+	ENTITY_SESSION_TOKEN = "SessionToken"
+)
+
+type SessionToken struct {
+	Email string
+	Token string
+	Created time.Time
 }
 
-func NewServerConfig(companyName string, companyAddress string, companyEmail string, companyPhone string) ServerConfig {
-	return ServerConfig{
-		ConfigKey: SERVER_CONFIG_KEY,
-		CompanyName: companyName,
-		CompanyAddress: companyAddress,
-		CompanyEmail: companyEmail,
-		CompanyPhone: companyPhone,
+func NewSessionToken(email string, token string) *SessionToken{
+	return &SessionToken{
+		Email: email,
+		Token: token,
+		Created: time.Now(),
 	}
 }
 
 func SetServerConfig(ctx context.Context, config ServerConfig) error {
 	log.Infof(ctx, "Storing config: %+v", config)
-	key := datastore.NewIncompleteKey(ctx, "ServerConfig", nil)
+	key := datastore.NewIncompleteKey(ctx, ENTITY_SERVER_CONFIG, nil)
 	_, err := datastore.Put(ctx, key, &config)
 	if err != nil{
 		return err
@@ -73,7 +76,7 @@ func GetServerConfig(ctx context.Context) (ServerConfig, error) {
 	}
 
 	var config []ServerConfig
-	query := datastore.NewQuery("ServerConfig").Filter("ConfigKey=", SERVER_CONFIG_KEY).Limit(1)
+	query := datastore.NewQuery(ENTITY_SERVER_CONFIG).Filter("ConfigKey=", SERVER_CONFIG_KEY).Limit(1)
 	_, err = query.GetAll(ctx, &config)
 	if err != nil{
 		return ServerConfig{}, err
@@ -102,19 +105,41 @@ func GetServerConfig(ctx context.Context) (ServerConfig, error) {
 }
 
 func CreateUser(ctx context.Context, user *User) error {
-	key := datastore.NewKey(ctx, "User", user.Email, 0, nil)
+	key := datastore.NewKey(ctx, ENTITY_USER, user.Email, 0, nil)
 	key, err := datastore.Put(ctx, key, user)
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
 func GetUser(ctx context.Context, email string) (*User, error) {
 	user := &User{}
-	err := datastore.Get(ctx, datastore.NewKey(ctx, "User", email, 0, nil), user)
+	err := datastore.Get(ctx, datastore.NewKey(ctx, ENTITY_USER, email, 0, nil), user)
 	if err != nil {
 		return nil, err
 	}
+
 	return user, nil
+}
+
+func StoreSessionToken(ctx context.Context, sessionToken *SessionToken) error {
+	key := datastore.NewKey(ctx, ENTITY_SESSION_TOKEN, sessionToken.Token, 0, nil)
+	_, err := datastore.Put(ctx, key, sessionToken)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func GetSessionToken(ctx context.Context, token string) (*SessionToken,error) {
+	sessionToken := &SessionToken{}
+	err := datastore.Get(ctx, datastore.NewKey(ctx, ENTITY_SESSION_TOKEN, token, 0, nil), sessionToken)
+	if err != nil {
+		return nil, err
+	}
+
+	return sessionToken, nil
 }
