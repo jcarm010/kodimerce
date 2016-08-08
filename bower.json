@@ -37,6 +37,9 @@
     "iron-pages": "PolymerElements/iron-pages#^1.0.8",
     "iron-selector": "PolymerElements/iron-selector#^1.5.2",
     "iron-icon": "PolymerElements/iron-icon#^1.0.9",
-    "iron-iconset": "PolymerElements/iron-iconset#^1.0.4"
+    "iron-iconset": "PolymerElements/iron-iconset#^1.0.4",
+    "iron-a11y-keys": "PolymerElements/iron-a11y-keys#^1.0.6",
+    "paper-fab": "PolymerElements/paper-fab#^1.2.0",
+    "paper-card": "PolymerElements/paper-card#^1.1.2"
   }
 }

@@ -1,0 +1,90 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/paper-card/paper-card.html">
+<link rel="import" href="/bower_components/paper-button/paper-button.html">
+<link rel="import" href="/bower_components/paper-input/paper-input.html">
+<link rel="import" href="/bower_components/iron-form/iron-form.html">
+<link rel="import" href="/bower_components/paper-spinner/paper-spinner-lite.html">
+
+<dom-module id="km-company-settings">
+
+    <template>
+
+        <style>
+            :host {
+                display: inline;
+                padding: 10px;
+            }
+            h1 {
+                font-size: 22px;
+                margin: 16px 0;
+                color: #212121;
+            }
+            #save-button{
+                float: right;
+            }
+            #menu{
+                width:300px;
+            }
+            *[hidden] {
+                display: none;
+            }
+        </style>
+            <paper-card id="menu" heading="Company Details">
+                <div class="card-content">
+                    <form id="form" is="iron-form" method="post" action="/login" with-credentials="true" on-iron-form-response="submissionDone" on-iron-form-error="submissionDone">
+                        <paper-input type="text" name="company_name" label="Company Name" value="{{editing.name}}" required auto-validate></paper-input>
+                        <paper-input type="tel" name="company_email" label="Company Email" value="{{editing.email}}" auto-validate></paper-input>
+                        <paper-input type="tel" name="company_phone" label="Company Phone" value="{{editing.phone}}" auto-validate></paper-input>
+                        <paper-input type="text" name="company_address" label="Company Address" value="{{editing.address}}" auto-validate></paper-input>
+                    </form>
+                </div>
+                <div class="card-actions">
+                    <paper-button hidden="[[loading]]" on-click="resetEditing">Reset</paper-button>
+                    <paper-button id="save-button">
+                        <span hidden="[[loading]]" on-click="save">Save</span>
+                        <paper-spinner-lite class="green" hidden="[[!loading]]" active></paper-spinner-lite>
+                    </paper-button>
+                </div>
+            </paper-card>
+    </template>
+
+    <script>
+
+        Polymer({
+
+            is: 'km-company-settings',
+            properties: {
+                loading: {
+                    type: Boolean,
+                    value: false
+                },
+                company: Object,
+                editing: Object
+            },
+            save: function(){
+                this.loading = true;
+            },
+            resetEditing: function(){
+                this.editing = JSON.parse(JSON.stringify(this.company));
+            },
+            ready: function(){
+                this.company = km_service.company;
+                this.resetEditing();
+                console.log("Company: ", this.company);
+            }
+
+        });
+
+    </script>
+
+</dom-module>

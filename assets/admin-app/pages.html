@@ -9,6 +9,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 
 <link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="/bower_components/iron-icons/iron-icons.html">
 
 <dom-module id="admin-pages">
 
@@ -43,14 +45,30 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         margin: 16px 0;
         color: #212121;
       }
+      paper-fab[icon="add"] {
+        --paper-fab-background: var(--paper-indigo-500);
+        --paper-fab-keyboard-focus-background: var(--paper-indigo-500);
+      }
+      #pages-container{
+        width: 100%;
+        height: 100%;
+      }
+      #new-page-button{
+        position: absolute;
+        right: 5px;
+        bottom: 5px;
+      }
     </style>
-
-    <div class="card">
-      <div class="circle">1</div>
-      <h1>View One</h1>
-      <p>Ut labores minimum atomorum pro. Laudem tibique ut has.
-      <p>Lorem ipsum dolor sit amet, per in nusquam nominavi periculis, sit elit oportere ea.Lorem ipsum dolor sit amet, per in nusquam nominavi periculis, sit elit oportere ea.Cu mei vide viris gloriatur, at populo eripuit sit.</p>
+    <div id="pages-container">
+      <div class="card">
+        <div class="circle">1</div>
+        <h1>View One</h1>
+        <p>Ut labores minimum atomorum pro. Laudem tibique ut has.
+        <p>Lorem ipsum dolor sit amet, per in nusquam nominavi periculis, sit elit oportere ea.Lorem ipsum dolor sit amet, per in nusquam nominavi periculis, sit elit oportere ea.Cu mei vide viris gloriatur, at populo eripuit sit.</p>
+      </div>
+      <paper-fab id="new-page-button" icon="add" title="new"></paper-fab>
     </div>
+
 
   </template>
 
