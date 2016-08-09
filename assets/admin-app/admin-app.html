@@ -135,7 +135,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
 
       ready: function(){
+        var self = this;
         this.company = km_service.company;
+        document.addEventListener("company-changed", function(e) {
+          self.company = e.detail.newCompany;
+        });
       }
 
     });

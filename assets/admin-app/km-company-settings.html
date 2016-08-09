@@ -14,6 +14,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="/bower_components/paper-input/paper-input.html">
 <link rel="import" href="/bower_components/iron-form/iron-form.html">
 <link rel="import" href="/bower_components/paper-spinner/paper-spinner-lite.html">
+<link rel="import" href="/bower_components/paper-toast/paper-toast.html">
 
 <dom-module id="km-company-settings">
 
@@ -35,27 +36,37 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             #menu{
                 width:300px;
             }
+            #errorToast {
+                --paper-toast-background-color: #d58512;
+                --paper-toast-color: white;
+            }
+            #successToast {
+                --paper-toast-background-color: #4caf50;
+                --paper-toast-color: white;
+            }
             *[hidden] {
                 display: none;
             }
         </style>
-            <paper-card id="menu" heading="Company Details">
-                <div class="card-content">
-                    <form id="form" is="iron-form" method="post" action="/login" with-credentials="true" on-iron-form-response="submissionDone" on-iron-form-error="submissionDone">
-                        <paper-input type="text" name="company_name" label="Company Name" value="{{editing.name}}" required auto-validate></paper-input>
-                        <paper-input type="tel" name="company_email" label="Company Email" value="{{editing.email}}" auto-validate></paper-input>
-                        <paper-input type="tel" name="company_phone" label="Company Phone" value="{{editing.phone}}" auto-validate></paper-input>
-                        <paper-input type="text" name="company_address" label="Company Address" value="{{editing.address}}" auto-validate></paper-input>
-                    </form>
-                </div>
-                <div class="card-actions">
-                    <paper-button hidden="[[loading]]" on-click="resetEditing">Reset</paper-button>
-                    <paper-button id="save-button">
-                        <span hidden="[[loading]]" on-click="save">Save</span>
-                        <paper-spinner-lite class="green" hidden="[[!loading]]" active></paper-spinner-lite>
-                    </paper-button>
-                </div>
-            </paper-card>
+        <paper-card id="menu" heading="Company Details">
+            <div class="card-content">
+                <form id="form" is="iron-form" method="put" action="/admin/company" on-iron-form-response="submissionSuccess" on-iron-form-error="submissionError">
+                    <paper-input type="text" name="company_name" label="Company Name" value="{{editing.name}}" auto-validate required></paper-input>
+                    <paper-input type="email" name="company_email" label="Company Email" value="{{editing.email}}" auto-validate></paper-input>
+                    <paper-input type="tel" name="company_phone" label="Company Phone" value="{{editing.phone}}" auto-validate></paper-input>
+                    <paper-input type="text" name="company_address" label="Company Address" value="{{editing.address}}" auto-validate></paper-input>
+                </form>
+            </div>
+            <div class="card-actions">
+                <paper-button hidden="[[loading]]" on-click="resetEditing">Reset</paper-button>
+                <paper-button id="save-button">
+                    <span hidden="[[loading]]" on-click="save">Save</span>
+                    <paper-spinner-lite class="green" hidden="[[!loading]]" active></paper-spinner-lite>
+                </paper-button>
+            </div>
+        </paper-card>
+        <paper-toast id="errorToast" class="fit-bottom" text="[[errorMessage]]"></paper-toast>
+        <paper-toast id="successToast" class="fit-bottom" text="Saved"></paper-toast>
     </template>
 
     <script>
@@ -69,20 +80,47 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     value: false
                 },
                 company: Object,
-                editing: Object
+                editing: Object,
+                errorMessage: {
+                    type: String,
+                    value: ""
+                }
+            },
+            submissionSuccess: function(event){
+                var oldCompany = this.company;
+                this.company = this.editing;
+                var newCompany = this.company;
+                this.resetEditing();
+                document.dispatchEvent(new CustomEvent("company-changed", { detail:{ oldCompany: oldCompany, newCompany: newCompany }}));
+                this.$.successToast.open();
+            },
+            submissionError: function(event){
+                this.loading = false;
+                var response = event.detail.request.response;
+                console.log("Failed: " + response);
+                if(response === null){
+                    response = "Unexpected error, please try again later.";
+                }
+                this.errorMessage = response;
+                this.$.errorToast.open();
             },
             save: function(){
-                this.loading = true;
+                console.log("Saving...");
+                if(this.$.form.validate()){
+                    this.loading = true;
+                }
+                this.$.form.submit();
             },
             resetEditing: function(){
                 this.editing = JSON.parse(JSON.stringify(this.company));
+                this.loading = false;
             },
             ready: function(){
                 this.company = km_service.company;
                 this.resetEditing();
-                console.log("Company: ", this.company);
+                this.$.errorToast.fitInto=this.$.form;
+                this.$.successToast.fitInto=this.$.form;
             }
-
         });
 
     </script>

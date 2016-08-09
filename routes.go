@@ -20,6 +20,7 @@ func init() {
 
 	router.Subrouter(entities.ServerContext{}, "/admin").
 		Middleware((*entities.ServerContext).ValidateAdminUser).
+		Put("/company", km.UpdateCompanyDetails).
 		Get("/", km.AdminView).
 		Get("/:", km.AdminView)
 

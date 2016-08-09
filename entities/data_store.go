@@ -35,7 +35,7 @@ func NewSessionToken(email string, token string) *SessionToken{
 
 func SetServerConfig(ctx context.Context, config ServerConfig) error {
 	log.Infof(ctx, "Storing config: %+v", config)
-	key := datastore.NewIncompleteKey(ctx, ENTITY_SERVER_CONFIG, nil)
+	key := datastore.NewKey(ctx, ENTITY_SERVER_CONFIG, SERVER_CONFIG_KEY, 0, nil)
 	_, err := datastore.Put(ctx, key, &config)
 	if err != nil{
 		return err
