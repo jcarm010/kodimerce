@@ -2,18 +2,29 @@ package entities
 
 type ServerConfig struct {
 	ConfigKey string
-	CompanyName string `datastore:",noindex"`
-	CompanyAddress string `datastore:",noindex"`
-	CompanyEmail string `datastore:",noindex"`
-	CompanyPhone string `datastore:",noindex"`
+	PrimaryColor string `datastore:",noindex"`
+	SuccessColor string `datastore:",noindex"`
+	WarningColor string `datastore:",noindex"`
+	DangerColor string `datastore:",noindex"`
+	DefaultColor string `datastore:",noindex"`
+	PrimaryFontColor string `datastore:",noindex"`
+	SuccessFontColor string `datastore:",noindex"`
+	WarningFontColor string `datastore:",noindex"`
+	DangerFontColor string `datastore:",noindex"`
+	DefaultFontColor string `datastore:",noindex"`
 }
 
-func NewServerConfig(companyName string, companyAddress string, companyEmail string, companyPhone string) ServerConfig {
+func DefaultServerConfig() ServerConfig {
 	return ServerConfig{
-		ConfigKey: SERVER_CONFIG_KEY,
-		CompanyName: companyName,
-		CompanyAddress: companyAddress,
-		CompanyEmail: companyEmail,
-		CompanyPhone: companyPhone,
+		PrimaryColor: "#3f51b5",
+		SuccessColor: "#3fb5a3",
+		WarningColor: "#b5a33f",
+		DangerColor: "#b53f51",
+		DefaultColor: "#ffffff",
+		PrimaryFontColor: "#ffffff",
+		SuccessFontColor: "#ffffff",
+		WarningFontColor: "#ffffff",
+		DangerFontColor: "#ffffff",
+		DefaultFontColor: "#000000",
 	}
 }

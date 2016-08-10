@@ -31,14 +31,19 @@ func UpdateCompanyDetails(c *entities.ServerContext, w web.ResponseWriter, r *we
 	companyEmail := r.FormValue("company_email")
 	companyPhone := r.FormValue("company_phone")
 	companyAddress := r.FormValue("company_address")
-	c.Config.CompanyName = companyName
-	c.Config.CompanyEmail = companyEmail
-	c.Config.CompanyPhone = companyPhone
-	c.Config.CompanyAddress = companyAddress
-	err = entities.SetServerConfig(c.Context, c.Config)
+	c.CompanyConfig.CompanyName = companyName
+	c.CompanyConfig.CompanyEmail = companyEmail
+	c.CompanyConfig.CompanyPhone = companyPhone
+	c.CompanyConfig.CompanyAddress = companyAddress
+	err = entities.SetCompanyConfig(c.Context, c.CompanyConfig)
 	if err != nil {
 		log.Errorf(c.Context, "Error saving server config: %+v", err)
 		c.ServeJson(http.StatusInternalServerError, "Unexpected error saving company details.")
 		return
 	}
+}
+
+
+func UpdatePlatformDetails(c *entities.ServerContext, w web.ResponseWriter, r *web.Request)  {
+	
 }

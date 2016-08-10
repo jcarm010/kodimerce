@@ -11,26 +11,27 @@ import (
 )
 
 type ServerContext struct {
-	Context context.Context
-	w web.ResponseWriter
-	r *web.Request
-	Config ServerConfig
-	SessionToken *SessionToken
-	User *User
+	Context       context.Context
+	w             web.ResponseWriter
+	r             *web.Request
+	ServerConfig  ServerConfig
+	CompanyConfig CompanyConfig
+	SessionToken  *SessionToken
+	User          *User
 }
 
-func (c *ServerContext) SetServerConfiguration(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc){
+func (c *ServerContext) SetServerConfiguration(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
 	c.Context = appengine.NewContext(r.Request)
 	c.w = w
 	c.r = r
-	serverConfig, err := GetServerConfig(c.Context)
+	companyConfig, err := GetCompanyConfig(c.Context)
 	if(err == ENTITY_NOT_FOUND_ERROR){
 		if(r.RequestURI != "/init"){
 			http.Redirect(w, r.Request, "/init", http.StatusTemporaryRedirect)
 			return
 		}
 	} else if err != nil {
-		log.Errorf(c.Context, "Error retrieving server config: %+v", serverConfig)
+		log.Errorf(c.Context, "Error retrieving server config: %+v", companyConfig)
 		c.ServeJson(500, "")
 		return
 	} else if r.RequestURI == "/init" || r.RequestURI == "/init/"{
@@ -38,9 +39,23 @@ func (c *ServerContext) SetServerConfiguration(w web.ResponseWriter, r *web.Requ
 		return
 	}
 
-	log.Infof(c.Context, "Server Config: %+v", serverConfig)
-	c.Config = serverConfig
+	log.Infof(c.Context, "Company Config: %+v", companyConfig)
+	c.CompanyConfig = companyConfig
 
+	serverConfig, err := GetServerConfig(c.Context)
+	if(err == ENTITY_NOT_FOUND_ERROR){
+		serverConfig = DefaultServerConfig()
+		err = SetServerConfig(c.Context, serverConfig)
+		if err != nil {
+			log.Errorf(c.Context, "Failed to save server config: %+v", err)
+		}
+	} else if err != nil {
+		log.Errorf(c.Context, "Error retrieving server config: %+v", companyConfig)
+		serverConfig = DefaultServerConfig()
+	}
+
+	log.Infof(c.Context, "Server Config: %+v", serverConfig)
+	c.ServerConfig = serverConfig
 	next(w, r)
 }
 

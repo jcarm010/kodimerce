@@ -1,0 +1,179 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/paper-card/paper-card.html">
+<link rel="import" href="/bower_components/paper-button/paper-button.html">
+<link rel="import" href="/bower_components/paper-input/paper-input.html">
+<link rel="import" href="/bower_components/iron-form/iron-form.html">
+<link rel="import" href="/bower_components/paper-spinner/paper-spinner-lite.html">
+<link rel="import" href="/bower_components/paper-toast/paper-toast.html">
+
+<dom-module id="km-server-settings">
+
+    <template>
+
+        <style>
+            :host {
+                display: inline;
+                padding: 10px;
+            }
+            h1 {
+                font-size: 22px;
+                margin: 16px 0;
+                color: #212121;
+            }
+            #save-button{
+                float: right;
+            }
+            #menu{
+                width:300px;
+            }
+            #errorToast {
+                --paper-toast-background-color: #d58512;
+                --paper-toast-color: white;
+            }
+            #successToast {
+                --paper-toast-background-color: #4caf50;
+                --paper-toast-color: white;
+            }
+            *[hidden] {
+                display: none;
+            }
+
+            paper-input[type="color"] {
+                width: 45%;
+                display: inline-block;
+            }
+
+            .km-primary {
+                background-color: var(--km-primary-color);
+                color: var(--km-primary-font-color);
+            }
+            .km-success {
+                background-color: var(--km-success-color);
+                color: var(--km-success-font-color);
+            }
+            .km-warning {
+                background-color: var(--km-warning-color);
+                color: var(--km-warning-font-color);
+            }
+            .km-danger {
+                background-color: var(--km-danger-color);
+                color: var(--km-danger-font-color);
+            }
+            .km-default {
+                background-color: calc(--km-default-color);
+                color: var(--km-default-font-color);
+            }
+            .sample-button{
+                margin-top: 5px;
+                width: 75px;
+            }
+        </style>
+
+        <paper-card id="menu" heading="Server Settings">
+            <div class="card-content">
+                <div>
+                    <form id="form" is="iron-form" method="put" action="/admin/server" on-iron-form-response="submissionSuccess" on-iron-form-error="submissionError">
+                        <paper-input type="color" name="primary_color" label="Primary Color" value="{{editing.primaryColor}}" auto-validate required></paper-input>
+                        <paper-input type="color" name="primary_font_color" label="Primary Font Color" value="{{editing.primaryFontColor}}" auto-validate required></paper-input>
+
+                        <paper-input type="color" name="success_color" label="Success Color" value="{{editing.successColor}}" auto-validate required></paper-input>
+                        <paper-input type="color" name="success_font_color" label="Success Font Color" value="{{editing.successFontColor}}" auto-validate required></paper-input>
+
+                        <paper-input type="color" name="warning_color" label="Warning Color" value="{{editing.warningColor}}" auto-validate required></paper-input>
+                        <paper-input type="color" name="warning_font_color" label="Warning Font Color" value="{{editing.warningFontColor}}" auto-validate required></paper-input>
+
+                        <paper-input type="color" name="danger_color" label="Danger Color" value="{{editing.dangerColor}}" auto-validate required></paper-input>
+                        <paper-input type="color" name="danger_font_color" label="Danger Font Color" value="{{editing.dangerFontColor}}" auto-validate required></paper-input>
+
+                        <paper-input type="color" name="default_color" label="Default Color" value="{{editing.defaultColor}}" auto-validate required></paper-input>
+                        <paper-input type="color" name="default_font_color" label="Default Font Color" value="{{editing.defaultFontColor}}" auto-validate required></paper-input>
+                    </form>
+                </div>
+                <div>
+                    <paper-button class="sample-button km-primary">Primary</paper-button>
+                    <paper-button class="sample-button km-success">Success</paper-button>
+                    <paper-button class="sample-button km-warning">Warning</paper-button>
+                    <paper-button class="sample-button km-danger">Danger</paper-button>
+                    <paper-button class="sample-button km-default">Default</paper-button>
+                </div>
+            </div>
+            <div class="card-actions">
+                <paper-button hidden="[[loading]]" on-click="resetEditing">Reset</paper-button>
+                <paper-button id="save-button">
+                    <span hidden="[[loading]]" on-click="save">Save</span>
+                    <paper-spinner-lite class="green" hidden="[[!loading]]" active></paper-spinner-lite>
+                </paper-button>
+            </div>
+        </paper-card>
+
+        <paper-toast id="errorToast" class="fit-bottom" text="[[errorMessage]]"></paper-toast>
+        <paper-toast id="successToast" class="fit-bottom" text="Saved"></paper-toast>
+    </template>
+
+    <script>
+
+        Polymer({
+
+            is: 'km-server-settings',
+            properties: {
+                loading: {
+                    type: Boolean,
+                    value: false
+                },
+                server: Object,
+                editing: Object,
+                errorMessage: {
+                    type: String,
+                    value: ""
+                }
+            },
+            submissionSuccess: function(event){
+                var oldCompany = this.company;
+                this.company = this.editing;
+                var newCompany = this.company;
+                this.resetEditing();
+                document.dispatchEvent(new CustomEvent("company-changed", { detail:{ oldCompany: oldCompany, newCompany: newCompany }}));
+                this.$.successToast.open();
+            },
+            submissionError: function(event){
+                this.loading = false;
+                var response = event.detail.request.response;
+                console.log("Failed: " + response);
+                if(response === null){
+                    response = "Unexpected error, please try again later.";
+                }
+                this.errorMessage = response;
+                this.$.errorToast.open();
+            },
+            save: function(){
+                console.log("Saving...");
+                if(this.$.form.validate()){
+                    this.loading = true;
+                }
+                this.$.form.submit();
+            },
+            resetEditing: function(){
+                this.editing = JSON.parse(JSON.stringify(this.server));
+                this.loading = false;
+            },
+            ready: function(){
+                this.server = km_service.server;
+                this.resetEditing();
+                this.$.errorToast.fitInto=this.$.form;
+                this.$.successToast.fitInto=this.$.form;
+            }
+        });
+
+    </script>
+
+</dom-module>

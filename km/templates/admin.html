@@ -2,7 +2,28 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{{.Server.CompanyName}} - Admin</title>
+    <title>{{.Company.CompanyName}} - Admin</title>
+
+    <style is="custom-style">
+        body {
+            margin: 0;
+            font-family: 'Roboto', 'Noto', sans-serif;
+            background-color: #eee;
+        }
+        :root {
+            --km-primary-color: {{.Server.PrimaryColor}};
+            --km-success-color: {{.Server.SuccessColor}};
+            --km-warning-color: {{.Server.WarningColor}};
+            --km-danger-color: {{.Server.DangerColor}};
+            --km-default-color: {{.Server.DefaultColor}};
+            --km-primary-font-color: {{.Server.PrimaryFontColor}};
+            --km-success-font-color: {{.Server.SuccessFontColor}};
+            --km-warning-font-color: {{.Server.WarningFontColor}};
+            --km-danger-font-color: {{.Server.DangerFontColor}};
+            --km-default-font-color: {{.Server.DefaultFontColor}};
+        }
+    </style>
+
     <script>
 
         // setup Polymer options
@@ -24,10 +45,22 @@
 
         var km_service = {
             company: {
-                name: {{.Server.CompanyName}},
-                address: {{.Server.CompanyAddress}},
-                email: {{.Server.CompanyEmail}},
-                phone: {{.Server.CompanyPhone}},
+                name: {{.Company.CompanyName}},
+                address: {{.Company.CompanyAddress}},
+                email: {{.Company.CompanyEmail}},
+                phone: {{.Company.CompanyPhone}}
+            },
+            server: {
+                primaryColor: {{.Server.PrimaryColor}},
+                successColor: {{.Server.SuccessColor}},
+                warningColor: {{.Server.WarningColor}},
+                dangerColor: {{.Server.DangerColor}},
+                defaultColor: {{.Server.DefaultColor}},
+                primaryFontColor: {{.Server.PrimaryFontColor}},
+                successFontColor: {{.Server.SuccessFontColor}},
+                warningFontColor: {{.Server.WarningFontColor}},
+                dangerFontColor: {{.Server.DangerFontColor}},
+                defaultFontColor: {{.Server.DefaultFontColor}},
             }
         };
     </script>
@@ -35,13 +68,7 @@
 
     <link rel="stylesheet" href="/bower_components/bootstrap/dist/css/bootstrap.min.css">
 
-    <style is="custom-style">
-        body {
-            margin: 0;
-            font-family: 'Roboto', 'Noto', sans-serif;
-            background-color: #eee;
-        }
-    </style>
+
 </head>
 <body>
     <admin-app></admin-app>

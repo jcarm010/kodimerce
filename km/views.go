@@ -26,7 +26,8 @@ func AdminView(c *entities.ServerContext, w web.ResponseWriter, r *web.Request) 
 		log.Errorf(context, "Error parsing login template: %+v", err)
 	}
 	data := map[string] interface{}{
-		"Server": c.Config,
+		"Server": c.ServerConfig,
+		"Company": c.CompanyConfig,
 		"User": c.User,
 	}
 	t.Execute(w, data)
@@ -39,7 +40,7 @@ func LoginView(c *entities.ServerContext, w web.ResponseWriter, r *web.Request) 
 		log.Errorf(context, "Error parsing login template: %+v", err)
 	}
 	data := map[string] interface{}{
-		"Server": c.Config,
+		"Server": c.CompanyConfig,
 	}
 	t.Execute(w, data)
 }

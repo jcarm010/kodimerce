@@ -1,0 +1,109 @@
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/paper-card/paper-card.html">
+<link rel="import" href="/bower_components/paper-button/paper-button.html">
+<link rel="import" href="/bower_components/paper-input/paper-input.html">
+<link rel="import" href="/bower_components/iron-form/iron-form.html">
+<link rel="import" href="/bower_components/paper-spinner/paper-spinner-lite.html">
+<link rel="import" href="/bower_components/paper-toast/paper-toast.html">
+
+<dom-module id="km-page-details">
+
+    <template>
+
+        <style>
+            :host {
+                display: inline;
+                padding: 10px;
+            }
+            h1 {
+                font-size: 22px;
+                margin: 16px 0;
+                color: #212121;
+            }
+            #view-button{
+                float: right;
+            }
+            #menu{
+                width:300px;
+            }
+            #errorToast {
+                --paper-toast-background-color: #d58512;
+                --paper-toast-color: white;
+            }
+            #successToast {
+                --paper-toast-background-color: #4caf50;
+                --paper-toast-color: white;
+            }
+            *[hidden] {
+                display: none;
+            }
+
+            #menu { @apply(--layout-horizontal); }
+            .page-image {
+                width: 3px; /*Expand this to see page preview*/
+                background: var(--paper-indigo-500);
+                background-size: cover;
+            }
+            .page-content {
+                @apply(--layout-flex);
+                float: left;
+            }
+            .card-header { @apply(--paper-font-headline); }
+            .card-name { color: var(--paper-grey-600); margin: 10px 0; }
+            paper-icon-button.rate-icon {
+                --iron-icon-fill-color: white;
+                --iron-icon-stroke-color: var(--paper-grey-600);
+            }
+        </style>
+        <paper-card id="menu" >
+            <div class="page-content">
+                <div class="card-content">
+                    <div class="card-header">
+                        [[name]]
+                    </div>
+                    <div class="card-name">
+                        <div>Uri: [[uri]]</div>
+                        <div hidden="[[createdDate===undefined]]">Created: [[createdDate]]</div>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <paper-button>Remove</paper-button>
+                    <paper-button id="view-button">Edit</paper-button>
+                </div>
+            </div>
+            <div class="page-image"></div>
+        </paper-card>
+        <paper-toast id="errorToast" class="fit-bottom" text="[[errorMessage]]"></paper-toast>
+        <paper-toast id="successToast" class="fit-bottom" text="Saved"></paper-toast>
+    </template>
+
+    <script>
+
+        Polymer({
+
+            is: 'km-page-details',
+            properties: {
+                loading: {
+                    type: Boolean,
+                    value: false
+                },
+                errorMessage: {
+                    type: String,
+                    value: ""
+                },
+                name: String,
+                uri: String,
+                createdDate: {
+                    type:String,
+                    value: undefined
+                }
+            },
+            ready: function(){
+                this.$.errorToast.fitInto=this.$.form;
+                this.$.successToast.fitInto=this.$.form;
+            }
+        });
+
+    </script>
+
+</dom-module>

@@ -20,7 +20,7 @@ var TEST_PASSWORD_BYTES, _ = bcrypt.GenerateFromPassword([]byte(TEST_USER_PASSWO
 var TEST_PASSWORD_HASH = string(TEST_PASSWORD_BYTES)
 
 func TestNewServerConfig(t *testing.T) {
-	want := ServerConfig{
+	want := CompanyConfig{
 		ConfigKey: SERVER_CONFIG_KEY,
 		CompanyName: TEST_COMPANY_NAME,
 		CompanyAddress: TEST_COMPANY_ADDRESS,
@@ -28,7 +28,7 @@ func TestNewServerConfig(t *testing.T) {
 		CompanyPhone: TEST_COMPANY_PHONE,
 	}
 
-	config := NewServerConfig(TEST_COMPANY_NAME, TEST_COMPANY_ADDRESS, TEST_COMPANY_EMAIL, TEST_COMPANY_PHONE)
+	config := NewCompanyConfig(TEST_COMPANY_NAME, TEST_COMPANY_ADDRESS, TEST_COMPANY_EMAIL, TEST_COMPANY_PHONE)
 	if !reflect.DeepEqual(config, want) {
 		t.Errorf("Configurations are not equal.\nNeed: %+v\nGot: %+v", want, config)
 	}
@@ -40,7 +40,7 @@ func TestGetServerConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer done()
-	config, err := GetServerConfig(ctx)
+	config, err := GetCompanyConfig(ctx)
 	if err != ENTITY_NOT_FOUND_ERROR {
 		t.Errorf("Server confuguration should not have been found but instead got config[%+v] err[%+v]", config, err)
 	}
@@ -52,18 +52,18 @@ func TestSetServerConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer done()
-	config, err := GetServerConfig(ctx)
+	config, err := GetCompanyConfig(ctx)
 	if err != ENTITY_NOT_FOUND_ERROR {
 		t.Errorf("Server confuguration should not have been found but instead got config[%+v] err[%+v]", config, err)
 		return
 	}
-	want := NewServerConfig(TEST_COMPANY_NAME, TEST_COMPANY_ADDRESS, TEST_COMPANY_EMAIL, TEST_COMPANY_PHONE)
-	err = SetServerConfig(ctx, want)
+	want := NewCompanyConfig(TEST_COMPANY_NAME, TEST_COMPANY_ADDRESS, TEST_COMPANY_EMAIL, TEST_COMPANY_PHONE)
+	err = SetCompanyConfig(ctx, want)
 	if err != nil {
 		t.Errorf("Error setting server config: %+v", err)
 		return
 	}
-	config, err = GetServerConfig(ctx)
+	config, err = GetCompanyConfig(ctx)
 	if err != nil {
 		t.Errorf("Error getting created configuration: %+v", err)
 		return

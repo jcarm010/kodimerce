@@ -11,8 +11,7 @@ import (
 
 func SetupServerInit(c *entities.ServerContext, w web.ResponseWriter, r *web.Request) {
 	context := appengine.NewContext(r.Request)
-
-	config, err := entities.GetServerConfig(context)
+	config, err := entities.GetCompanyConfig(context)
 	if err != entities.ENTITY_NOT_FOUND_ERROR {
 		c.ServeJson(http.StatusForbidden, "Server already configured.")
 		return
@@ -79,9 +78,9 @@ func SetupServerInit(c *entities.ServerContext, w web.ResponseWriter, r *web.Req
 		return
 	}
 
-	config = entities.NewServerConfig(companyName, companyAddress, companyEmail, companyPhone)
+	config = entities.NewCompanyConfig(companyName, companyAddress, companyEmail, companyPhone)
 	log.Infof(context, "New Configuration: %+v", config)
-	err = entities.SetServerConfig(context, config)
+	err = entities.SetCompanyConfig(context, config)
 	if err != nil {
 		log.Errorf(context, "Error saving configuration: %+v", err)
 		c.ServeJson(http.StatusBadRequest, "Unexpected error saving configuration")
