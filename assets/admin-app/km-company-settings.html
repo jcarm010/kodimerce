@@ -47,6 +47,26 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             *[hidden] {
                 display: none;
             }
+            .km-primary {
+                background-color: var(--km-primary-color);
+                color: var(--km-primary-font-color);
+            }
+            .km-success {
+                background-color: var(--km-success-color);
+                color: var(--km-success-font-color);
+            }
+            .km-warning {
+                background-color: var(--km-warning-color);
+                color: var(--km-warning-font-color);
+            }
+            .km-danger {
+                background-color: var(--km-danger-color);
+                color: var(--km-danger-font-color);
+            }
+            .km-default {
+                background-color: var(--km-default-color);
+                color: var(--km-default-font-color);
+            }
         </style>
         <paper-card id="menu" heading="Company Details">
             <div class="card-content">
@@ -65,8 +85,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 </paper-button>
             </div>
         </paper-card>
-        <paper-toast id="errorToast" class="fit-bottom" text="[[errorMessage]]"></paper-toast>
-        <paper-toast id="successToast" class="fit-bottom" text="Saved"></paper-toast>
+        <paper-toast id="errorToast" class="fit-bottom km-warning" text="[[errorMessage]]"></paper-toast>
+        <paper-toast id="successToast" class="fit-bottom km-success" text="Saved"></paper-toast>
     </template>
 
     <script>
@@ -118,8 +138,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             ready: function(){
                 this.company = km_service.company;
                 this.resetEditing();
-                this.$.errorToast.fitInto=this.$.form;
-                this.$.successToast.fitInto=this.$.form;
+                this.$.errorToast.fitInto=this.$.menu;
+                this.$.successToast.fitInto=this.$.menu;
             }
         });
 

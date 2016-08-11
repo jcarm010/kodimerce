@@ -70,7 +70,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 color: var(--km-danger-font-color);
             }
             .km-default {
-                background-color: calc(--km-default-color);
+                background-color: var(--km-default-color);
                 color: var(--km-default-font-color);
             }
             .sample-button{
@@ -116,8 +116,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             </div>
         </paper-card>
 
-        <paper-toast id="errorToast" class="fit-bottom" text="[[errorMessage]]"></paper-toast>
-        <paper-toast id="successToast" class="fit-bottom" text="Saved"></paper-toast>
+        <paper-toast id="errorToast" class="fit-bottom km-warning" text="[[errorMessage]]"></paper-toast>
+        <paper-toast id="successToast" class="fit-bottom km-success" text="Saved"></paper-toast>
     </template>
 
     <script>
@@ -137,12 +137,27 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     value: ""
                 }
             },
+            observers: [
+                'serverChanged(editing.primaryColor)',
+                'serverChanged(editing.successColor)',
+                'serverChanged(editing.warningColor)',
+                'serverChanged(editing.dangerColor)',
+                'serverChanged(editing.defaultColor)',
+                'serverChanged(editing.primaryFontColor)',
+                'serverChanged(editing.successFontColor)',
+                'serverChanged(editing.warningFontColor)',
+                'serverChanged(editing.dangerFontColor)',
+                'serverChanged(editing.defaultFontColor)'
+
+            ],
+            serverChanged: function(){
+//                console.log("Primary: ", this.editing.primaryColor);
+                document.dispatchEvent(new CustomEvent("server-config-changed", { detail:{ config: this.editing }}));
+            },
             submissionSuccess: function(event){
-                var oldCompany = this.company;
-                this.company = this.editing;
-                var newCompany = this.company;
+                this.server = this.editing;
                 this.resetEditing();
-                document.dispatchEvent(new CustomEvent("company-changed", { detail:{ oldCompany: oldCompany, newCompany: newCompany }}));
+                km_service.server = this.server;
                 this.$.successToast.open();
             },
             submissionError: function(event){
@@ -169,8 +184,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             ready: function(){
                 this.server = km_service.server;
                 this.resetEditing();
-                this.$.errorToast.fitInto=this.$.form;
-                this.$.successToast.fitInto=this.$.form;
+                this.$.errorToast.fitInto=this.$.menu;
+                this.$.successToast.fitInto=this.$.menu;
             }
         });
 
