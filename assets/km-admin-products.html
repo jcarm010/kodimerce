@@ -1,0 +1,205 @@
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="/bower_components/paper-button/paper-button.html">
+<link rel="import" href="/bower_components/vaadin-grid/vaadin-grid.html">
+<link rel="import" href="/bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="/bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="/bower_components/paper-input/paper-input.html">
+<link rel="import" href="km-ajax.html">
+
+<dom-module id="km-admin-products">
+    <template>
+        <style>
+            :host {
+                display: block;
+                height: 100%;
+            }
+            #container {
+                height: 100%;
+            }
+            #productsGrid {
+                height: 100%;
+            }
+            #add-icon {
+                position: absolute;
+                bottom: 10px;
+                right: 10px;
+            }
+            .primary {
+                background-color: var(--primary-color, "blue");
+                color: white;
+            }
+            .danger {
+                background-color: var(--danger-color, "red");
+                color: white;
+            }
+            .success {
+                background-color: var(--success-color, "green");
+                color: white;
+            }
+        </style>
+        <km-ajax id="ajax"></km-ajax>
+        <div id="container">
+            <vaadin-grid id="productsGrid" items="[[products]]">
+                <table>
+                </table>
+            </vaadin-grid>
+
+            <paper-fab class="primary" id="add-icon" icon="add" on-click="openCreateModal"></paper-fab>
+
+            <paper-dialog id="createModal">
+                <h2>Create Product</h2>
+                <p>
+                    <paper-input label="Product Name" value="{{newProductName}}"></paper-input>
+                </p>
+                <div class="buttons">
+                    <paper-button dialog-confirm>Cancel</paper-button>
+                    <paper-button class="primary" on-click="createProduct">Create</paper-button>
+                </div>
+            </paper-dialog>
+
+            <paper-dialog id="editModal" no-cancel-on-outside-click>
+                <h2>Product: [[selectedProduct.name]]</h2>
+                <p>
+                    Info Here
+                </p>
+                <div class="buttons">
+                    <paper-button dialog-confirm>Close</paper-button>
+                    <!--<paper-button class="primary" on-click="createProduct">Save</paper-button>-->
+                </div>
+            </paper-dialog>
+        </div>
+        <paper-toast class="success" id="successToast" class="fit-bottom" text=""></paper-toast>
+        <paper-toast class="primary" id="messageToast" class="fit-bottom" text=""></paper-toast>
+        <paper-toast class="danger" id="errorToast" class="fit-bottom" text=""></paper-toast>
+    </template>
+    <script>
+        (function () {
+            Polymer({
+                is: 'km-admin-products',
+                properties: {
+                    newProductName: {
+                        type: String,
+                        value: ""
+                    },
+                    products: {
+                        type: Array,
+                        value: function(){
+                            return [];
+                        }
+                    },
+                    selectedProduct: {
+                        type: Object,
+                        value: function(){
+                            return null;
+                        }
+                    }
+                },
+                openCreateModal: function(){
+                    this.$.createModal.open();
+                },
+                createProduct: function(){
+                    var self = this;
+                    console.log("Creating product...");
+                    var name = self.newProductName;
+                    self.showMessage("Creating product: " + name);
+                    this.$.ajax.adminCreateProduct(name).then(function(data){
+                        var response = data.response;
+                        console.log("Product created successfully:", response);
+                        self.newProductName = "";
+                        self.showSuccess("Product created: " + name);
+                        self.$.createModal.close();
+                        self.push('products', response);
+                    }, function(data){
+                        console.log(data);
+                        self.showError("Could not create product, check your input and try again.");
+                    });
+                },
+                showError: function(message){
+                    this.$.errorToast.text = message;
+                    this.$.errorToast.open();
+                },
+                showMessage: function(message){
+                    this.$.messageToast.text = message;
+                    this.$.messageToast.open();
+                },
+                showSuccess: function(message){
+                    this.$.successToast.text = message;
+                    this.$.successToast.open();
+                },
+                _fetchProducts: function(){
+                    var self = this;
+                    self.showMessage("Fetching products...");
+                    this.$.ajax.adminGetProducts().then(function(data){
+                        var products = data.response;
+                        console.log("Products:", products);
+
+                        var pushParams = ['products'];
+                        for(var i = 0 ; i < products.length; i++){
+                            var product = products[i];
+                            pushParams.push(product);
+                        }
+
+                        self.splice("products", 0, self.products.length);
+                        self.push.apply(self, pushParams);
+                    }, function(data){
+                        console.log(data);
+                        self.showError("Could not fetch products, please try again later.")
+                    })
+                },
+                _sortOrderChanged: function(){
+                    var self = this;
+                    return function () {
+                        var table = self.$.productsGrid;
+                        var idx = table.columns[table.sortOrder[0].column].name;
+                        var lesser = table.sortOrder[0].direction == 'asc' ? -1 : 1;
+                        self.products.sort(function (a, b) {
+                            var av = a[idx];
+                            if (av === undefined) {
+                                return lesser;
+                            }
+                            var bv = b[idx];
+                            if (bv === undefined) {
+                                return -lesser;
+                            }
+                            return (av < bv) ? lesser : -lesser;
+                        });
+                    }
+                },
+                _productSelected: function(){
+                    var self = this;
+                    return function(){
+                        var grid = self.$.productsGrid;
+                        var selectedIndex = grid.selection.selected();
+                        var selected = grid.items[selectedIndex];
+                        if(!selected){
+                            return;
+                        }
+                        console.log('Selected: ', selected);
+                        self.selectedProduct = selected;
+                        self.$.editModal.open();
+                    }
+                },
+                ready: function(){
+                    var grid = this.$.productsGrid;
+                    this.$.messageToast.fitInto = this.$.container;
+                    this.$.errorToast.fitInto = this.$.container;
+                    this.$.successToast.fitInto = this.$.container;
+
+                    grid.columns = [
+                        {name: "id", sortable: true},
+                        {name: "name", sortable: true},
+                        {name: "quantity", sortable: true},
+                        {name: "active", sortable: true},
+                        {name: "created", sortable: true}
+                    ];
+
+                    grid.addEventListener('sort-order-changed', this._sortOrderChanged());
+                    grid.addEventListener('selected-items-changed', this._productSelected());
+
+                    this._fetchProducts();
+                }
+            });
+        })();
+    </script>
+</dom-module>

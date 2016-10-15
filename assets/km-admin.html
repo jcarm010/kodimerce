@@ -1,0 +1,191 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/app-route/app-location.html">
+<link rel="import" href="../bower_components/app-route/app-route.html">
+<link rel="import" href="../bower_components/app-layout/app-drawer-layout/app-drawer-layout.html">
+<link rel="import" href="../bower_components/app-layout/app-drawer/app-drawer.html">
+<link rel="import" href="../bower_components/app-layout/app-scroll-effects/app-scroll-effects.html">
+<link rel="import" href="../bower_components/app-layout/app-header/app-header.html">
+<link rel="import" href="../bower_components/app-layout/app-header-layout/app-header-layout.html">
+<link rel="import" href="../bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../bower_components/iron-icons/places-icons.html">
+<link rel="import" href="../bower_components/iron-icons/social-icons.html">
+<link rel="import" href="../bower_components/iron-icons/device-icons.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+
+<!--<link rel="import" href="my-icons.html">-->
+<dom-module id="km-admin">
+    <template>
+
+        <style>
+
+            :host {
+                display: block;
+                --app-primary-color: var(--default-color);
+                --app-secondary-color: black;
+                height: 100%;
+            }
+
+            app-header {
+                background-color: var(--app-primary-color);
+                box-shadow: 0 -2px 14px 0px #232323;;
+                -moz-box-shadow: 0 -2px 14px 0px #232323;;
+                -webkit-box-shadow: 0 -2px 14px 0px #232323;;
+            }
+
+            app-header paper-icon-button {
+                --paper-icon-button-ink-color: white;
+            }
+
+            .drawer-list {
+                margin: 0 20px;
+            }
+
+            app-drawer {
+                --app-drawer-content-container: {
+                    background: #3C454D;
+                    color: var(--default-color);
+                }
+            }
+
+            .drawer-list > * {
+                display: block;
+                padding: 0 16px;
+                line-height: 40px;
+                text-decoration: none;
+                color: var(--default-color);
+            }
+
+            .drawer-list > *.iron-selected {
+                background: #24292e;
+                color: var(--default-color);
+            }
+
+            .drawer-list * {
+                color: #a7b1c2;
+            }
+            .drawer-list *:hover {
+                background: #636a71;
+            }
+
+            .drawer-list *.subroute {
+                padding-left: 32px;
+            }
+            .nav-label{
+                font-size: 13px;
+            }
+
+            iron-pages {
+                height: 100%;
+                width: 100%;
+            }
+
+            iron-pages > * {
+                width: 100%;
+                height: 100%;
+            }
+            .menu-icon {
+                --iron-icon-height: 14px;
+                --iron-icon-width: 14px;
+                margin-bottom: 2px;
+            }
+
+            *[hidden]{
+                display: none;
+            }
+
+            @media print {
+                app-drawer, app-header {
+                    display: none;
+                }
+
+                app-drawer-layout, iron-pages {
+                    width: 8.5in;
+                    padding: 0;
+                    margin: 0;
+                }
+            }
+        </style>
+
+        <app-location route="{{route}}"></app-location>
+        <app-route
+                id="approute"
+                route="{{route}}"
+                pattern="/admin/:page"
+                data="{{routeData}}"
+                tail="{{subroute}}">
+
+        </app-route>
+
+        <app-drawer-layout fullbleed force-narrow>
+            <app-drawer id="drawerMenu" swipe-open>
+                <iron-selector selected="[[page]]" attr-for-selected="name" class="drawer-list" role="navigation">
+                    <a name="dashboard" href="/admin/dashboard/">
+                        <iron-icon class="menu-icon" icon="places:business-center"></iron-icon>
+                        <span class="nav-label">Dashboard</span>
+                    </a>
+                    <a name="store" href="/admin/store/">
+                        <iron-icon class="menu-icon" icon="places:business-center"></iron-icon>
+                        <span class="nav-label">Store</span>
+                    </a>
+                    <a name="store" href="/admin/products/">
+                        <iron-icon class="menu-icon" icon="places:business-center"></iron-icon>
+                        <span class="nav-label">Products</span>
+                    </a>
+                </iron-selector>
+            </app-drawer>
+
+            <!-- Main content -->
+            <app-header-layout fullbleed> <!-- has-scrolling-region -->
+                <app-header fixed>
+                    <app-toolbar>
+                        <paper-icon-button icon="icons:menu" drawer-toggle></paper-icon-button>
+                        <div title>[[title]]</div>
+                    </app-toolbar>
+                </app-header>
+
+                <iron-pages role="main" selected="[[page]]" attr-for-selected="name">
+                    <km-admin-dashboard name="dashboard"></km-admin-dashboard>
+                    <km-admin-store name="store"></km-admin-store>
+                    <km-admin-products name="products"></km-admin-products>
+                </iron-pages>
+            </app-header-layout>
+
+        </app-drawer-layout>
+
+    </template>
+
+    <script>
+        Polymer({
+            is: 'km-admin',
+            properties: {
+                page: {
+                    type: String,
+                    reflectToAttribute: true,
+                    observer: '_pageChanged'
+                },
+                title: {
+                    type: String,
+                    value: "Kodimerce"
+                }
+            },
+            observers: [
+                '_routePageChanged(routeData.page)'
+            ],
+            _routePageChanged: function (page) {
+                this.page = page || 'dashboard';
+                this.title = page.charAt(0).toUpperCase() + page.slice(1);
+            },
+            _pageChanged: function (page) {
+                this.importHref(this.resolveUrl("km-admin-" + page + '.html'), null, null, true);
+                this.$.drawerMenu.close();
+            },
+            ready:function () {
+            }
+        });
+
+    </script>
+
+</dom-module>

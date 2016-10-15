@@ -3,27 +3,22 @@ package server
 import (
 	"github.com/gocraft/web"
 	"net/http"
-	"entities"
 	"km"
+	"views"
 )
 
 func init() {
-	router := web.New(entities.ServerContext{}).
+	router := web.New(km.ServerContext{}).
 		Middleware(web.LoggerMiddleware).
-		Middleware(web.ShowErrorsMiddleware).
-		Get("/init", km.ServerInitView).
-		Post("/init", km.SetupServerInit).
-		Middleware((*entities.ServerContext).SetServerConfiguration).
-		Get("/login", km.LoginView).
-		Post("/login", km.Login).
-		Get("/login/landing", km.UserLanding)
+		Middleware((*km.ServerContext).InitServerContext)
 
-	router.Subrouter(entities.ServerContext{}, "/admin").
-		Middleware((*entities.ServerContext).ValidateAdminUser).
-		Put("/company", km.UpdateCompanyDetails).
-		Put("/server", km.UpdateServerDetails).
-		Get("/", km.AdminView).
-		Get("/:", km.AdminView)
+	router.Subrouter(km.AdminContext{}, "/admin").
+		Middleware((*km.AdminContext).Auth).
+		Get("/km/product", (*km.AdminContext).GetProducts).
+		Post("/km/product", (*km.AdminContext).CreateProduct).
+		Put("/km/product", (*km.AdminContext).UpdateProduct).
+		Get("/", views.AdminView).
+		Get("/:page", views.AdminView)
 
 	http.Handle("/", router)
 }

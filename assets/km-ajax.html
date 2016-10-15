@@ -1,0 +1,45 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+
+<dom-module id="km-ajax">
+    <template>
+        <iron-ajax id="xhrGet" handle-as="json" method="GET" headers="[[headers]]"></iron-ajax>
+        <iron-ajax id="xhr" handle-as="json" method="POST" headers="[[headers]]"></iron-ajax>
+    </template>
+    <script>
+        (function () {
+            Polymer({
+                is: 'km-ajax',
+                properties: {
+                    headers: {
+                        type: Object,
+                        value: function(){
+                            return {}
+                        }
+                    }
+                },
+                post: function (url, data) {
+                    this.$.xhr.url = url;
+                    this.$.xhr.contentType = "application/json";
+                    this.$.xhr.body = data;
+                    var r = this.$.xhr.generateRequest();
+                    return r.completes;
+                },
+                get:function(url){
+                    this.$.xhrGet.url = url;
+                    this.$.xhrGet.contentType = "application/json";
+                    var r = this.$.xhrGet.generateRequest();
+                    return r.completes;
+                },
+                ready: function () {},
+                //calls
+                adminCreateProduct: function (name) {
+                    return this.post("/admin/km/product/?name="+encodeURIComponent(name));
+                },
+                adminGetProducts: function(){
+                    return this.get("/admin/km/product/");
+                }
+            });
+        })();
+    </script>
+</dom-module>

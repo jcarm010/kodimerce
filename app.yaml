@@ -2,11 +2,18 @@ runtime: go
 api_version: go1
 
 handlers:
+#- url: /(.*\.(gif|png|jpg))$
+#  static_files: static/\1
+#  upload: static/.*\.(gif|png|jpg)$
+
 - url: /assets
   static_dir: assets
 
 - url: /bower_components
   static_dir: bower_components
+
+- url: /views
+  static_dir: views
 
 - url: /.*
   script: _go_app
