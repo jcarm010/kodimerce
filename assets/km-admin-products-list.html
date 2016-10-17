@@ -5,6 +5,7 @@
 <link rel="import" href="/bower_components/paper-dialog/paper-dialog.html">
 <link rel="import" href="/bower_components/paper-toast/paper-toast.html">
 <link rel="import" href="/bower_components/paper-input/paper-input.html">
+<link rel="import" href="/bower_components/paper-toggle-button/paper-toggle-button.html">
 <link rel="import" href="km-ajax.html">
 
 <dom-module id="km-admin-products-list">
@@ -119,6 +120,19 @@
                         cell.element.innerHTML = '$'+(product.price_cents/100).toFixed(2);
                     };
                 },
+                _booleanRenderer: function(){
+                    return function(cell){
+                        var toggle;
+                        if(!cell.element.innerHTML || cell.element.innerHTML===""){
+                            toggle = document.createElement('paper-toggle-button');
+                            cell.element.appendChild(toggle);
+                        }else {
+                            toggle = cell.element.children[0];
+                        }
+
+                        toggle.checked = cell.data;
+                    };
+                },
                 ready: function(){
                     var grid = this.$.productsGrid;
 
@@ -127,7 +141,7 @@
                         {name: "name", sortable: true},
                         {name: "price", sortable: true, renderer: this._centsRenderer()},
                         {name: "quantity", sortable: true},
-                        {name: "active", sortable: true},
+                        {name: "active", sortable: true, renderer: this._booleanRenderer()},
                         {name: "created", sortable: true}
                     ];
 

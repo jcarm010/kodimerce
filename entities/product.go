@@ -14,6 +14,7 @@ type Product struct {
 	Quantity int `datastore:"quantity" json:"quantity"`
 	Active bool `datastore:"active" json:"active"`
 	PriceCents int64 `datastore:"price_cents" json:"price_cents"`
+	Pictures []string `datastore:"pictures,noindex" json:"pictures"`
 	Created time.Time `datastore:"created" json:"created"`
 }
 
@@ -21,6 +22,7 @@ func NewProduct(name string) *Product {
 	return &Product{
 		Name: name,
 		Created: time.Now(),
+		Pictures: make([]string,0),
 	}
 }
 
@@ -63,6 +65,7 @@ func UpdateProduct(ctx context.Context, product *Product) error {
 		p.PriceCents = product.PriceCents
 		p.Quantity = product.Quantity
 		p.Active = product.Active
+		p.Pictures = product.Pictures
 		_, err = datastore.Put(ctx, key, p)
 		return err
 	}, nil)

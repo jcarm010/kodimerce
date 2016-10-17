@@ -6,6 +6,7 @@ import (
 	"google.golang.org/appengine/log"
 	"net/http"
 	"strconv"
+	"google.golang.org/appengine/blobstore"
 )
 
 type AdminContext struct {
@@ -125,4 +126,20 @@ func (c *AdminContext) UpdateProduct(w web.ResponseWriter, r *web.Request) {
 		c.ServeJson(http.StatusInternalServerError, "Unexpected value storing product")
 		return
 	}
+}
+
+func (c *AdminContext) GetProductImageUploadUrl(w web.ResponseWriter, r *web.Request) {
+	uploadURL, err := blobstore.UploadURL(c.Context, "/admin/product/image/upload", nil)
+	if err != nil {
+		log.Errorf(c.Context, "Failed to create upload url: %+v", err)
+		c.ServeJson(http.StatusInternalServerError, "Failed to create upload url")
+		return
+	}
+
+	log.Infof(c.Context, "Upload url: %+v", uploadURL)
+	c.ServeJson(http.StatusOK, uploadURL)
+}
+
+func (c *AdminContext) ProductImageUploadHandler(w web.ResponseWriter, r *web.Request) {
+
 }

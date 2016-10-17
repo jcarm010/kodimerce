@@ -23,9 +23,10 @@
                 background-color: var(--success-color, "green");
                 color: white;
             }
-            #details {
-                width: 30%;
+            .details {
+                /*width: 30%;*/
                 margin-top:20px;
+                /*display: inline-block;*/
             }
         </style>
         <div>
@@ -33,7 +34,8 @@
                 <paper-button raised on-click="_cancelViewing">Back</paper-button>
                 <paper-button raised class="primary" on-click="save">Save</paper-button>
             </div>
-            <div id="details">
+            <div class="details">
+                <h4>Product Details</h4>
                 <span><b>Id:</b> [[editing.id]] <b>Creation Date:</b> [[editing.created]]</span>
                 <paper-toggle-button checked="{{editing.active}}">Active</paper-toggle-button>
                 <paper-input type="text" label="Name" value="{{editing.name}}"></paper-input>
@@ -41,6 +43,10 @@
                     <div prefix>$</div>
                 </paper-input>
                 <paper-input type="number" label="Quantity" value="{{editing.quantity}}"></paper-input>
+            </div>
+            <div class="details">
+                <h4>Product Images</h4>
+                <paper-button raised>Upload</paper-button>
             </div>
         </div>
     </template>

@@ -165,8 +165,8 @@
                     for(var i = 0 ; i < this.products.length; i++){
                         var product = this.products[i];
                         if(product.id === productId){
+                            this.selectedProduct = null;
                             this.selectedProduct = product;
-                            console.log("Found:", product);
                             break;
                         }
                     }
@@ -221,6 +221,9 @@
                             }
                         }
                         self.set('route.path', "/admin/products/all");
+                        var products = self.products;
+                        self.products = [];
+                        self.products = products;
                     }, function(data){
                         console.log("Failed to update:", data);
                         self.showError("Failed to update the product, please refresh this page and try again later.")
