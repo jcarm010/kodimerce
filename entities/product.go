@@ -13,6 +13,7 @@ type Product struct {
 	Name string `datastore:"name" json:"name"`
 	Quantity int `datastore:"quantity" json:"quantity"`
 	Active bool `datastore:"active" json:"active"`
+	PriceCents int64 `datastore:"price_cents" json:"price_cents"`
 	Created time.Time `datastore:"created" json:"created"`
 }
 
@@ -47,4 +48,28 @@ func ListProducts(ctx context.Context) ([]*Product, error) {
 	}
 
 	return products, err
+}
+
+func UpdateProduct(ctx context.Context, product *Product) error {
+	key := datastore.NewKey(ctx, ENTITY_PRODUCT, "", product.Id, nil)
+	err := datastore.RunInTransaction(ctx, func(ctx context.Context) error {
+		p := &Product{}
+		err := datastore.Get(ctx, key, p)
+		if err != nil {
+			return err
+		}
+
+		p.Name = product.Name
+		p.PriceCents = product.PriceCents
+		p.Quantity = product.Quantity
+		p.Active = product.Active
+		_, err = datastore.Put(ctx, key, p)
+		return err
+	}, nil)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

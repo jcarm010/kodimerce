@@ -1,0 +1,91 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
+
+<dom-module id="km-admin-products-view">
+    <template>
+        <style>
+            :host {
+                display: block;
+                padding: 10px;
+            }
+
+            .primary {
+                background-color: var(--primary-color, "blue");
+                color: white;
+            }
+            .danger {
+                background-color: var(--danger-color, "red");
+                color: white;
+            }
+            .success {
+                background-color: var(--success-color, "green");
+                color: white;
+            }
+            #details {
+                width: 30%;
+                margin-top:20px;
+            }
+        </style>
+        <div>
+            <div>
+                <paper-button raised on-click="_cancelViewing">Back</paper-button>
+                <paper-button raised class="primary" on-click="save">Save</paper-button>
+            </div>
+            <div id="details">
+                <span><b>Id:</b> [[editing.id]] <b>Creation Date:</b> [[editing.created]]</span>
+                <paper-toggle-button checked="{{editing.active}}">Active</paper-toggle-button>
+                <paper-input type="text" label="Name" value="{{editing.name}}"></paper-input>
+                <paper-input type="number" label="Price Cents" value="{{editing.price}}" step="0.01">
+                    <div prefix>$</div>
+                </paper-input>
+                <paper-input type="number" label="Quantity" value="{{editing.quantity}}"></paper-input>
+            </div>
+        </div>
+    </template>
+    <script>
+        (function () {
+            Polymer({
+                is: 'km-admin-products-view',
+                properties: {
+                    product: {
+                        type: Object,
+                        value: function () {
+                            return null;
+                        }
+                    },
+                    editing: {
+                        type: Object,
+                        value: function () {
+                            return null;
+                        }
+                    }
+                },
+                observers: [
+                    '_productChanged(product)'
+                ],
+                save: function(){
+                    var editing = JSON.parse(JSON.stringify(this.editing));
+                    editing.price_cents = Math.floor(editing.price * 100);
+                    delete editing['price'];
+                    this.product = editing;
+                    this.fire("product-changed", this.product);
+                },
+                _cancelViewing: function(){
+                    this.fire("viewing-canceled", {});
+                },
+                _productChanged: function(product){
+                    if(!product){
+                        this.editing = null;
+                        return
+                    }
+                    var editing = JSON.parse(JSON.stringify(this.product));
+                    editing.price = this.product.price_cents/100;
+                    this.editing = editing;
+                },
+                ready: function(){}
+            });
+        })();
+    </script>
+</dom-module>

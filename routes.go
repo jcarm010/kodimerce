@@ -18,7 +18,8 @@ func init() {
 		Post("/km/product", (*km.AdminContext).CreateProduct).
 		Put("/km/product", (*km.AdminContext).UpdateProduct).
 		Get("/", views.AdminView).
-		Get("/:page", views.AdminView)
+		Get("/:page", views.AdminView).
+		Get("/:page/:subpage", views.AdminView)
 
 	http.Handle("/", router)
 }

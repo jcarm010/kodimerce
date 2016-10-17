@@ -175,7 +175,8 @@
                 '_routePageChanged(routeData.page)'
             ],
             _routePageChanged: function (page) {
-                this.page = page || 'dashboard';
+                page = page || 'dashboard';
+                this.page = page;
                 this.title = page.charAt(0).toUpperCase() + page.slice(1);
             },
             _pageChanged: function (page) {

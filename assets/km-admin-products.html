@@ -1,11 +1,14 @@
-<link rel="import" href="/bower_components/polymer/polymer.html">
-<link rel="import" href="/bower_components/paper-fab/paper-fab.html">
-<link rel="import" href="/bower_components/paper-button/paper-button.html">
-<link rel="import" href="/bower_components/vaadin-grid/vaadin-grid.html">
-<link rel="import" href="/bower_components/paper-dialog/paper-dialog.html">
-<link rel="import" href="/bower_components/paper-toast/paper-toast.html">
-<link rel="import" href="/bower_components/paper-input/paper-input.html">
-<link rel="import" href="km-ajax.html">
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/app-route/app-location.html">
+<link rel="import" href="../bower_components/app-route/app-route.html">
+<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/vaadin-grid/vaadin-grid.html">
+<link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="./km-ajax.html">
 
 <dom-module id="km-admin-products">
     <template>
@@ -37,13 +40,29 @@
                 background-color: var(--success-color, "green");
                 color: white;
             }
+            iron-pages{
+                height: 100%;
+                background: white;
+            }
         </style>
+        <app-location route="{{route}}"></app-location>
+        <app-route
+                id="approute"
+                route="{{route}}"
+                pattern="/admin/products/:page"
+                data="{{routeData}}"
+                tail="{{subroute}}">
+
+        </app-route>
+
+
         <km-ajax id="ajax"></km-ajax>
         <div id="container">
-            <vaadin-grid id="productsGrid" items="[[products]]">
-                <table>
-                </table>
-            </vaadin-grid>
+            <iron-pages role="main" selected="[[page]]" attr-for-selected="name">
+                <km-admin-products-list id="productList" name="all" products="[[products]]"></km-admin-products-list>
+                <km-admin-products-view id="viewingProduct" name="view" on-viewing-canceled="_viewingCanceled" on-product-changed="_selectedChanged" product="[[selectedProduct]]"></km-admin-products-view>
+            </iron-pages>
+
 
             <paper-fab class="primary" id="add-icon" icon="add" on-click="openCreateModal"></paper-fab>
 
@@ -57,17 +76,6 @@
                     <paper-button class="primary" on-click="createProduct">Create</paper-button>
                 </div>
             </paper-dialog>
-
-            <paper-dialog id="editModal" no-cancel-on-outside-click>
-                <h2>Product: [[selectedProduct.name]]</h2>
-                <p>
-                    Info Here
-                </p>
-                <div class="buttons">
-                    <paper-button dialog-confirm>Close</paper-button>
-                    <!--<paper-button class="primary" on-click="createProduct">Save</paper-button>-->
-                </div>
-            </paper-dialog>
         </div>
         <paper-toast class="success" id="successToast" class="fit-bottom" text=""></paper-toast>
         <paper-toast class="primary" id="messageToast" class="fit-bottom" text=""></paper-toast>
@@ -78,6 +86,11 @@
             Polymer({
                 is: 'km-admin-products',
                 properties: {
+                    page: {
+                        type: String,
+                        reflectToAttribute: true,
+                        observer: '_pageChanged'
+                    },
                     newProductName: {
                         type: String,
                         value: ""
@@ -93,7 +106,37 @@
                         value: function(){
                             return null;
                         }
+                    },
+                    selectedProductId: {
+                        type: Number,
+                        value: 0
                     }
+                },
+                observers: [
+                    '_routePageChanged(routeData.page)'
+                ],
+                _routePageChanged: function (page) {
+                    switch(page){
+                        case undefined:
+                        case null:
+                        case "":
+                        case "all":
+                            this.page = "all";
+                            break;
+                        default:
+                            this.setSelectedProduct(parseInt(page));
+                            this.page = "view";
+                    }
+                },
+                _pageChanged: function (page) {
+                    switch(page){
+                        case "all":
+                            page = "list";
+                            break;
+                        default:
+                            page = "view"
+                    }
+                    this.importHref(this.resolveUrl("km-admin-products-" + page + '.html'), null, null, true);
                 },
                 openCreateModal: function(){
                     this.$.createModal.open();
@@ -110,10 +153,23 @@
                         self.showSuccess("Product created: " + name);
                         self.$.createModal.close();
                         self.push('products', response);
+//                        self.set('route.path', "/admin/products/"+response.id);
                     }, function(data){
                         console.log(data);
                         self.showError("Could not create product, check your input and try again.");
                     });
+                },
+                setSelectedProduct: function(productId){
+                    console.log("Product selected:", productId);
+                    this.selectedProductId = productId;
+                    for(var i = 0 ; i < this.products.length; i++){
+                        var product = this.products[i];
+                        if(product.id === productId){
+                            this.selectedProduct = product;
+                            console.log("Found:", product);
+                            break;
+                        }
+                    }
                 },
                 showError: function(message){
                     this.$.errorToast.text = message;
@@ -142,60 +198,51 @@
 
                         self.splice("products", 0, self.products.length);
                         self.push.apply(self, pushParams);
+                        self.setSelectedProduct(self.selectedProductId);
+                        self.showSuccess("Products fetched");
                     }, function(data){
                         console.log(data);
                         self.showError("Could not fetch products, please try again later.")
                     })
                 },
-                _sortOrderChanged: function(){
+                _selectedChanged: function(evt){
                     var self = this;
-                    return function () {
-                        var table = self.$.productsGrid;
-                        var idx = table.columns[table.sortOrder[0].column].name;
-                        var lesser = table.sortOrder[0].direction == 'asc' ? -1 : 1;
-                        self.products.sort(function (a, b) {
-                            var av = a[idx];
-                            if (av === undefined) {
-                                return lesser;
+                    var product = evt.detail;
+                    console.log("Selected product changed:", product);
+                    self.showMessage("Saving changes to product: " + product.name);
+                    self.$.ajax.adminUpdateProducts(product).then(function(data){
+                        console.log("Product updated");
+                        self.showSuccess("Product " + product.name + " was updated.");
+                        for(var i = 0; i < self.products.length; i++){
+                            var p = self.products[i];
+                            if(p.id === product.id){
+                                self.splice("products", i, 1, product);
+                                break;
                             }
-                            var bv = b[idx];
-                            if (bv === undefined) {
-                                return -lesser;
-                            }
-                            return (av < bv) ? lesser : -lesser;
-                        });
-                    }
+                        }
+                        self.set('route.path', "/admin/products/all");
+                    }, function(data){
+                        console.log("Failed to update:", data);
+                        self.showError("Failed to update the product, please refresh this page and try again later.")
+                    })
                 },
                 _productSelected: function(){
                     var self = this;
-                    return function(){
-                        var grid = self.$.productsGrid;
-                        var selectedIndex = grid.selection.selected();
-                        var selected = grid.items[selectedIndex];
-                        if(!selected){
-                            return;
-                        }
-                        console.log('Selected: ', selected);
-                        self.selectedProduct = selected;
-                        self.$.editModal.open();
-                    }
+                    return function(evt){
+                        var selected = evt.detail;
+                        self.set('route.path', "/admin/products/"+selected.id);
+                    };
+                },
+                _viewingCanceled: function(){
+                    console.log("viewing canceled");
+                    this.set('route.path', "/admin/products/all");
                 },
                 ready: function(){
-                    var grid = this.$.productsGrid;
                     this.$.messageToast.fitInto = this.$.container;
                     this.$.errorToast.fitInto = this.$.container;
                     this.$.successToast.fitInto = this.$.container;
 
-                    grid.columns = [
-                        {name: "id", sortable: true},
-                        {name: "name", sortable: true},
-                        {name: "quantity", sortable: true},
-                        {name: "active", sortable: true},
-                        {name: "created", sortable: true}
-                    ];
-
-                    grid.addEventListener('sort-order-changed', this._sortOrderChanged());
-                    grid.addEventListener('selected-items-changed', this._productSelected());
+                    this.$.productList.addEventListener('selected-product', this._productSelected());
 
                     this._fetchProducts();
                 }

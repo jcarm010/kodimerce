@@ -4,6 +4,7 @@
 <dom-module id="km-ajax">
     <template>
         <iron-ajax id="xhrGet" handle-as="json" method="GET" headers="[[headers]]"></iron-ajax>
+        <iron-ajax id="xhrPut" handle-as="json" method="PUT" headers="[[headers]]"></iron-ajax>
         <iron-ajax id="xhr" handle-as="json" method="POST" headers="[[headers]]"></iron-ajax>
     </template>
     <script>
@@ -18,9 +19,16 @@
                         }
                     }
                 },
+                put: function (url, data) {
+                    this.$.xhrPut.url = url;
+                    this.$.xhrPut.contentType = "application/x-www-form-urlencoded";
+                    this.$.xhrPut.body = urlSerialize(data);
+                    var r = this.$.xhrPut.generateRequest();
+                    return r.completes;
+                },
                 post: function (url, data) {
                     this.$.xhr.url = url;
-                    this.$.xhr.contentType = "application/json";
+                    this.$.xhr.contentType = "application/x-www-form-urlencoded";
                     this.$.xhr.body = data;
                     var r = this.$.xhr.generateRequest();
                     return r.completes;
@@ -38,8 +46,19 @@
                 },
                 adminGetProducts: function(){
                     return this.get("/admin/km/product/");
+                },
+                adminUpdateProducts: function(product){
+                    return this.put("/admin/km/product/", product);
                 }
             });
+            function urlSerialize(obj) {
+                var str = [];
+                for(var p in obj)
+                    if (obj.hasOwnProperty(p)) {
+                        str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
+                    }
+                return str.join("&");
+            }
         })();
     </script>
 </dom-module>
