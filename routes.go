@@ -14,8 +14,6 @@ func init() {
 
 	router.Subrouter(km.AdminContext{}, "/admin").
 		Middleware((*km.AdminContext).Auth).
-		Get("/km/product/image/upload", (*km.AdminContext).GetProductImageUploadUrl).
-		Post("/km/product/image/upload", (*km.AdminContext).ProductImageUploadHandler).
 		Get("/km/product", (*km.AdminContext).GetProducts).
 		Post("/km/product", (*km.AdminContext).CreateProduct).
 		Put("/km/product", (*km.AdminContext).UpdateProduct).

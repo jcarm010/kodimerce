@@ -1,6 +1,8 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-input/paper-textarea.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-card/paper-card.html">
 <link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
 
 <dom-module id="km-admin-products-view">
@@ -24,9 +26,10 @@
                 color: white;
             }
             .details {
-                /*width: 30%;*/
                 margin-top:20px;
-                /*display: inline-block;*/
+            }
+            paper-card {
+                max-width: 250px;
             }
         </style>
         <div>
@@ -43,10 +46,22 @@
                     <div prefix>$</div>
                 </paper-input>
                 <paper-input type="number" label="Quantity" value="{{editing.quantity}}"></paper-input>
+                <paper-textarea label="Description" value="{{editing.description}}"></paper-textarea>
             </div>
             <div class="details">
                 <h4>Product Images</h4>
-                <paper-button raised>Upload</paper-button>
+                <paper-button raised on-click="addPicture">Add Image</paper-button>
+                <div style="margin-top: 5px;">
+                    <template is="dom-repeat" items="{{editing.pictures}}">
+                        <div style="margin-top: 5px; display: inline;">
+                            <paper-card heading="" image="[[item]]" alt="House" class="white" style="margin-bottom:8px;">
+                                <div class="card-actions">
+                                    <paper-input label="Url" name="[[index]]" value="[[getPicture(index)]]" on-change="setPicture"></paper-input>
+                                </div>
+                            </paper-card>
+                        </div>
+                    </template>
+                </div>
             </div>
         </div>
     </template>
@@ -71,6 +86,21 @@
                 observers: [
                     '_productChanged(product)'
                 ],
+                setPicture: function(evt){
+                    var input = evt.target;
+                    console.log("Editing image path: ", 'editing.pictures.'+input.name);
+                    if(input.value == ""){
+                        this.splice('editing.pictures', input.name, 1);
+                    }else {
+                        this.splice('editing.pictures', input.name, 1, input.value);
+                    }
+                },
+                getPicture: function(index){
+                    return this.editing.pictures[index];
+                },
+                addPicture: function(){
+                    this.push('editing.pictures',"/assets/images/stock.jpeg")
+                },
                 save: function(){
                     var editing = JSON.parse(JSON.stringify(this.editing));
                     editing.price_cents = Math.floor(editing.price * 100);

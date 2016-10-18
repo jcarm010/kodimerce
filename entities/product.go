@@ -15,6 +15,7 @@ type Product struct {
 	Active bool `datastore:"active" json:"active"`
 	PriceCents int64 `datastore:"price_cents" json:"price_cents"`
 	Pictures []string `datastore:"pictures,noindex" json:"pictures"`
+	Description string `datastore:"description,noindex" json:"description"`
 	Created time.Time `datastore:"created" json:"created"`
 }
 
@@ -46,7 +47,11 @@ func ListProducts(ctx context.Context) ([]*Product, error) {
 	}
 
 	for index, key := range keys {
-		products[index].Id = key.IntID()
+		var product = products[index];
+		product.Id = key.IntID()
+		if product.Pictures == nil {
+			product.Pictures = make([]string, 0)
+		}
 	}
 
 	return products, err
@@ -66,6 +71,7 @@ func UpdateProduct(ctx context.Context, product *Product) error {
 		p.Quantity = product.Quantity
 		p.Active = product.Active
 		p.Pictures = product.Pictures
+		p.Description = product.Description
 		_, err = datastore.Put(ctx, key, p)
 		return err
 	}, nil)

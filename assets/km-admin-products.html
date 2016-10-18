@@ -18,13 +18,13 @@
                 height: 100%;
             }
             #container {
-                height: 100%;
+                min-height: 100%;
             }
             #productsGrid {
                 height: 100%;
             }
             #add-icon {
-                position: absolute;
+                position: fixed;
                 bottom: 10px;
                 right: 10px;
             }
@@ -41,7 +41,7 @@
                 color: white;
             }
             iron-pages{
-                height: 100%;
+                min-height: 100%;
                 background: white;
             }
         </style>
@@ -237,7 +237,6 @@
                     };
                 },
                 _viewingCanceled: function(){
-                    console.log("viewing canceled");
                     this.set('route.path', "/admin/products/all");
                 },
                 ready: function(){

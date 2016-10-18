@@ -10,9 +10,6 @@
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/iron-pages/iron-pages.html">
 <link rel="import" href="../bower_components/iron-selector/iron-selector.html">
-<link rel="import" href="../bower_components/iron-icons/places-icons.html">
-<link rel="import" href="../bower_components/iron-icons/social-icons.html">
-<link rel="import" href="../bower_components/iron-icons/device-icons.html">
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 
 <!--<link rel="import" href="my-icons.html">-->
@@ -123,15 +120,15 @@
             <app-drawer id="drawerMenu" swipe-open>
                 <iron-selector selected="[[page]]" attr-for-selected="name" class="drawer-list" role="navigation">
                     <a name="dashboard" href="/admin/dashboard/">
-                        <iron-icon class="menu-icon" icon="places:business-center"></iron-icon>
+                        <iron-icon class="menu-icon" icon="icons:dashboard"></iron-icon>
                         <span class="nav-label">Dashboard</span>
                     </a>
                     <a name="store" href="/admin/store/">
-                        <iron-icon class="menu-icon" icon="places:business-center"></iron-icon>
+                        <iron-icon class="menu-icon" icon="icons:store"></iron-icon>
                         <span class="nav-label">Store</span>
                     </a>
-                    <a name="store" href="/admin/products/">
-                        <iron-icon class="menu-icon" icon="places:business-center"></iron-icon>
+                    <a name="products" href="/admin/products/">
+                        <iron-icon class="menu-icon" icon="icons:add-shopping-cart"></iron-icon>
                         <span class="nav-label">Products</span>
                     </a>
                 </iron-selector>

@@ -55,7 +55,12 @@
                 var str = [];
                 for(var p in obj)
                     if (obj.hasOwnProperty(p)) {
-                        str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
+                        var value = obj[p];
+                        if(value.constructor === Array){
+                            value = value.join();
+                        }
+
+                        str.push(encodeURIComponent(p) + "=" + encodeURIComponent(value));
                     }
                 return str.join("&");
             }

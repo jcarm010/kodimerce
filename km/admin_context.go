@@ -6,7 +6,7 @@ import (
 	"google.golang.org/appengine/log"
 	"net/http"
 	"strconv"
-	"google.golang.org/appengine/blobstore"
+	"strings"
 )
 
 type AdminContext struct {
@@ -61,7 +61,9 @@ func (c *AdminContext) UpdateProduct(w web.ResponseWriter, r *web.Request) {
 	priceCentsStr := r.FormValue("price_cents")
 	quantityStr := r.FormValue("quantity")
 	activeStr := r.FormValue("active")
-	log.Infof(c.Context, "Modifying product [%s] with values: name[%s] price_cents[%s] quantity[%s] active[%s]", idStr, name, priceCentsStr, quantityStr, activeStr)
+	picturesStr := r.FormValue("pictures")
+	description := r.FormValue("description")
+	log.Infof(c.Context, "Modifying product [%s] with values: name[%s] price_cents[%s] quantity[%s] active[%s] pictures[%s] description[%s]", idStr, name, priceCentsStr, quantityStr, activeStr, picturesStr, description)
 	var id int64
 	if idStr == "" {
 		c.ServeJson(http.StatusBadRequest, "Id cannot be empty")
@@ -115,31 +117,18 @@ func (c *AdminContext) UpdateProduct(w web.ResponseWriter, r *web.Request) {
 	}
 
 	log.Infof(c.Context, "Quantity: %+v", quantity)
+	var pictures []string = strings.Split(picturesStr,",")
 	product := entities.NewProduct(name)
 	product.Id = id
 	product.Active = active
 	product.PriceCents = priceCents
 	product.Quantity = quantity
+	product.Pictures = pictures
+	product.Description = description
 	err = entities.UpdateProduct(c.Context, product)
 	if err != nil {
 		log.Errorf(c.Context, "Error storing product: %+v", err)
 		c.ServeJson(http.StatusInternalServerError, "Unexpected value storing product")
 		return
 	}
-}
-
-func (c *AdminContext) GetProductImageUploadUrl(w web.ResponseWriter, r *web.Request) {
-	uploadURL, err := blobstore.UploadURL(c.Context, "/admin/product/image/upload", nil)
-	if err != nil {
-		log.Errorf(c.Context, "Failed to create upload url: %+v", err)
-		c.ServeJson(http.StatusInternalServerError, "Failed to create upload url")
-		return
-	}
-
-	log.Infof(c.Context, "Upload url: %+v", uploadURL)
-	c.ServeJson(http.StatusOK, uploadURL)
-}
-
-func (c *AdminContext) ProductImageUploadHandler(w web.ResponseWriter, r *web.Request) {
-
 }
