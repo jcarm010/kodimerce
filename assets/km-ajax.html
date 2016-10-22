@@ -49,6 +49,12 @@
                 },
                 adminUpdateProducts: function(product){
                     return this.put("/admin/km/product/", product);
+                },
+                adminCreateCategory: function(name) {
+                    return this.post("/admin/km/category/?name="+encodeURIComponent(name));
+                },
+                adminGetCategories: function(){
+                    return this.get("/admin/km/category/");
                 }
             });
             function urlSerialize(obj) {

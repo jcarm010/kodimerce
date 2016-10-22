@@ -1,0 +1,105 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+
+<dom-module id="km-admin-categories-list">
+    <template>
+        <style>
+            :host {
+                display: block;
+                height: 100%;
+            }
+            #container {
+                height: 100%;
+            }
+            #categoriesGrid {
+                height: 100%;
+            }
+            .primary {
+                background-color: var(--primary-color, "blue");
+                color: white;
+            }
+            .danger {
+                background-color: var(--danger-color, "red");
+                color: white;
+            }
+            .success {
+                background-color: var(--success-color, "green");
+                color: white;
+            }
+        </style>
+        <div>
+            <div id="container">
+                <vaadin-grid id="categoriesGrid" items="[[categories]]">
+                    <table>
+                    </table>
+                </vaadin-grid>
+            </div>
+        </div>
+    </template>
+    <script>
+        (function () {
+            Polymer({
+                is: 'km-admin-categories-list',
+                properties: {
+                    categories: {
+                        type: Array,
+                        value: function(){
+                            return [];
+                        }
+                    },
+                    selectedCategory: {
+                        type: Object,
+                        value: function(){
+                            return null;
+                        }
+                    }
+                },
+                _sortOrderChanged: function(){
+                    var self = this;
+                    var table = self.$.categoriesGrid;
+                    return function () {
+                        var idx = table.columns[table.sortOrder[0].column].name;
+                        var lesser = table.sortOrder[0].direction == 'asc' ? -1 : 1;
+                        self.categories.sort(function (a, b) {
+                            var av = a[idx];
+                            if (av === undefined) {
+                                return lesser;
+                            }
+                            var bv = b[idx];
+                            if (bv === undefined) {
+                                return -lesser;
+                            }
+                            return (av < bv) ? lesser : -lesser;
+                        });
+                    }
+                },
+                _productSelected: function(){
+                    var self = this;
+                    var grid = self.$.categoriesGrid;
+                    return function(){
+                        var selectedIndex = grid.selection.selected();
+                        var selected = grid.items[selectedIndex];
+                        if(!selected){
+                            return;
+                        }
+
+                        self.selectedCategory = selected;
+                        self.fire("selected-category", selected);
+                        grid.selection.clear();
+                    }
+                },
+                ready: function(){
+                    var grid = this.$.categoriesGrid;
+
+                    grid.columns = [
+                        {name: "id", sortable: true},
+                        {name: "name", sortable: true},
+                        {name: "created", sortable: true}
+                    ];
+
+                    grid.addEventListener('sort-order-changed', this._sortOrderChanged());
+                    grid.addEventListener('selected-items-changed', this._productSelected());
+                }
+            });
+        })();
+    </script>
+</dom-module>

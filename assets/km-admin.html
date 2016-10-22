@@ -12,7 +12,6 @@
 <link rel="import" href="../bower_components/iron-selector/iron-selector.html">
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 
-<!--<link rel="import" href="my-icons.html">-->
 <dom-module id="km-admin">
     <template>
 
@@ -119,6 +118,7 @@
         <app-drawer-layout fullbleed force-narrow>
             <app-drawer id="drawerMenu" swipe-open>
                 <iron-selector selected="[[page]]" attr-for-selected="name" class="drawer-list" role="navigation">
+                    <!--
                     <a name="dashboard" href="/admin/dashboard/">
                         <iron-icon class="menu-icon" icon="icons:dashboard"></iron-icon>
                         <span class="nav-label">Dashboard</span>
@@ -127,9 +127,14 @@
                         <iron-icon class="menu-icon" icon="icons:store"></iron-icon>
                         <span class="nav-label">Store</span>
                     </a>
+                    -->
                     <a name="products" href="/admin/products/">
                         <iron-icon class="menu-icon" icon="icons:add-shopping-cart"></iron-icon>
                         <span class="nav-label">Products</span>
+                    </a>
+                    <a name="categories" href="/admin/categories/">
+                        <iron-icon class="menu-icon" icon="icons:folder-open"></iron-icon>
+                        <span class="nav-label">Categories</span>
                     </a>
                 </iron-selector>
             </app-drawer>
@@ -147,6 +152,7 @@
                     <km-admin-dashboard name="dashboard"></km-admin-dashboard>
                     <km-admin-store name="store"></km-admin-store>
                     <km-admin-products name="products"></km-admin-products>
+                    <km-admin-categories name="categories"></km-admin-categories>
                 </iron-pages>
             </app-header-layout>
 
@@ -172,7 +178,7 @@
                 '_routePageChanged(routeData.page)'
             ],
             _routePageChanged: function (page) {
-                page = page || 'dashboard';
+                page = page || 'products';
                 this.page = page;
                 this.title = page.charAt(0).toUpperCase() + page.slice(1);
             },

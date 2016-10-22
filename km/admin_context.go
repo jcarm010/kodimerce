@@ -132,3 +132,32 @@ func (c *AdminContext) UpdateProduct(w web.ResponseWriter, r *web.Request) {
 		return
 	}
 }
+
+func (c *AdminContext) GetCategory(w web.ResponseWriter, r *web.Request) {
+	categories, err := entities.ListCategories(c.Context)
+	if err != nil {
+		log.Errorf(c.Context, "Error getting categories: %+v", err)
+		c.ServeJson(http.StatusInternalServerError, "Unexpected error getting categories.")
+		return
+	}
+
+	c.ServeJson(http.StatusOK, categories)
+}
+
+func (c *AdminContext) CreateCategory(w web.ResponseWriter, r *web.Request) {
+	name := r.URL.Query().Get("name")
+	log.Infof(c.Context, "Creating category: %+v", name)
+	if name == "" {
+		c.ServeJson(http.StatusBadRequest, "Name cannot be empty")
+		return
+	}
+
+	category, err := entities.CreateCategory(c.Context, name)
+	if err != nil {
+		log.Errorf(c.Context, "Error creating category: %+v", err)
+		c.ServeJson(http.StatusInternalServerError, "Unexpected error creating category.")
+		return
+	}
+
+	c.ServeJson(http.StatusOK, category)
+}

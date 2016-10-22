@@ -9,9 +9,9 @@ handlers:
 - url: /assets
   static_dir: assets
 
-- url: /bower_components/(.*\.(js|html|css|gif|png|jpg))$
+- url: /bower_components/(.*\.(js|html|css|gif|png|jpg|svg))$
   static_files: bower_components/\1
-  upload: bower_components/.*\.(js|html|css|gif|png|jpg)$
+  upload: bower_components/.*\.(js|html|css|gif|png|jpg|svg)$
 
 - url: /views
   static_dir: views

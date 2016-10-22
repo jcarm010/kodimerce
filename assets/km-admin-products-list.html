@@ -46,10 +46,6 @@
             Polymer({
                 is: 'km-admin-products-list',
                 properties: {
-                    newProductName: {
-                        type: String,
-                        value: ""
-                    },
                     products: {
                         type: Array,
                         value: function(){
@@ -80,8 +76,8 @@
                 },
                 _sortOrderChanged: function(){
                     var self = this;
+                    var table = self.$.productsGrid;
                     return function () {
-                        var table = self.$.productsGrid;
                         var idx = table.columns[table.sortOrder[0].column].name;
                         var lesser = table.sortOrder[0].direction == 'asc' ? -1 : 1;
                         self.products.sort(function (a, b) {
@@ -99,8 +95,8 @@
                 },
                 _productSelected: function(){
                     var self = this;
+                    var grid = self.$.productsGrid;
                     return function(){
-                        var grid = self.$.productsGrid;
                         var selectedIndex = grid.selection.selected();
                         var selected = grid.items[selectedIndex];
                         if(!selected){

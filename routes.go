@@ -17,6 +17,8 @@ func init() {
 		Get("/km/product", (*km.AdminContext).GetProducts).
 		Post("/km/product", (*km.AdminContext).CreateProduct).
 		Put("/km/product", (*km.AdminContext).UpdateProduct).
+		Get("/km/category", (*km.AdminContext).GetCategory).
+		Post("/km/category", (*km.AdminContext).CreateCategory).
 		Get("/", views.AdminView).
 		Get("/:page", views.AdminView).
 		Get("/:page/:subpage", views.AdminView)

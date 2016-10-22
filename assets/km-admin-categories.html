@@ -1,4 +1,4 @@
-<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/app-route/app-location.html">
 <link rel="import" href="../bower_components/app-route/app-route.html">
 <link rel="import" href="../bower_components/iron-pages/iron-pages.html">
@@ -10,10 +10,10 @@
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
 <link rel="import" href="./km-ajax.html">
 
-<dom-module id="km-admin-products">
+<dom-module id="km-admin-categories">
     <template>
         <style>
-            :host {
+            :host{
                 display: block;
                 height: 100%;
             }
@@ -52,31 +52,30 @@
         <app-route
                 id="approute"
                 route="{{route}}"
-                pattern="/admin/products/:page"
+                pattern="/admin/categories/:page"
                 data="{{routeData}}"
                 tail="{{subroute}}">
 
         </app-route>
 
-
         <km-ajax id="ajax"></km-ajax>
         <div id="container">
             <iron-pages role="main" selected="[[page]]" attr-for-selected="name">
-                <km-admin-products-list id="productList" name="all" products="[[products]]"></km-admin-products-list>
-                <km-admin-products-view id="viewingProduct" name="view" on-viewing-canceled="_viewingCanceled" on-product-changed="_selectedChanged" product="[[selectedProduct]]"></km-admin-products-view>
+                <km-admin-categories-list id="categoriesList" name="all" categories="[[categories]]"></km-admin-categories-list>
+                <km-admin-categories-view id="viewingCategory" name="view" on-viewing-canceled="_viewingCanceled" category="[[selectedCategory]]"></km-admin-categories-view>
             </iron-pages>
 
 
             <paper-fab class="primary" id="add-icon" icon="add" on-click="openCreateModal"></paper-fab>
 
             <paper-dialog id="createModal">
-                <h2>Create Product</h2>
+                <h2>Create Category</h2>
                 <p>
-                    <paper-input label="Product Name" value="{{newProductName}}"></paper-input>
+                    <paper-input label="Category Name" value="{{newCategoryName}}"></paper-input>
                 </p>
                 <div class="buttons">
                     <paper-button dialog-confirm>Cancel</paper-button>
-                    <paper-button class="primary" on-click="createProduct">Create</paper-button>
+                    <paper-button class="primary" on-click="createCategory">Create</paper-button>
                 </div>
             </paper-dialog>
         </div>
@@ -87,32 +86,32 @@
     <script>
         (function () {
             Polymer({
-                is: 'km-admin-products',
+                is: 'km-admin-categories',
                 properties: {
                     page: {
                         type: String,
                         reflectToAttribute: true,
                         observer: '_pageChanged'
                     },
-                    newProductName: {
-                        type: String,
-                        value: ""
-                    },
-                    products: {
+                    categories: {
                         type: Array,
                         value: function(){
                             return [];
                         }
                     },
-                    selectedProduct: {
+                    newCategoryName: {
+                        type: String,
+                        value: ""
+                    },
+                    selectedCategoryId: {
+                        type: Number,
+                        value: 0
+                    },
+                    selectedCategory: {
                         type: Object,
                         value: function(){
                             return null;
                         }
-                    },
-                    selectedProductId: {
-                        type: Number,
-                        value: 0
                     }
                 },
                 observers: [
@@ -127,7 +126,7 @@
                             this.page = "all";
                             break;
                         default:
-                            this.setSelectedProduct(parseInt(page));
+                            this.setSelectedCategory(parseInt(page));
                             this.page = "view";
                     }
                 },
@@ -139,39 +138,61 @@
                         default:
                             page = "view"
                     }
-                    this.importHref(this.resolveUrl("km-admin-products-" + page + '.html'), null, null, true);
+                    this.importHref(this.resolveUrl("km-admin-categories-" + page + '.html'), null, null, true);
+                },
+                _fetchCategories: function(){
+                    var self = this;
+                    self.showMessage("Fetching categories...");
+                    this.$.ajax.adminGetCategories().then(function(data){
+                        var categories = data.response;
+                        console.log("Categories:", categories);
+
+                        var pushParams = ['categories'];
+                        for(var i = 0 ; i < categories.length; i++){
+                            var category = categories[i];
+                            pushParams.push(category);
+                        }
+
+                        self.splice("categories", 0, self.categories.length);
+                        self.push.apply(self, pushParams);
+                        self.setSelectedCategory(self.selectedCategoryId);
+                        self.showSuccess("Categories fetched");
+                    }, function(data){
+                        console.log(data);
+                        self.showError("Could not fetch categories, please try again later.")
+                    })
+                },
+                setSelectedCategory: function(categoryId){
+                    console.log("Category selected:", categoryId);
+                    this.selectedCategoryId = categoryId;
+                    for(var i = 0 ; i < this.categories.length; i++){
+                        var category = this.categories[i];
+                        if(category.id === categoryId){
+                            this.selectedCategory = null;
+                            this.selectedCategory = category;
+                            break;
+                        }
+                    }
                 },
                 openCreateModal: function(){
                     this.$.createModal.open();
                 },
-                createProduct: function(){
+                createCategory: function(){
                     var self = this;
-                    console.log("Creating product...");
-                    var name = self.newProductName;
-                    self.showMessage("Creating product: " + name);
-                    this.$.ajax.adminCreateProduct(name).then(function(data){
+                    console.log("Creating category...");
+                    var name = self.newCategoryName;
+                    self.showMessage("Creating category: " + name);
+                    this.$.ajax.adminCreateCategory(name).then(function(data){
                         var response = data.response;
-                        console.log("Product created successfully:", response);
-                        self.newProductName = "";
-                        self.showSuccess("Product created: " + name);
+                        console.log("Category created successfully:", response);
+                        self.newCategoryName = "";
+                        self.showSuccess("Category created: " + name);
                         self.$.createModal.close();
-                        self.push('products', response);
+                        self.push('categories', response);
                     }, function(data){
                         console.log(data);
-                        self.showError("Could not create product, check your input and try again.");
+                        self.showError("Could not create category, check your input and try again.");
                     });
-                },
-                setSelectedProduct: function(productId){
-                    console.log("Product selected:", productId);
-                    this.selectedProductId = productId;
-                    for(var i = 0 ; i < this.products.length; i++){
-                        var product = this.products[i];
-                        if(product.id === productId){
-                            this.selectedProduct = null;
-                            this.selectedProduct = product;
-                            break;
-                        }
-                    }
                 },
                 showError: function(message){
                     this.$.errorToast.text = message;
@@ -185,70 +206,24 @@
                     this.$.successToast.text = message;
                     this.$.successToast.open();
                 },
-                _fetchProducts: function(){
-                    var self = this;
-                    self.showMessage("Fetching products...");
-                    this.$.ajax.adminGetProducts().then(function(data){
-                        var products = data.response;
-                        console.log("Products:", products);
-
-                        var pushParams = ['products'];
-                        for(var i = 0 ; i < products.length; i++){
-                            var product = products[i];
-                            pushParams.push(product);
-                        }
-
-                        self.splice("products", 0, self.products.length);
-                        self.push.apply(self, pushParams);
-                        self.setSelectedProduct(self.selectedProductId);
-                        self.showSuccess("Products fetched");
-                    }, function(data){
-                        console.log(data);
-                        self.showError("Could not fetch products, please try again later.")
-                    })
-                },
-                _selectedChanged: function(evt){
-                    var self = this;
-                    var product = evt.detail;
-                    console.log("Selected product changed:", product);
-                    self.showMessage("Saving changes to product: " + product.name);
-                    self.$.ajax.adminUpdateProducts(product).then(function(data){
-                        console.log("Product updated");
-                        self.showSuccess("Product " + product.name + " was updated.");
-                        for(var i = 0; i < self.products.length; i++){
-                            var p = self.products[i];
-                            if(p.id === product.id){
-                                self.splice("products", i, 1, product);
-                                break;
-                            }
-                        }
-                        self.set('route.path', "/admin/products/all");
-                        var products = self.products;
-                        self.products = [];
-                        self.products = products;
-                    }, function(data){
-                        console.log("Failed to update:", data);
-                        self.showError("Failed to update the product, please refresh this page and try again later.")
-                    })
-                },
-                _productSelected: function(){
+                _categorySelected: function(){
                     var self = this;
                     return function(evt){
                         var selected = evt.detail;
-                        self.set('route.path', "/admin/products/"+selected.id);
+                        self.set('route.path', "/admin/categories/"+selected.id);
                     };
                 },
                 _viewingCanceled: function(){
-                    this.set('route.path', "/admin/products/all");
+                    this.set('route.path', "/admin/categories/all");
                 },
                 ready: function(){
                     this.$.messageToast.fitInto = this.$.container;
                     this.$.errorToast.fitInto = this.$.container;
                     this.$.successToast.fitInto = this.$.container;
 
-                    this.$.productList.addEventListener('selected-product', this._productSelected());
+                    this.$.categoriesList.addEventListener('selected-category', this._categorySelected());
 
-                    this._fetchProducts();
+                    this._fetchCategories();
                 }
             });
         })();
