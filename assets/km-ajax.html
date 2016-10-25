@@ -55,6 +55,9 @@
                 },
                 adminGetCategories: function(){
                     return this.get("/admin/km/category/");
+                },
+                adminUpdateCategory: function(category){
+                    return this.put("/admin/km/category/", category);
                 }
             });
             function urlSerialize(obj) {

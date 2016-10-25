@@ -62,7 +62,14 @@
         <div id="container">
             <iron-pages role="main" selected="[[page]]" attr-for-selected="name">
                 <km-admin-categories-list id="categoriesList" name="all" categories="[[categories]]"></km-admin-categories-list>
-                <km-admin-categories-view id="viewingCategory" name="view" on-viewing-canceled="_viewingCanceled" category="[[selectedCategory]]"></km-admin-categories-view>
+                <km-admin-categories-view id="viewingCategory"
+                                          name="view"
+                                          on-viewing-canceled="_viewingCanceled"
+                                          category="[[selectedCategory]]"
+                                          products="[[products]]"
+                                          on-category-changed="_selectedChanged">
+
+                </km-admin-categories-view>
             </iron-pages>
 
 
@@ -112,11 +119,50 @@
                         value: function(){
                             return null;
                         }
+                    },
+                    products: {
+                        type: Object,
+                        value: function() {
+                            return [];
+                        }
                     }
                 },
                 observers: [
                     '_routePageChanged(routeData.page)'
                 ],
+                _selectedChanged: function(evt){
+                    var self = this;
+                    console.log("Selected category changed:", evt.detail);
+                    var category = evt.detail.category;
+                    var products = evt.detail.products;
+                    var productIds = [];
+                    for(var i = 0 ; i < products.length; i++){
+                        var product = products[i];
+                        productIds.push(product.id);
+                    }
+                    category.product_ids = productIds;
+                    self.showMessage("Saving changes to category: " + category.name);
+                    self.$.ajax.adminUpdateCategory(category).then(function(data){
+                        delete category.product_ids;
+                        console.log("Category updated");
+                        self.showSuccess("Category " + category.name + " was updated.");
+                        for(var i = 0; i < self.categories.length; i++){
+                            var p = self.categories[i];
+                            if(p.id === category.id){
+                                self.splice("categories", i, 1, category);
+                                break;
+                            }
+                        }
+                        self.set('route.path', "/admin/categories/all");
+                        var categories = self.categories;
+                        self.categories = [];
+                        self.categories = categories;
+                    }, function(data){
+                        delete delete category.product_ids;
+                        console.log("Failed to update:", data);
+                        self.showError("Failed to update the category, please refresh this page and try again later.");
+                    });
+                },
                 _routePageChanged: function (page) {
                     switch(page){
                         case undefined:
@@ -143,7 +189,7 @@
                 _fetchCategories: function(){
                     var self = this;
                     self.showMessage("Fetching categories...");
-                    this.$.ajax.adminGetCategories().then(function(data){
+                    return this.$.ajax.adminGetCategories().then(function(data){
                         var categories = data.response;
                         console.log("Categories:", categories);
 
@@ -216,14 +262,34 @@
                 _viewingCanceled: function(){
                     this.set('route.path', "/admin/categories/all");
                 },
+                _fetchProducts: function(){
+                    var self = this;
+                    self.showMessage("Fetching products...");
+                    this.$.ajax.adminGetProducts().then(function(data){
+                        var products = data.response;
+                        console.log("Products:", products);
+
+                        var pushParams = ['products'];
+                        for(var i = 0 ; i < products.length; i++){
+                            var product = products[i];
+                            pushParams.push(product);
+                        }
+
+                        self.splice("products", 0, self.products.length);
+                        self.push.apply(self, pushParams);
+                        self.showSuccess("Products fetched");
+                    }, function(data){
+                        console.log(data);
+                        self.showError("Could not fetch products, please try again later.")
+                    })
+                },
                 ready: function(){
                     this.$.messageToast.fitInto = this.$.container;
                     this.$.errorToast.fitInto = this.$.container;
                     this.$.successToast.fitInto = this.$.container;
 
                     this.$.categoriesList.addEventListener('selected-category', this._categorySelected());
-
-                    this._fetchCategories();
+                    this._fetchCategories().then(this._fetchProducts.bind(this));
                 }
             });
         })();

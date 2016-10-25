@@ -2,6 +2,7 @@
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
 <link rel="import" href="../bower_components/paper-input/paper-textarea.html">
+<link rel="import" href="./km-admin-products-list.html">
 
 <dom-module id="km-admin-categories-view">
     <template>
@@ -38,6 +39,10 @@
                 <paper-input type="text" label="Name" value="{{editing.name}}"></paper-input>
                 <paper-textarea label="Description" value="{{editing.description}}"></paper-textarea>
             </div>
+            <div class="details">
+                <h4>Products</h4>
+                <km-admin-products-list id="productSelect" mode="multi" products="[[products]]"></km-admin-products-list>
+            </div>
         </div>
     </template>
     <script>
@@ -56,13 +61,20 @@
                         value: function () {
                             return null;
                         }
+                    },
+                    products: {
+                        type: Object,
+                        value: function() {
+                            return [];
+                        }
                     }
                 },
                 observers: [
                     '_categoryChanged(category)'
                 ],
                 save: function(){
-                    console.log("Saving category...");
+                    this.category = JSON.parse(JSON.stringify(this.editing));
+                    this.fire("category-changed", {category: this.category, products: this.$.productSelect.selected});
                 },
                 _cancelViewing: function(){
                     this.fire("viewing-canceled", {});

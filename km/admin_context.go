@@ -161,3 +161,65 @@ func (c *AdminContext) CreateCategory(w web.ResponseWriter, r *web.Request) {
 
 	c.ServeJson(http.StatusOK, category)
 }
+
+func (c *AdminContext) UpdateCategory(w web.ResponseWriter, r *web.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		log.Errorf(c.Context, "Failed to parse update category: %+v", err)
+		c.ServeJson(http.StatusInternalServerError, "Failed to parse category.")
+		return
+	}
+
+	idStr := r.FormValue("id")
+	name := r.FormValue("name")
+	productIdsStr := r.FormValue("product_ids")
+	description := r.FormValue("description")
+	log.Infof(c.Context, "Modifying category [%s] with values: name[%s] description[%s] productIds[%s]", idStr, name, description, productIdsStr)
+	var id int64
+	if idStr == "" {
+		c.ServeJson(http.StatusBadRequest, "Id cannot be empty")
+		return
+	}else {
+		id, err = strconv.ParseInt(idStr, 10, 64)
+		if err != nil {
+			log.Errorf(c.Context, "Error parsing idStr: %+v", err)
+			c.ServeJson(http.StatusBadRequest, "Invalid value for id")
+			return
+		}
+	}
+
+	log.Infof(c.Context, "Id: %+v", id)
+	if name == "" {
+		c.ServeJson(http.StatusBadRequest, "Name cannot be empty")
+		return
+	}
+
+	category := entities.NewCategory(name)
+	category.Id = id
+	category.Description = description
+	err = entities.UpdateCategory(c.Context, category)
+	if err != nil {
+		log.Errorf(c.Context, "Error storing category: %+v", err)
+		c.ServeJson(http.StatusInternalServerError, "Unexpected value storing category")
+		return
+	}
+
+	productIds := strings.Split(productIdsStr, ",")
+	productIdNums := make([]int64, len(productIds))
+	for index, productIdStr := range(productIds) {
+		num, err := strconv.ParseInt(productIdStr, 10, 64)
+		if err != nil {
+			log.Errorf(c.Context, "Could not parse productIdStr[%s] to int64: %+v", productIdStr, err)
+			continue
+		}
+
+		productIdNums[index] = num
+	}
+
+	err = entities.SetCategoryProducts(c.Context, productIdNums, id)
+	if err != nil {
+		log.Errorf(c.Context, "Error storing category products: %+v", err)
+		c.ServeJson(http.StatusInternalServerError, "Unexpected value storing category products")
+		return
+	}
+}

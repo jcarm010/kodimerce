@@ -82,3 +82,7 @@ func UpdateProduct(ctx context.Context, product *Product) error {
 
 	return nil
 }
+
+func SetProductCategories(ctx context.Context, productId int64, categoryIds []int64){
+
+}

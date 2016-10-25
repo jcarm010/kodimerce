@@ -35,7 +35,7 @@
             }
         </style>
         <div id="container">
-            <vaadin-grid id="productsGrid" items="[[products]]">
+            <vaadin-grid id="productsGrid" items="[[products]]" selection-mode="[[mode]]">
                 <table>
                 </table>
             </vaadin-grid>
@@ -52,10 +52,14 @@
                             return [];
                         }
                     },
-                    selectedProduct: {
-                        type: Object,
+                    mode: {
+                        type: String,
+                        value: "single"
+                    },
+                    selected: {
+                        type: Array,
                         value: function(){
-                            return null;
+                            return [];
                         }
                     }
                 },
@@ -97,15 +101,21 @@
                     var self = this;
                     var grid = self.$.productsGrid;
                     return function(){
-                        var selectedIndex = grid.selection.selected();
-                        var selected = grid.items[selectedIndex];
-                        if(!selected){
-                            return;
+                        var selectedIndexes = grid.selection.selected();
+                        var selectedItems = [];
+                        for(var i = 0 ; i < selectedIndexes.length; i++){
+                            var selectedIndex = selectedIndexes[i];
+                            var selected = grid.items[selectedIndex];
+                            selectedItems.push(selected);
                         }
 
-                        self.selectedProduct = selected;
-                        self.fire("selected-product", selected);
-                        grid.selection.clear();
+                        if(this.mode === "single" && selectedItems.length > 0){
+                            self.fire("selected-product", selectedItems);
+                            grid.selection.clear();
+                        }else if(this.mode !== "single"){
+                            self.fire("selected-product", selectedItems);
+                        }
+                        self.selected = selectedItems;
                     }
                 },
                 _centsRenderer: function(){
@@ -143,6 +153,7 @@
 
                     grid.addEventListener('sort-order-changed', this._sortOrderChanged());
                     grid.addEventListener('selected-items-changed', this._productSelected());
+                    grid.selection.mode = this.mode;
                 }
             });
         })();

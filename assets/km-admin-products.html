@@ -62,7 +62,7 @@
         <km-ajax id="ajax"></km-ajax>
         <div id="container">
             <iron-pages role="main" selected="[[page]]" attr-for-selected="name">
-                <km-admin-products-list id="productList" name="all" products="[[products]]"></km-admin-products-list>
+                <km-admin-products-list id="productList" name="all" products="[[products]]" on-selected-product="_productSelected"></km-admin-products-list>
                 <km-admin-products-view id="viewingProduct" name="view" on-viewing-canceled="_viewingCanceled" on-product-changed="_selectedChanged" product="[[selectedProduct]]"></km-admin-products-view>
             </iron-pages>
 
@@ -231,12 +231,9 @@
                         self.showError("Failed to update the product, please refresh this page and try again later.")
                     })
                 },
-                _productSelected: function(){
-                    var self = this;
-                    return function(evt){
-                        var selected = evt.detail;
-                        self.set('route.path', "/admin/products/"+selected.id);
-                    };
+                _productSelected: function(evt){
+                    var selected = evt.detail[0];
+                    this.set('route.path', "/admin/products/"+selected.id);
                 },
                 _viewingCanceled: function(){
                     this.set('route.path', "/admin/products/all");
@@ -245,8 +242,6 @@
                     this.$.messageToast.fitInto = this.$.container;
                     this.$.errorToast.fitInto = this.$.container;
                     this.$.successToast.fitInto = this.$.container;
-
-                    this.$.productList.addEventListener('selected-product', this._productSelected());
 
                     this._fetchProducts();
                 }

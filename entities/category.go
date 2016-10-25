@@ -4,9 +4,11 @@ import (
 	"time"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
+	"fmt"
 )
 
 const ENTITY_CATEGORY = "category"
+const ENTITY_CATEGORY_PRODUCT = "category_product"
 
 type Category struct {
 	Id int64 `datastore:"-" json:"id"`
@@ -20,6 +22,11 @@ func NewCategory(name string) *Category {
 		Name: name,
 		Created: time.Now(),
 	}
+}
+
+type CategoryProduct struct {
+	CategoryId int64 `datastore:"category_id" json:"category_id"`
+	ProductId int64 `datastore:"product_id" json:"product_id"`
 }
 
 func ListCategories(ctx context.Context) ([]*Category, error) {
@@ -49,4 +56,32 @@ func CreateCategory(ctx context.Context, name string) (*Category, error) {
 	return category, nil
 }
 
+func UpdateCategory(ctx context.Context, category *Category) error {
+	key := datastore.NewKey(ctx, ENTITY_CATEGORY, "", category.Id, nil)
+	_, err := datastore.Put(ctx, key, category)
+	if err != nil {
+		return err
+	}
 
+	return nil
+}
+
+func SetCategoryProducts(ctx context.Context, productIds []int64, categoryId int64) error {
+	keys := make([]*datastore.Key,0)
+	categoryProducts := make([]CategoryProduct, 0)
+	for _, productId := range productIds {
+		keys = append(keys,datastore.NewKey(ctx, ENTITY_CATEGORY_PRODUCT, fmt.Sprintf("%v_%v", categoryId, productId), 0, nil))
+		categoryProducts = append(categoryProducts, CategoryProduct{ProductId: productId, CategoryId: categoryId})
+	}
+
+	_, err := datastore.PutMulti(ctx, keys, categoryProducts)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func UnsetCategoryProducts(ctx context.Context, productIds []int64, categoryId int64) error {
+	return nil
+}
