@@ -20,6 +20,9 @@ func init() {
 		Get("/km/category", (*km.AdminContext).GetCategory).
 		Post("/km/category", (*km.AdminContext).CreateCategory).
 		Put("/km/category", (*km.AdminContext).UpdateCategory).
+		Get("/km/category_products", (*km.AdminContext).GetCategoryProduct).
+		Post("/km/category_products", (*km.AdminContext).SetCategoryProducts).
+		Delete("/km/category_products", (*km.AdminContext).UnsetCategoryProducts).
 		Get("/", views.AdminView).
 		Get("/:page", views.AdminView).
 		Get("/:page/:subpage", views.AdminView)

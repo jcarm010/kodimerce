@@ -67,6 +67,7 @@
                                           on-viewing-canceled="_viewingCanceled"
                                           category="[[selectedCategory]]"
                                           products="[[products]]"
+                                          category-products="[[categoryProducts]]"
                                           on-category-changed="_selectedChanged">
 
                 </km-admin-categories-view>
@@ -104,7 +105,8 @@
                         type: Array,
                         value: function(){
                             return [];
-                        }
+                        },
+                        notify: true
                     },
                     newCategoryName: {
                         type: String,
@@ -125,24 +127,24 @@
                         value: function() {
                             return [];
                         }
+                    },
+                    categoryProducts: {
+                        type: Array,
+                        value: function(){
+                            return [];
+                        },
+                        notify:true
                     }
                 },
                 observers: [
-                    '_routePageChanged(routeData.page)'
+                    '_routePageChanged(routeData.page)',
+                    '_setSelectedCategory(categories.splices)',
+                    '_setSelectedCategory(categories)'
                 ],
-                _selectedChanged: function(evt){
+                _updateCategory: function(category){
                     var self = this;
-                    console.log("Selected category changed:", evt.detail);
-                    var category = evt.detail.category;
-                    var products = evt.detail.products;
-                    var productIds = [];
-                    for(var i = 0 ; i < products.length; i++){
-                        var product = products[i];
-                        productIds.push(product.id);
-                    }
-                    category.product_ids = productIds;
                     self.showMessage("Saving changes to category: " + category.name);
-                    self.$.ajax.adminUpdateCategory(category).then(function(data){
+                    return self.$.ajax.adminUpdateCategory(category).then(function(data){
                         delete category.product_ids;
                         console.log("Category updated");
                         self.showSuccess("Category " + category.name + " was updated.");
@@ -153,6 +155,7 @@
                                 break;
                             }
                         }
+
                         self.set('route.path', "/admin/categories/all");
                         var categories = self.categories;
                         self.categories = [];
@@ -161,6 +164,78 @@
                         delete delete category.product_ids;
                         console.log("Failed to update:", data);
                         self.showError("Failed to update the category, please refresh this page and try again later.");
+                    });
+                },
+                _selectedChanged: function(evt){
+                    var self = this;
+                    console.log("Selected category changed:", evt.detail);
+                    var category = evt.detail.category;
+                    var products = evt.detail.products;
+                    var productLookup = {};
+                    var categoryProducts = {};
+                    for(var i = 0 ; i < products.length; i++){
+                        var product = products[i];
+                        productLookup[""+product.id] = true;
+                        categoryProducts[""+category.id] = ""+product.id;
+                    }
+
+                    var toRemove = [];
+                    for(i=0 ; i < self.categoryProducts.length; i++){
+                        var categoryProduct = self.categoryProducts[i];
+                        if(categoryProduct.category_id === category.id && !productLookup[""+categoryProduct.product_id]) {
+                            var cStr = ""+categoryProduct.category_id;
+                            var pStr = ""+categoryProduct.product_id;
+                            var p = {};
+                            p[cStr] = pStr;
+                            toRemove.push(p);
+                        }
+                    }
+
+                    this._updateCategory(category).then(function(){
+                        self.showMessage("Removing products...");
+                        console.log("Removing products:", toRemove);
+                        self.$.ajax.adminUnsetCategoryProducts(toRemove).then(function(evt){
+                            self.showSuccess("Products removed.");
+                            for(i=0 ; i < self.categoryProducts.length; i++){
+                                var categoryProduct = self.categoryProducts[i];
+                                if(categoryProduct.category_id === category.id && !productLookup[""+categoryProduct.product_id]) {
+                                    console.log("Removing:", categoryProduct);
+                                    self.splice('categoryProducts', i, 1);
+                                    i--;
+                                    delete productLookup[""+categoryProduct.product_id];
+                                } else if(categoryProduct.category_id === category.id && productLookup[""+categoryProduct.product_id]){
+                                    delete productLookup[""+categoryProduct.product_id];
+                                }
+                            }
+                        }, function(evt){
+                            console.log(evt);
+                            self.showError("Failed to unset category products.");
+                        }).then(function(evt){
+                            var toAdd = [];
+                            for (var productId in productLookup) {
+                                if(!productLookup.hasOwnProperty(productId)){
+                                    continue;
+                                }
+                                toAdd.push(category.id+":"+productId);
+                            }
+
+                            self.showMessage("Adding products...");
+                            console.log("Adding products:", toAdd);
+                            self.$.ajax.adminSetCategoryProducts({to_add: toAdd}).then(function(evt){
+                                self.showSuccess("Products added.");
+                                for (var productId in productLookup) {
+                                    if(!productLookup.hasOwnProperty(productId)){
+                                        continue;
+                                    }
+                                    var cp = {category_id: category.id, product_id: parseInt(productId)};
+                                    console.log("Adding:", cp);
+                                    self.push('categoryProducts', cp);
+                                }
+                            }, function(evt){
+                                console.log(evt);
+                                self.showError("Failed to set category products.");
+                            });
+                        });
                     });
                 },
                 _routePageChanged: function (page) {
@@ -186,30 +261,14 @@
                     }
                     this.importHref(this.resolveUrl("km-admin-categories-" + page + '.html'), null, null, true);
                 },
-                _fetchCategories: function(){
-                    var self = this;
-                    self.showMessage("Fetching categories...");
-                    return this.$.ajax.adminGetCategories().then(function(data){
-                        var categories = data.response;
-                        console.log("Categories:", categories);
-
-                        var pushParams = ['categories'];
-                        for(var i = 0 ; i < categories.length; i++){
-                            var category = categories[i];
-                            pushParams.push(category);
-                        }
-
-                        self.splice("categories", 0, self.categories.length);
-                        self.push.apply(self, pushParams);
-                        self.setSelectedCategory(self.selectedCategoryId);
-                        self.showSuccess("Categories fetched");
-                    }, function(data){
-                        console.log(data);
-                        self.showError("Could not fetch categories, please try again later.")
-                    })
+                _setSelectedCategory: function(){
+                    this.setSelectedCategory(this.selectedCategoryId);
                 },
                 setSelectedCategory: function(categoryId){
-                    console.log("Category selected:", categoryId);
+                    if(!categoryId){
+                        return;
+                    }
+
                     this.selectedCategoryId = categoryId;
                     for(var i = 0 ; i < this.categories.length; i++){
                         var category = this.categories[i];
@@ -262,34 +321,12 @@
                 _viewingCanceled: function(){
                     this.set('route.path', "/admin/categories/all");
                 },
-                _fetchProducts: function(){
-                    var self = this;
-                    self.showMessage("Fetching products...");
-                    this.$.ajax.adminGetProducts().then(function(data){
-                        var products = data.response;
-                        console.log("Products:", products);
-
-                        var pushParams = ['products'];
-                        for(var i = 0 ; i < products.length; i++){
-                            var product = products[i];
-                            pushParams.push(product);
-                        }
-
-                        self.splice("products", 0, self.products.length);
-                        self.push.apply(self, pushParams);
-                        self.showSuccess("Products fetched");
-                    }, function(data){
-                        console.log(data);
-                        self.showError("Could not fetch products, please try again later.")
-                    })
-                },
                 ready: function(){
                     this.$.messageToast.fitInto = this.$.container;
                     this.$.errorToast.fitInto = this.$.container;
                     this.$.successToast.fitInto = this.$.container;
 
                     this.$.categoriesList.addEventListener('selected-category', this._categorySelected());
-                    this._fetchCategories().then(this._fetchProducts.bind(this));
                 }
             });
         })();

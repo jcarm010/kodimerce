@@ -66,12 +66,10 @@ func UpdateCategory(ctx context.Context, category *Category) error {
 	return nil
 }
 
-func SetCategoryProducts(ctx context.Context, productIds []int64, categoryId int64) error {
+func SetCategoryProducts(ctx context.Context, categoryProducts []*CategoryProduct) error {
 	keys := make([]*datastore.Key,0)
-	categoryProducts := make([]CategoryProduct, 0)
-	for _, productId := range productIds {
-		keys = append(keys,datastore.NewKey(ctx, ENTITY_CATEGORY_PRODUCT, fmt.Sprintf("%v_%v", categoryId, productId), 0, nil))
-		categoryProducts = append(categoryProducts, CategoryProduct{ProductId: productId, CategoryId: categoryId})
+	for _, cp := range categoryProducts {
+		keys = append(keys,datastore.NewKey(ctx, ENTITY_CATEGORY_PRODUCT, fmt.Sprintf("%v_%v", cp.CategoryId, cp.ProductId), 0, nil))
 	}
 
 	_, err := datastore.PutMulti(ctx, keys, categoryProducts)
@@ -82,6 +80,26 @@ func SetCategoryProducts(ctx context.Context, productIds []int64, categoryId int
 	return nil
 }
 
-func UnsetCategoryProducts(ctx context.Context, productIds []int64, categoryId int64) error {
+func UnsetCategoryProducts(ctx context.Context, categoryProducts []*CategoryProduct) error {
+	keys := make([]*datastore.Key,0)
+	for _, cp := range categoryProducts {
+		keys = append(keys,datastore.NewKey(ctx, ENTITY_CATEGORY_PRODUCT, fmt.Sprintf("%v_%v", cp.CategoryId, cp.ProductId), 0, nil))
+	}
+
+	err := datastore.DeleteMulti(ctx, keys)
+	if err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func GetCategoryProducts(ctx context.Context) ([]*CategoryProduct, error) {
+	categoryProducts := make([]*CategoryProduct, 0)
+	_, err := datastore.NewQuery(ENTITY_CATEGORY_PRODUCT).GetAll(ctx, &categoryProducts)
+	if err != nil {
+		return nil, err
+	}
+
+	return categoryProducts, nil
 }

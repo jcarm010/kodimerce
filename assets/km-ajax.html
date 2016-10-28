@@ -5,6 +5,7 @@
     <template>
         <iron-ajax id="xhrGet" handle-as="json" method="GET" headers="[[headers]]"></iron-ajax>
         <iron-ajax id="xhrPut" handle-as="json" method="PUT" headers="[[headers]]"></iron-ajax>
+        <iron-ajax id="xhrDelete" handle-as="json" method="DELETE" headers="[[headers]]"></iron-ajax>
         <iron-ajax id="xhr" handle-as="json" method="POST" headers="[[headers]]"></iron-ajax>
     </template>
     <script>
@@ -18,6 +19,12 @@
                             return {}
                         }
                     }
+                },
+                del: function (url) {
+                    this.$.xhrDelete.url = url;
+                    this.$.xhrDelete.contentType = "application/x-www-form-urlencoded";
+                    var r = this.$.xhrDelete.generateRequest();
+                    return r.completes;
                 },
                 put: function (url, data) {
                     this.$.xhrPut.url = url;
@@ -58,6 +65,27 @@
                 },
                 adminUpdateCategory: function(category){
                     return this.put("/admin/km/category/", category);
+                },
+                adminGetCategoryProducts: function(){
+                    return this.get("/admin/km/category_products/");
+                },
+                adminSetCategoryProducts: function(categoryProducts){
+                    return this.post("/admin/km/category_products/", categoryProducts);
+                },
+                adminUnsetCategoryProducts: function(categoryProducts){
+                    var query = "";
+                    for(var i = 0 ; i < categoryProducts.length; i++){
+                        if(i !== 0){
+                            query += "&";
+                        }
+
+                        var cp = categoryProducts[i];
+                        for(var key in cp){
+                            query += encodeURIComponent(key)+"="+encodeURIComponent(cp[key]);
+                        }
+                    }
+
+                    return this.del("/admin/km/category_products/?"+query);
                 }
             });
             function urlSerialize(obj) {

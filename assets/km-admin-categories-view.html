@@ -67,14 +67,40 @@
                         value: function() {
                             return [];
                         }
+                    },
+                    categoryProducts: {
+                        type: Array,
+                        value: function(){
+                            return [];
+                        }
                     }
                 },
                 observers: [
-                    '_categoryChanged(category)'
+                    '_categoryChanged(category)',
+                    '_categoryProductsModified(categoryProducts)',
+                    '_categoryProductsModified(categoryProducts.splices)'
                 ],
                 save: function(){
                     this.category = JSON.parse(JSON.stringify(this.editing));
                     this.fire("category-changed", {category: this.category, products: this.$.productSelect.selected});
+                },
+                _categoryProductsModified: function(){
+                    if(!this.category || !this.categoryProducts){
+                        return;
+                    }
+
+                    var categoryProductLookup = {};
+                    for(var i = 0 ; i < this.categoryProducts.length ; i++) {
+                        var categoryProduct = this.categoryProducts[i];
+                        if(categoryProduct.category_id === this.category.id) {
+                            categoryProductLookup[categoryProduct.product_id] = true;
+                        }
+                    }
+
+                    for(i = 0; i < this.products.length; i++){
+                        var product = this.products[i];
+                        this.$.productSelect.select(i, categoryProductLookup[product.id] === true);
+                    }
                 },
                 _cancelViewing: function(){
                     this.fire("viewing-canceled", {});
@@ -85,6 +111,7 @@
                         return
                     }
                     this.editing = JSON.parse(JSON.stringify(this.category));
+                    this._categoryProductsModified();
                 },
                 ready: function(){}
             });

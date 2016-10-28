@@ -11,6 +11,7 @@
 <link rel="import" href="../bower_components/iron-pages/iron-pages.html">
 <link rel="import" href="../bower_components/iron-selector/iron-selector.html">
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="./km-ajax.html">
 
 <dom-module id="km-admin">
     <template>
@@ -104,7 +105,7 @@
                 }
             }
         </style>
-
+        <km-ajax id="ajax"></km-ajax>
         <app-location route="{{route}}"></app-location>
         <app-route
                 id="approute"
@@ -151,8 +152,8 @@
                 <iron-pages role="main" selected="[[page]]" attr-for-selected="name">
                     <km-admin-dashboard name="dashboard"></km-admin-dashboard>
                     <km-admin-store name="store"></km-admin-store>
-                    <km-admin-products name="products"></km-admin-products>
-                    <km-admin-categories name="categories"></km-admin-categories>
+                    <km-admin-products name="products" products="{{products}}"></km-admin-products>
+                    <km-admin-categories name="categories" categories="{{categories}}" products="[[products]]" category-products="{{categoryProducts}}"></km-admin-categories>
                 </iron-pages>
             </app-header-layout>
 
@@ -172,6 +173,24 @@
                 title: {
                     type: String,
                     value: "Kodimerce"
+                },
+                products: {
+                    type: Array,
+                    value: function(){
+                        return [];
+                    }
+                },
+                categories: {
+                    type: Array,
+                    value: function(){
+                        return [];
+                    }
+                },
+                categoryProducts: {
+                    type: Array,
+                    value: function(){
+                        return [];
+                    }
                 }
             },
             observers: [
@@ -186,7 +205,64 @@
                 this.importHref(this.resolveUrl("km-admin-" + page + '.html'), null, null, true);
                 this.$.drawerMenu.close();
             },
+            _fetchProducts: function(){
+                var self = this;
+                this.$.ajax.adminGetProducts().then(function(data){
+                    var products = data.response;
+                    console.log("Products:", products);
+
+                    var pushParams = ['products'];
+                    for(var i = 0 ; i < products.length; i++){
+                        var product = products[i];
+                        pushParams.push(product);
+                    }
+
+                    self.splice("products", 0, self.products.length);
+                    self.push.apply(self, pushParams);
+                }, function(data){
+                    console.log(data);
+                })
+            },
+            _fetchCategories: function(){
+                var self = this;
+                return this.$.ajax.adminGetCategories().then(function(data){
+                    var categories = data.response;
+                    console.log("Categories:", categories);
+
+                    var pushParams = ['categories'];
+                    for(var i = 0 ; i < categories.length; i++){
+                        var category = categories[i];
+                        pushParams.push(category);
+                    }
+
+                    self.splice("categories", 0, self.categories.length);
+                    self.push.apply(self, pushParams);
+                }, function(data){
+                    console.log(data);
+                })
+            },
+            _fetchCategoryProducts: function(){
+                var self = this;
+                return this.$.ajax.adminGetCategoryProducts().then(function(data){
+                    var categoryProducts = data.response;
+                    console.log("CategoryProducts:", categoryProducts);
+
+                    var pushParams = ['categoryProducts'];
+                    for(var i = 0 ; i < categoryProducts.length; i++){
+                        var categoryProduct = categoryProducts[i];
+                        pushParams.push(categoryProduct);
+                    }
+
+                    self.splice("categoryProducts", 0, self.categoryProducts.length);
+                    self.push.apply(self, pushParams);
+                }, function(data){
+                    console.log(data);
+                })
+            },
             ready:function () {
+                this._fetchProducts();
+                this._fetchCategories();
+                this._fetchCategoryProducts();
             }
         });
 

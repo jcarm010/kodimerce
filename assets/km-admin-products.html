@@ -102,7 +102,8 @@
                         type: Array,
                         value: function(){
                             return [];
-                        }
+                        },
+                        notify:true
                     },
                     selectedProduct: {
                         type: Object,
@@ -116,7 +117,9 @@
                     }
                 },
                 observers: [
-                    '_routePageChanged(routeData.page)'
+                    '_routePageChanged(routeData.page)',
+                    '_setSelectedProduct(products.splices)',
+                    '_setSelectedProduct(products)'
                 ],
                 _routePageChanged: function (page) {
                     switch(page){
@@ -162,7 +165,10 @@
                     });
                 },
                 setSelectedProduct: function(productId){
-                    console.log("Product selected:", productId);
+                    if(!productId){
+                        return;
+                    }
+
                     this.selectedProductId = productId;
                     for(var i = 0 ; i < this.products.length; i++){
                         var product = this.products[i];
@@ -185,27 +191,8 @@
                     this.$.successToast.text = message;
                     this.$.successToast.open();
                 },
-                _fetchProducts: function(){
-                    var self = this;
-                    self.showMessage("Fetching products...");
-                    this.$.ajax.adminGetProducts().then(function(data){
-                        var products = data.response;
-                        console.log("Products:", products);
-
-                        var pushParams = ['products'];
-                        for(var i = 0 ; i < products.length; i++){
-                            var product = products[i];
-                            pushParams.push(product);
-                        }
-
-                        self.splice("products", 0, self.products.length);
-                        self.push.apply(self, pushParams);
-                        self.setSelectedProduct(self.selectedProductId);
-                        self.showSuccess("Products fetched");
-                    }, function(data){
-                        console.log(data);
-                        self.showError("Could not fetch products, please try again later.")
-                    })
+                _setSelectedProduct: function(){
+                    this.setSelectedProduct(this.selectedProductId);
                 },
                 _selectedChanged: function(evt){
                     var self = this;
@@ -233,6 +220,10 @@
                 },
                 _productSelected: function(evt){
                     var selected = evt.detail[0];
+                    if(!selected){
+                        return;
+                    }
+
                     this.set('route.path', "/admin/products/"+selected.id);
                 },
                 _viewingCanceled: function(){
@@ -242,8 +233,6 @@
                     this.$.messageToast.fitInto = this.$.container;
                     this.$.errorToast.fitInto = this.$.container;
                     this.$.successToast.fitInto = this.$.container;
-
-                    this._fetchProducts();
                 }
             });
         })();

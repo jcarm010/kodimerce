@@ -63,6 +63,17 @@
                         }
                     }
                 },
+                select: function(index, selected){
+                    var grid = this.$.productsGrid;
+                    grid.then(function(){
+                        if(selected){
+                            grid.selection.select(index);
+                        }else {
+                            grid.selection.deselect(index);
+                        }
+                        grid.refreshItems();
+                    });
+                },
                 openCreateModal: function(){
                     this.$.createModal.open();
                 },

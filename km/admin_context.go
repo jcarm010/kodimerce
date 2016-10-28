@@ -144,6 +144,17 @@ func (c *AdminContext) GetCategory(w web.ResponseWriter, r *web.Request) {
 	c.ServeJson(http.StatusOK, categories)
 }
 
+func (c *AdminContext) GetCategoryProduct(w web.ResponseWriter, r *web.Request) {
+	categoryProducts, err := entities.GetCategoryProducts(c.Context)
+	if err != nil {
+		log.Errorf(c.Context, "Error getting category products: %+v", err)
+		c.ServeJson(http.StatusInternalServerError, "Unexpected error getting categories.")
+		return
+	}
+
+	c.ServeJson(http.StatusOK, categoryProducts)
+}
+
 func (c *AdminContext) CreateCategory(w web.ResponseWriter, r *web.Request) {
 	name := r.URL.Query().Get("name")
 	log.Infof(c.Context, "Creating category: %+v", name)
@@ -172,9 +183,8 @@ func (c *AdminContext) UpdateCategory(w web.ResponseWriter, r *web.Request) {
 
 	idStr := r.FormValue("id")
 	name := r.FormValue("name")
-	productIdsStr := r.FormValue("product_ids")
 	description := r.FormValue("description")
-	log.Infof(c.Context, "Modifying category [%s] with values: name[%s] description[%s] productIds[%s]", idStr, name, description, productIdsStr)
+	log.Infof(c.Context, "Modifying category [%s] with values: name[%s] description[%s]", idStr, name, description)
 	var id int64
 	if idStr == "" {
 		c.ServeJson(http.StatusBadRequest, "Id cannot be empty")
@@ -203,23 +213,89 @@ func (c *AdminContext) UpdateCategory(w web.ResponseWriter, r *web.Request) {
 		c.ServeJson(http.StatusInternalServerError, "Unexpected value storing category")
 		return
 	}
+}
 
-	productIds := strings.Split(productIdsStr, ",")
-	productIdNums := make([]int64, len(productIds))
-	for index, productIdStr := range(productIds) {
-		num, err := strconv.ParseInt(productIdStr, 10, 64)
+func (c *AdminContext) SetCategoryProducts(w web.ResponseWriter, r *web.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		log.Errorf(c.Context, "Failed to parse category products: %+v", err)
+		c.ServeJson(http.StatusInternalServerError, "Failed to parse parameters.")
+		return
+	}
+
+	toAdd := r.FormValue("to_add")
+	colSeparated := strings.Split(toAdd, ",")
+	categoryProducts := make([]*entities.CategoryProduct, 0)
+	for _, str := range colSeparated {
+		log.Debugf(c.Context, "%s", str)
+		tokens := strings.Split(str, ":")
+		if len(tokens) < 2 {
+			log.Errorf(c.Context, "Could not separate tokens")
+			continue;
+		}
+
+		categoryId, err := strconv.ParseInt(tokens[0], 10, 64)
 		if err != nil {
-			log.Errorf(c.Context, "Could not parse productIdStr[%s] to int64: %+v", productIdStr, err)
+			log.Errorf(c.Context, "Error parsing categoryId: %+v", err)
 			continue
 		}
 
-		productIdNums[index] = num
+		productId, err := strconv.ParseInt(tokens[1], 10, 64)
+		if err != nil {
+			log.Errorf(c.Context, "Error parsing productId: %+v", err)
+			continue
+		}
+
+		log.Debugf(c.Context, "%v => %v", categoryId, productId)
+		categoryProducts = append(categoryProducts, &entities.CategoryProduct{
+			ProductId: productId,
+			CategoryId: categoryId,
+		})
 	}
 
-	err = entities.SetCategoryProducts(c.Context, productIdNums, id)
+	err = entities.SetCategoryProducts(c.Context, categoryProducts)
 	if err != nil {
 		log.Errorf(c.Context, "Error storing category products: %+v", err)
 		c.ServeJson(http.StatusInternalServerError, "Unexpected value storing category products")
+		return
+	}
+}
+
+func (c *AdminContext) UnsetCategoryProducts(w web.ResponseWriter, r *web.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		log.Errorf(c.Context, "Failed to parse category products: %+v", err)
+		c.ServeJson(http.StatusInternalServerError, "Failed to parse parameters.")
+		return
+	}
+
+	categoryProducts := make([]*entities.CategoryProduct, 0)
+	for categoryIdStr, productIdsStr := range r.Form {
+		log.Debugf(c.Context, "%s => %s", categoryIdStr, productIdsStr)
+		categoryId, err := strconv.ParseInt(categoryIdStr, 10, 64)
+		if err != nil {
+			log.Errorf(c.Context, "Error parsing categoryId: %+v", err)
+			continue
+		}
+
+		for _, productIdStr := range productIdsStr {
+			productId, err := strconv.ParseInt(productIdStr, 10, 64)
+			if err != nil {
+				log.Errorf(c.Context, "Error parsing productId: %+v", err)
+				continue
+			}
+
+			categoryProducts = append(categoryProducts, &entities.CategoryProduct{
+				CategoryId: categoryId,
+				ProductId: productId,
+			})
+		}
+	}
+
+	err = entities.UnsetCategoryProducts(c.Context, categoryProducts)
+	if err != nil {
+		log.Errorf(c.Context, "Error deleting category products: %+v", err)
+		c.ServeJson(http.StatusInternalServerError, "Unexpected value deleting category products")
 		return
 	}
 }
