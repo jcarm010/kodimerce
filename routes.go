@@ -10,7 +10,8 @@ import (
 func init() {
 	router := web.New(km.ServerContext{}).
 		Middleware(web.LoggerMiddleware).
-		Middleware((*km.ServerContext).InitServerContext)
+		Middleware((*km.ServerContext).InitServerContext).
+		Get("/", views.HomeView)
 
 	router.Subrouter(km.AdminContext{}, "/admin").
 		Middleware((*km.AdminContext).Auth).
