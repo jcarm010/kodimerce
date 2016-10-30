@@ -152,7 +152,7 @@
                 <iron-pages role="main" selected="[[page]]" attr-for-selected="name">
                     <km-admin-dashboard name="dashboard"></km-admin-dashboard>
                     <km-admin-store name="store"></km-admin-store>
-                    <km-admin-products name="products" products="{{products}}"></km-admin-products>
+                    <km-admin-products name="products" products="{{products}}" categories="[[categories]]" category-products="{{categoryProducts}}"></km-admin-products>
                     <km-admin-categories name="categories" categories="{{categories}}" products="[[products]]" category-products="{{categoryProducts}}"></km-admin-categories>
                 </iron-pages>
             </app-header-layout>

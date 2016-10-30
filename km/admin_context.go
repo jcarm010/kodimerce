@@ -117,14 +117,16 @@ func (c *AdminContext) UpdateProduct(w web.ResponseWriter, r *web.Request) {
 	}
 
 	log.Infof(c.Context, "Quantity: %+v", quantity)
-	var pictures []string = strings.Split(picturesStr,",")
 	product := entities.NewProduct(name)
 	product.Id = id
 	product.Active = active
 	product.PriceCents = priceCents
 	product.Quantity = quantity
-	product.Pictures = pictures
 	product.Description = description
+	if picturesStr != "" {
+		product.Pictures = strings.Split(picturesStr,",")
+	}
+
 	err = entities.UpdateProduct(c.Context, product)
 	if err != nil {
 		log.Errorf(c.Context, "Error storing product: %+v", err)

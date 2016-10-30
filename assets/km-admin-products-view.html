@@ -4,6 +4,7 @@
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-card/paper-card.html">
 <link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
+<link rel="import" href="./km-admin-categories-list.html">
 
 <dom-module id="km-admin-products-view">
     <template>
@@ -63,6 +64,10 @@
                     </template>
                 </div>
             </div>
+            <div class="details">
+                <h4>Categories</h4>
+                <km-admin-categories-list id="categoriesSelect" mode="multi" categories="[[categories]]"></km-admin-categories-list>
+            </div>
         </div>
     </template>
     <script>
@@ -81,11 +86,43 @@
                         value: function () {
                             return null;
                         }
+                    },
+                    categories: {
+                        type: Array,
+                        value: function(){
+                            return [];
+                        }
+                    },
+                    categoryProducts: {
+                        type: Array,
+                        value: function(){
+                            return [];
+                        }
                     }
                 },
                 observers: [
-                    '_productChanged(product)'
+                    '_productChanged(product)',
+                    '_categoryProductsModified(categoryProducts)',
+                    '_categoryProductsModified(categoryProducts.splices)'
                 ],
+                _categoryProductsModified: function(){
+                    if(!this.product || !this.categoryProducts){
+                        return;
+                    }
+
+                    var categoryProductLookup = {};
+                    for(var i = 0 ; i < this.categoryProducts.length ; i++) {
+                        var categoryProduct = this.categoryProducts[i];
+                        if(categoryProduct.product_id === this.product.id) {
+                            categoryProductLookup[categoryProduct.category_id] = true;
+                        }
+                    }
+
+                    for(i = 0; i < this.categories.length; i++){
+                        var category = this.categories[i];
+                        this.$.categoriesSelect.select(i, categoryProductLookup[category.id] === true);
+                    }
+                },
                 setPicture: function(evt){
                     var input = evt.target;
                     console.log("Editing image path: ", 'editing.pictures.'+input.name);
@@ -106,7 +143,7 @@
                     editing.price_cents = Math.floor(editing.price * 100);
                     delete editing['price'];
                     this.product = editing;
-                    this.fire("product-changed", this.product);
+                    this.fire("product-changed", {product: this.product, categories: this.$.categoriesSelect.selected});
                 },
                 _cancelViewing: function(){
                     this.fire("viewing-canceled", {});
@@ -116,9 +153,11 @@
                         this.editing = null;
                         return
                     }
+                    console.log("Editing product:", this.product);
                     var editing = JSON.parse(JSON.stringify(this.product));
                     editing.price = this.product.price_cents/100;
                     this.editing = editing;
+                    this._categoryProductsModified();
                 },
                 ready: function(){}
             });

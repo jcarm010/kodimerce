@@ -314,7 +314,10 @@
                 _categorySelected: function(){
                     var self = this;
                     return function(evt){
-                        var selected = evt.detail;
+                        var selected = evt.detail[0];
+                        if(!selected){
+                            return;
+                        }
                         self.set('route.path', "/admin/categories/"+selected.id);
                     };
                 },

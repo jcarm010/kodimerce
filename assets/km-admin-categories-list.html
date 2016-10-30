@@ -28,7 +28,7 @@
         </style>
         <div>
             <div id="container">
-                <vaadin-grid id="categoriesGrid" items="[[categories]]">
+                <vaadin-grid id="categoriesGrid" items="[[categories]]" selection-mode="[[mode]]">
                     <table>
                     </table>
                 </vaadin-grid>
@@ -46,12 +46,27 @@
                             return [];
                         }
                     },
+                    mode: {
+                        type: String,
+                        value: "single"
+                    },
                     selectedCategory: {
                         type: Object,
                         value: function(){
                             return null;
                         }
                     }
+                },
+                select: function(index, selected){
+                    var grid = this.$.categoriesGrid;
+                    grid.then(function(){
+                        if(selected){
+                            grid.selection.select(index);
+                        }else {
+                            grid.selection.deselect(index);
+                        }
+                        grid.refreshItems();
+                    });
                 },
                 _sortOrderChanged: function(){
                     var self = this;
@@ -76,15 +91,21 @@
                     var self = this;
                     var grid = self.$.categoriesGrid;
                     return function(){
-                        var selectedIndex = grid.selection.selected();
-                        var selected = grid.items[selectedIndex];
-                        if(!selected){
-                            return;
+                        var selectedIndexes = grid.selection.selected();
+                        var selectedItems = [];
+                        for(var i = 0 ; i < selectedIndexes.length; i++){
+                            var selectedIndex = selectedIndexes[i];
+                            var selected = grid.items[selectedIndex];
+                            selectedItems.push(selected);
                         }
 
-                        self.selectedCategory = selected;
-                        self.fire("selected-category", selected);
-                        grid.selection.clear();
+                        if(this.mode === "single" && selectedItems.length > 0){
+                            self.fire("selected-category", selectedItems);
+                            grid.selection.clear();
+                        }else if(this.mode !== "single"){
+                            self.fire("selected-category", selectedItems);
+                        }
+                        self.selected = selectedItems;
                     }
                 },
                 ready: function(){
@@ -98,6 +119,7 @@
 
                     grid.addEventListener('sort-order-changed', this._sortOrderChanged());
                     grid.addEventListener('selected-items-changed', this._productSelected());
+                    grid.selection.mode = this.mode;
                 }
             });
         })();

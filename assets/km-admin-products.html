@@ -63,7 +63,14 @@
         <div id="container">
             <iron-pages role="main" selected="[[page]]" attr-for-selected="name">
                 <km-admin-products-list id="productList" name="all" products="[[products]]" on-selected-product="_productSelected"></km-admin-products-list>
-                <km-admin-products-view id="viewingProduct" name="view" on-viewing-canceled="_viewingCanceled" on-product-changed="_selectedChanged" product="[[selectedProduct]]"></km-admin-products-view>
+                <km-admin-products-view id="viewingProduct" name="view"
+                                        on-viewing-canceled="_viewingCanceled"
+                                        on-product-changed="_selectedChanged"
+                                        product="[[selectedProduct]]"
+                                        categories="[[categories]]"
+                                        category-products="[[categoryProducts]]">
+
+                </km-admin-products-view>
             </iron-pages>
 
 
@@ -114,6 +121,19 @@
                     selectedProductId: {
                         type: Number,
                         value: 0
+                    },
+                    categoryProducts: {
+                        type: Array,
+                        value: function(){
+                            return [];
+                        },
+                        notify:true
+                    },
+                    categories: {
+                        type: Array,
+                        value: function(){
+                            return [];
+                        }
                     }
                 },
                 observers: [
@@ -194,12 +214,10 @@
                 _setSelectedProduct: function(){
                     this.setSelectedProduct(this.selectedProductId);
                 },
-                _selectedChanged: function(evt){
+                _saveProduct(product){
                     var self = this;
-                    var product = evt.detail;
-                    console.log("Selected product changed:", product);
                     self.showMessage("Saving changes to product: " + product.name);
-                    self.$.ajax.adminUpdateProducts(product).then(function(data){
+                    return self.$.ajax.adminUpdateProducts(product).then(function(data){
                         console.log("Product updated");
                         self.showSuccess("Product " + product.name + " was updated.");
                         for(var i = 0; i < self.products.length; i++){
@@ -216,6 +234,79 @@
                     }, function(data){
                         console.log("Failed to update:", data);
                         self.showError("Failed to update the product, please refresh this page and try again later.")
+                    })
+                },
+                _selectedChanged: function(evt){
+                    var self = this;
+                    var product = evt.detail.product;
+                    var categories = evt.detail.categories;
+
+                    var categoryLookup = {};
+                    var categoryProducts = {};
+                    for(var i = 0 ; i < categories.length; i++){
+                        var category = categories[i];
+                        categoryLookup[""+category.id] = true;
+                        categoryProducts[""+category.id] = ""+product.id;
+                    }
+
+                    var toRemove = [];
+                    for(i=0 ; i < self.categoryProducts.length; i++){
+                        var categoryProduct = self.categoryProducts[i];
+                        if(categoryProduct.product_id === product.id && !categoryLookup[""+categoryProduct.category_id]) {
+                            var cStr = ""+categoryProduct.category_id;
+                            var pStr = ""+categoryProduct.product_id;
+                            var p = {};
+                            p[cStr] = pStr;
+                            toRemove.push(p);
+                        }
+                    }
+
+                    console.log("Selected product changed:", product);
+                    self._saveProduct(product).then(function(){
+                        self.showMessage("Removing categories...");
+                        console.log("Removing categories:", toRemove);
+                        self.$.ajax.adminUnsetCategoryProducts(toRemove).then(function(evt){
+                            self.showSuccess("Categories removed.");
+                            for(i=0 ; i < self.categoryProducts.length; i++){
+                                var categoryProduct = self.categoryProducts[i];
+                                if(categoryProduct.product_id === product.id && !categoryLookup[""+categoryProduct.category_id]) {
+                                    console.log("Removing:", categoryProduct);
+                                    self.splice('categoryProducts', i, 1);
+                                    i--;
+                                    delete categoryLookup[""+categoryProduct.product_id];
+                                } else if(categoryProduct.category_id === category.id && categoryLookup[""+categoryProduct.product_id]){
+                                    delete categoryLookup[""+categoryProduct.product_id];
+                                }
+                            }
+                        }, function(evt){
+                            console.log(evt);
+                            self.showError("Failed to unset category products.");
+                        }).then(function(evt){
+                            var toAdd = [];
+                            for (var categoryId in categoryLookup) {
+                                if(!categoryLookup.hasOwnProperty(categoryId)){
+                                    continue;
+                                }
+                                toAdd.push(categoryId+":"+product.id);
+                            }
+
+                            self.showMessage("Adding categories...");
+                            console.log("Adding categories:", toAdd);
+                            self.$.ajax.adminSetCategoryProducts({to_add: toAdd}).then(function(evt){
+                                self.showSuccess("Categories added.");
+                                for (var categoryId in categoryLookup) {
+                                    if(!categoryLookup.hasOwnProperty(categoryId)){
+                                        continue;
+                                    }
+                                    var cp = {category_id: parseInt(categoryId), product_id: product.id};
+                                    console.log("Adding:", cp);
+                                    self.push('categoryProducts', cp);
+                                }
+                            }, function(evt){
+                                console.log(evt);
+                                self.showError("Failed to set category products.");
+                            });
+                        });
                     })
                 },
                 _productSelected: function(evt){
