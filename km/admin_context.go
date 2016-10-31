@@ -15,7 +15,59 @@ type AdminContext struct {
 }
 
 func (c *AdminContext) Auth(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
-	c.User = &entities.User{Email: "jcarm010@fiu.edu"}
+	cookies := r.Cookies()
+	sessionToken := ""
+	for _, cookie := range cookies {
+		if cookie.Name == "km-session" {
+			sessionToken = cookie.Value
+		}
+	}
+
+	if sessionToken == "" {
+		if r.Method == "GET" {
+			http.Redirect(w, r.Request, "/login", http.StatusTemporaryRedirect)
+		}else {
+			c.ServeJson(http.StatusUnauthorized, "Missing session.")
+		}
+		return
+	}
+
+
+	userSession, err := entities.GetUserSession(c.Context, sessionToken)
+	if err != nil {
+		log.Errorf(c.Context, "Error getting session: %+v", err)
+		if r.Method == "GET" {
+			http.Redirect(w, r.Request, "/login", http.StatusTemporaryRedirect)
+		}else {
+			c.ServeJson(http.StatusUnauthorized, "Session not found.")
+		}
+
+		return
+	}
+
+	user, err := entities.GetUser(c.Context, userSession.Email)
+	if err != nil {
+		log.Errorf(c.Context, "Error getting user: %+v", err)
+		if r.Method == "GET" {
+			http.Redirect(w, r.Request, "/login", http.StatusTemporaryRedirect)
+		}else {
+			c.ServeJson(http.StatusUnauthorized, "Session not found.")
+		}
+		return
+	}
+
+	if user.UserType != "admin" {
+		log.Errorf(c.Context, "User is not admin: %+v", user)
+		if r.Method == "GET" {
+			http.Redirect(w, r.Request, "/login", http.StatusTemporaryRedirect)
+		}else {
+			c.ServeJson(http.StatusForbidden, "Not allowed.")
+		}
+		return
+	}
+
+	log.Debugf(c.Context, "Authenticated user: %+v", user.Email)
+	c.User = user
 	next(w, r)
 }
 

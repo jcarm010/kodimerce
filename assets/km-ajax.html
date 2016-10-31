@@ -38,7 +38,7 @@
                     this.$.xhr.contentType = "application/x-www-form-urlencoded";
                     this.$.xhr.body = data;
                     var r = this.$.xhr.generateRequest();
-                    return r.completes;
+                    return r;
                 },
                 get:function(url){
                     this.$.xhrGet.url = url;
@@ -48,8 +48,14 @@
                 },
                 ready: function () {},
                 //calls
+                registerUser: function(email, password){
+                    return this.post("/register", {email: email, password: password})
+                },
+                loginUser: function(email, password){
+                    return this.post("/login", {email: email, password: password})
+                },
                 adminCreateProduct: function (name) {
-                    return this.post("/admin/km/product/?name="+encodeURIComponent(name));
+                    return this.post("/admin/km/product/?name="+encodeURIComponent(name)).completes;
                 },
                 adminGetProducts: function(){
                     return this.get("/admin/km/product/");
@@ -58,7 +64,7 @@
                     return this.put("/admin/km/product/", product);
                 },
                 adminCreateCategory: function(name) {
-                    return this.post("/admin/km/category/?name="+encodeURIComponent(name));
+                    return this.post("/admin/km/category/?name="+encodeURIComponent(name)).completes;
                 },
                 adminGetCategories: function(){
                     return this.get("/admin/km/category/");
@@ -70,7 +76,7 @@
                     return this.get("/admin/km/category_products/");
                 },
                 adminSetCategoryProducts: function(categoryProducts){
-                    return this.post("/admin/km/category_products/", categoryProducts);
+                    return this.post("/admin/km/category_products/", categoryProducts).completes;
                 },
                 adminUnsetCategoryProducts: function(categoryProducts){
                     var query = "";
