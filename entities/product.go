@@ -4,6 +4,7 @@ import (
 	"time"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
+	"google.golang.org/appengine/log"
 )
 
 const ENTITY_PRODUCT = "product"
@@ -17,6 +18,12 @@ type Product struct {
 	Pictures []string `datastore:"pictures,noindex" json:"pictures"`
 	Description string `datastore:"description,noindex" json:"description"`
 	Created time.Time `datastore:"created" json:"created"`
+	PriceLabel string `datastore:"-" json:"-"`
+	Thumbnail string `datastore:"-" json:"-"`
+}
+
+func (p *Product) String() string {
+	return p.Name
 }
 
 func NewProduct(name string) *Product {
@@ -83,6 +90,41 @@ func UpdateProduct(ctx context.Context, product *Product) error {
 	return nil
 }
 
-func SetProductCategories(ctx context.Context, productId int64, categoryIds []int64){
+func GetProductsInCategories(ctx context.Context, categories []*Category) ([]*Product, error){
+	log.Debugf(ctx, "Finding products in categories: %+v", categories)
+	query := datastore.NewQuery(ENTITY_CATEGORY_PRODUCT)
+	keyLookup := map[int64]bool{}
+	keys := make([]*datastore.Key, 0)
+	for _, category := range categories {
+		query = query.Filter("category_id=", category.Id)
+		categoryProducts := make([]*CategoryProduct, 0)
+		_, err := query.GetAll(ctx, &categoryProducts)
+		if err != nil {
+			return nil, err
+		}
 
+		log.Debugf(ctx, "Category products: %+v", categoryProducts)
+		for _, categoryProduct := range categoryProducts {
+			productId := categoryProduct.ProductId
+			if keyLookup[productId] {
+				continue
+			}
+
+			keys = append(keys, datastore.NewKey(ctx, ENTITY_PRODUCT, "", categoryProduct.ProductId, nil))
+			keyLookup[productId] = true
+		}
+	}
+
+	log.Debugf(ctx, "Keys: %+v", len(keys))
+	products := make([]*Product, len(keys))
+	err := datastore.GetMulti(ctx, keys, products)
+	if err != nil {
+		return nil, err
+	}
+
+	for index, product := range products {
+		product.Id = keys[index].IntID()
+	}
+
+	return products, nil
 }

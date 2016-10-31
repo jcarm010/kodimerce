@@ -12,6 +12,7 @@ func init() {
 		Middleware(web.LoggerMiddleware).
 		Middleware((*km.ServerContext).InitServerContext).
 		Get("/", views.HomeView).
+		Get("/store", views.StoreView).
 		Get("/register", views.RegisterView).
 		Post("/register", (*km.ServerContext).RegisterUser).
 		Get("/login", views.LoginView).

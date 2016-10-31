@@ -17,6 +17,10 @@ type Category struct {
 	Created time.Time `datastore:"created" json:"created"`
 }
 
+func (c *Category) String() string {
+	return c.Name
+}
+
 func NewCategory(name string) *Category {
 	return &Category{
 		Name: name,
@@ -27,6 +31,9 @@ func NewCategory(name string) *Category {
 type CategoryProduct struct {
 	CategoryId int64 `datastore:"category_id" json:"category_id"`
 	ProductId int64 `datastore:"product_id" json:"product_id"`
+}
+func (cp *CategoryProduct) String() string {
+	return fmt.Sprintf("%v-%v", cp.CategoryId, cp.ProductId)
 }
 
 func ListCategories(ctx context.Context) ([]*Category, error) {
@@ -102,4 +109,17 @@ func GetCategoryProducts(ctx context.Context) ([]*CategoryProduct, error) {
 	}
 
 	return categoryProducts, nil
+}
+
+func GetCategoryByName(ctx context.Context, name string) ([]*Category, error) {
+	categories := make([]*Category, 0)
+	keys, err := datastore.NewQuery(ENTITY_CATEGORY).Filter("name=", name).GetAll(ctx, &categories)
+	if err != nil {
+		return nil, err
+	}
+
+	for index, category := range categories {
+		category.Id = keys[index].IntID()
+	}
+	return categories, nil
 }
