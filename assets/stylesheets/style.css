@@ -11,13 +11,13 @@ html, body {
 }
 
 .km-header-content {
-    height: 100px;
+    height: 140px;
     position: relative;
 }
 
 .km-header-content > .logo {
     position: absolute;
-    top: 30%;
+    top: 20%;
     left: 50%;
     margin: 0 -50% 0 0;
     transform: translate(-50%, -50%)
@@ -33,17 +33,24 @@ html, body {
     left: 50%;
     margin: 0 -50% 0 0;
     transform: translate(-50%, -40px);
+    width: 1280px;
     min-height: 400px;
     background: rgb(255, 255, 255);
-    box-shadow: 0 0 5px rgb(245, 245, 245);
-    -moz-box-shadow: 0 0 5px rgb(245, 245, 245);
-    -webkit-box-shadow: 0 0 5px rgb(245, 245, 245);
-    padding: 30px;
+    box-shadow: 0 0 5px rgb(200, 200, 200);
+    -moz-box-shadow: 0 0 5px rgb(200, 200, 200);
+    -webkit-box-shadow: 0 0 5px rgb(200, 200, 200);
+    padding-left: 40px;
+    padding-right: 40px;
+}
+
+.km-nav {
+    height: 80px;
 }
 
 .km-nav-menu {
+    font-size: 20px;
     text-align: center;
-    margin-bottom: 30px;
+    padding-top: 25px;
 }
 
 .km-nav-item {
@@ -57,6 +64,12 @@ html, body {
 }
 
 .page-footer {
-    margin-top: 30px;
+    margin-bottom: 40px;
     text-align: center;
+}
+
+.page-divisor{
+    margin-top: 40px;
+    margin-bottom: 40px;
+    border-top: 1px solid rgb(237,237,237);
 }
