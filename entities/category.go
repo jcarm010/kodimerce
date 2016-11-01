@@ -113,7 +113,12 @@ func GetCategoryProducts(ctx context.Context) ([]*CategoryProduct, error) {
 
 func GetCategoryByName(ctx context.Context, name string) ([]*Category, error) {
 	categories := make([]*Category, 0)
-	keys, err := datastore.NewQuery(ENTITY_CATEGORY).Filter("name=", name).GetAll(ctx, &categories)
+	query := datastore.NewQuery(ENTITY_CATEGORY)
+	if name != "" {
+		query = query.Filter("name=", name)
+	}
+
+	keys, err := query.GetAll(ctx, &categories)
 	if err != nil {
 		return nil, err
 	}

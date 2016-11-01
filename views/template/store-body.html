@@ -10,10 +10,10 @@
             {{end}}
         </div>
 
-        <div class="product-thumbnails col-xs-12">
+        <div class="product-thumbnails">
             {{range $index, $element := .Products}}
-            <div class="km-product-thumb">
-                <a href="#">
+            <div class="km-product-thumb {{if $element.Last}}last{{end}}">
+                <a href="/product?p={{$element.Id}}">
                     <img src="{{$element.Thumbnail}}" alt="...">
                 </a>
                 <div class="caption">

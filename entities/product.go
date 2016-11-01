@@ -5,6 +5,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/log"
+	"fmt"
 )
 
 const ENTITY_PRODUCT = "product"
@@ -18,8 +19,10 @@ type Product struct {
 	Pictures []string `datastore:"pictures,noindex" json:"pictures"`
 	Description string `datastore:"description,noindex" json:"description"`
 	Created time.Time `datastore:"created" json:"created"`
+	//these fields are here to help building the UI
 	PriceLabel string `datastore:"-" json:"-"`
 	Thumbnail string `datastore:"-" json:"-"`
+	Last bool `datastore:"-" json:"-"`
 }
 
 func (p *Product) String() string {
@@ -46,6 +49,19 @@ func CreateProduct(ctx context.Context, name string) (*Product, error) {
 	return product, nil
 }
 
+func setProductDynamicFields (product *Product) {
+	if product.Pictures == nil {
+		product.Pictures = make([]string, 0)
+	}
+
+	product.Thumbnail = "/assets/images/stock.jpeg"
+	if len(product.Pictures) > 0 {
+		product.Thumbnail = product.Pictures[0]
+	}
+
+	product.PriceLabel = fmt.Sprintf("$%.2f", float64(product.PriceCents)/100)
+}
+
 func ListProducts(ctx context.Context) ([]*Product, error) {
 	products := make([]*Product, 0)
 	keys, err := datastore.NewQuery(ENTITY_PRODUCT).GetAll(ctx, &products)
@@ -56,9 +72,7 @@ func ListProducts(ctx context.Context) ([]*Product, error) {
 	for index, key := range keys {
 		var product = products[index];
 		product.Id = key.IntID()
-		if product.Pictures == nil {
-			product.Pictures = make([]string, 0)
-		}
+		setProductDynamicFields(product)
 	}
 
 	return products, err
@@ -90,15 +104,26 @@ func UpdateProduct(ctx context.Context, product *Product) error {
 	return nil
 }
 
+func GetProduct(ctx context.Context, productId int64) (*Product, error) {
+	key := datastore.NewKey(ctx, ENTITY_PRODUCT, "", productId, nil)
+	product := &Product{}
+	err := datastore.Get(ctx, key, product)
+	if err != nil {
+		return nil, err
+	}
+
+	setProductDynamicFields(product)
+	return product, nil
+}
+
 func GetProductsInCategories(ctx context.Context, categories []*Category) ([]*Product, error){
 	log.Debugf(ctx, "Finding products in categories: %+v", categories)
 	query := datastore.NewQuery(ENTITY_CATEGORY_PRODUCT)
 	keyLookup := map[int64]bool{}
 	keys := make([]*datastore.Key, 0)
 	for _, category := range categories {
-		query = query.Filter("category_id=", category.Id)
 		categoryProducts := make([]*CategoryProduct, 0)
-		_, err := query.GetAll(ctx, &categoryProducts)
+		_, err := query.Filter("category_id=", category.Id).GetAll(ctx, &categoryProducts)
 		if err != nil {
 			return nil, err
 		}
@@ -122,9 +147,14 @@ func GetProductsInCategories(ctx context.Context, categories []*Category) ([]*Pr
 		return nil, err
 	}
 
+	p := make([]*Product, 0)
 	for index, product := range products {
 		product.Id = keys[index].IntID()
+		if product.Active {
+			p = append(p, product)
+		}
+		setProductDynamicFields(product)
 	}
 
-	return products, nil
+	return p, nil
 }

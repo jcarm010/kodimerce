@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"settings"
 	"entities"
-	"fmt"
+	"strconv"
 )
 
 type View struct {
@@ -29,9 +29,52 @@ func HomeView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 	}
 }
 
+func ProductView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
+	var templates = template.Must(template.ParseGlob("views/template/*")) // cache this globally
+	productIdStr := r.URL.Query().Get("p")
+	productId, err := strconv.ParseInt(productIdStr, 10, 64)
+	if err != nil {
+		productId = int64(0)
+	}
+
+	log.Infof(c.Context, "Querying productId: %s", productId)
+	productFound := true
+	product, err := entities.GetProduct(c.Context, productId)
+	if err != nil {
+		log.Errorf(c.Context, "Error getting product: %+v", err)
+		product = entities.NewProduct("Product not found")
+		product.Description = "This product no longer exists."
+		productFound = false
+	}
+
+	type ProductView struct {
+		Title string
+		Product *entities.Product
+		ProductFound bool
+	}
+
+	p := ProductView {
+		Title: settings.COMPANY_NAME + " | " + product.Name,
+		Product: product,
+		ProductFound: productFound,
+	}
+
+	if !productFound {
+		w.WriteHeader(http.StatusNotFound)
+	}
+
+	err = templates.ExecuteTemplate(w, "product-page", p)
+	if err != nil {
+		log.Errorf(c.Context, "Error parsing store html file: %+v", err)
+		c.ServeHTML(http.StatusInternalServerError, "Unexpected error, please try again later.")
+		return
+	}
+}
+
 func StoreView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 	var templates = template.Must(template.ParseGlob("views/template/*")) // cache this globally
 	category := r.URL.Query().Get("c")
+	log.Infof(c.Context, "Querying categories: %s", category)
 	categories, err := entities.GetCategoryByName(c.Context, category)
 	if err != nil {
 		log.Errorf(c.Context, "Error getting categories: %+v", err)
@@ -39,6 +82,7 @@ func StoreView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		return
 	}
 
+	log.Infof(c.Context, "Categories found: %+v", categories)
 	products, err := entities.GetProductsInCategories(c.Context, categories)
 	if err != nil {
 		log.Errorf(c.Context, "Error getting products: %+v", err)
@@ -47,19 +91,11 @@ func StoreView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 	}
 
 	log.Debugf(c.Context, "Products: %+v", products)
-	for _, product := range products {
-		label := fmt.Sprintf("$%.2f", float64(product.PriceCents)/100)
-		if err != nil {
-			continue
+	for index, product := range products {
+		log.Debugf(c.Context, "Product Thumbnail: %s", product.Thumbnail)
+		if (index+1)%4 == 0 {
+			product.Last = true
 		}
-
-		product.PriceLabel = label
-		thumbnail := "/assets/images/stock.jpeg"
-		if len(product.Pictures) > 0 {
-			thumbnail = product.Pictures[0]
-		}
-
-		product.Thumbnail = thumbnail
 	}
 
 	type CategoryOption struct {

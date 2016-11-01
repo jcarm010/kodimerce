@@ -32,12 +32,16 @@
 
 .km-product-thumb{
     float: left;
-    margin-right: 30px;
+    margin-right: calc(200px/3);
+    margin-bottom: 40px;
+}
+.km-product-thumb.last {
+    margin-right: 0;
 }
 
 .km-product-thumb  img {
-    width: 200px;
-    height: 200px;
+    width: 250px;
+    height: 250px;
 }
 
 .km-product-thumb .caption {
@@ -45,5 +49,6 @@
 }
 
 .product-thumbnails {
-    margin-top: 30px;
+    margin-top: 40px;
+    width: 100%;
 }
