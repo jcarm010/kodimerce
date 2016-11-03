@@ -1,11 +1,24 @@
 {{define "store-page"}}
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    {{template "page-standard-meta-tags"}}
     <title>{{.Title}}</title>
     <link rel="stylesheet" href="/bower_components/bootstrap/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="/assets/stylesheets/style.css">
     <link rel="stylesheet" href="/assets/stylesheets/store.css">
+
+    {{range $index, $element := .Products}}
+    <script type="application/ld+json">
+    {
+      "@context": "http://schema.org",
+      "@type": "Product",
+      "url": "http://www.mandalacrame.com/product?{{$element.Id}}",
+      "name": "{{$element.Name}}",
+      "description": "{{$element.Description}}",
+      "image": "{{$element.Thumbnail}}"
+    }
+    </script>
+    {{end}}
 </head>
 <body>
 

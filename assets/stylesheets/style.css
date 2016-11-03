@@ -117,7 +117,7 @@ html, body {
     cursor: pointer;
 }
 
-.km-image-button > .km-image-button-label > span {
+.km-image-button > .km-image-button-label > * {
     display: table-cell;
     vertical-align: middle;
     text-align: center;

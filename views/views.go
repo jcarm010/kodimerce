@@ -120,8 +120,8 @@ func StoreView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		Products: products,
 		Category: category,
 		CategoryOptions: []CategoryOption{
-			{Name: "Pendants", Selected: category=="pendants", Url: "/store?c=pendants"},
-			{Name: "Bracelets", Selected: category=="bracelets", Url: "/store?c=bracelets"},
+			{Name: "Pendants", Selected: category=="pendants", Url: "/store/pendants"},
+			{Name: "Bracelets", Selected: category=="bracelets", Url: "/store/bracelets"},
 		},
 	}
 
