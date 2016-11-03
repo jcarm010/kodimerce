@@ -20,8 +20,8 @@ type Product struct {
 	Description string `datastore:"description,noindex" json:"description"`
 	Created time.Time `datastore:"created" json:"created"`
 	//these fields are here to help building the UI
-	PriceLabel string `datastore:"-" json:"-"`
-	Thumbnail string `datastore:"-" json:"-"`
+	PriceLabel string `datastore:"-" json:"price_label"`
+	Thumbnail string `datastore:"-" json:"thumbnail"`
 	Last bool `datastore:"-" json:"-"`
 }
 
@@ -111,7 +111,7 @@ func GetProduct(ctx context.Context, productId int64) (*Product, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	product.Id = key.IntID()
 	setProductDynamicFields(product)
 	return product, nil
 }
