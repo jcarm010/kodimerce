@@ -7,9 +7,12 @@
     background-image: none;
 }
 
+.km-categories-container{
+    margin-top: 40px;
+}
+
 .km-categories-section {
     position: relative;
-    margin-top: 40px;
     height: 300px;
     width: calc(50% - 20px);
     display: inline-block;
