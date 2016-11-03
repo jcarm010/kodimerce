@@ -74,6 +74,10 @@ func ProductView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 func StoreView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 	var templates = template.Must(template.ParseGlob("views/template/*")) // cache this globally
 	category := r.URL.Query().Get("c")
+	if category == "" {
+		category = r.PathParams["category"]
+	}
+
 	log.Infof(c.Context, "Querying categories: %s", category)
 	categories, err := entities.GetCategoryByName(c.Context, category)
 	if err != nil {

@@ -39,11 +39,6 @@
     margin-right: 0;
 }
 
-.km-product-thumb  img {
-    width: 250px;
-    height: 250px;
-}
-
 .km-product-thumb .caption {
     margin-top: 5px;
 }
@@ -51,4 +46,9 @@
 .product-thumbnails {
     margin-top: 40px;
     width: 100%;
+}
+
+.km-product-thumb > .km-image-button {
+    width: 250px;
+    height: 250px;
 }

@@ -14,6 +14,7 @@ func init() {
 		Get("/", views.HomeView).
 		Get("/product", views.ProductView).
 		Get("/store", views.StoreView).
+		Get("/store/:category", views.StoreView).
 		Get("/register", views.RegisterView).
 		Post("/register", (*km.ServerContext).RegisterUser).
 		Get("/login", views.LoginView).
