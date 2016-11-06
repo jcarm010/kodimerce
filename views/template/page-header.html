@@ -1,7 +1,40 @@
 {{define "page-header"}}
 <div class="km-header">
     <div class="km-header-content">
+        <button type="button" class="navbar-toggle expand expand">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
+        <button type="button" class="navbar-toggle shrink hide">
+            <span class="sr-only">Toggle navigation</span>
+            <span style="font-size: 30px; top: -5px;" class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+        </button>
         <img class="logo" src="/assets/images/logo.png">
     </div>
 </div>
+<script>
+    (function() {
+        var showBtn = $('.navbar-toggle.expand');
+        var hideBtn = $('.navbar-toggle.shrink');
+
+        showBtn.click(function(){
+            var snav = $('.km-nav');
+            if(!snav.hasClass("expanded")){
+                snav.addClass("expanded");
+            }
+            hideBtn.removeClass('hide');
+            showBtn.addClass('hide');
+        });
+        hideBtn.click(function(){
+            var snav = $('.km-nav');
+            if(snav.hasClass("expanded")){
+                snav.removeClass("expanded");
+            }
+            showBtn.removeClass('hide');
+            hideBtn.addClass('hide');
+        });
+    })();
+</script>
 {{end}}

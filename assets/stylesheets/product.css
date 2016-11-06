@@ -1,3 +1,11 @@
+.product-details{
+    text-align: center;
+}
+
+.product-details > .description {
+    text-align: left;
+}
+
 .product-image > img {
     width: 100%;
 }

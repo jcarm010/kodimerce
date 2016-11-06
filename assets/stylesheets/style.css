@@ -6,21 +6,35 @@ html, body {
 
 .km-header {
     height: 140px;
-    text-align: center;
     background: rgb(255, 255, 255);
+    text-align: center;
 }
 
 .km-header-content {
     display: inline-block;
     margin-top: 40px;
+    width: 100%;
+}
+.navbar-toggle {
+    position: absolute;
+    top: 30px;
+    left: 20px;
+    float: none;
+}
+.navbar-toggle .icon-bar {
+    width: 30px;
+    height: 4px;
+    background: rgb(40, 40, 40);
 }
 
 .km-body {
     text-align: center;
+    width: 100%;
 }
 
 .km-body-content {
     display: inline-block;
+    width: 100%;
     text-align: left;
     min-height: 400px;
     background: rgb(255, 255, 255);
@@ -33,7 +47,17 @@ html, body {
 }
 
 .km-nav {
-    height: 80px;
+    display: none;
+}
+
+.km-nav.expanded {
+    display: block;
+    position: absolute;
+    z-index: 1;
+    background: white;
+    margin-right: 40px;
+    width: calc(100% - 40px);
+    opacity: .8;
 }
 
 .km-nav-menu {
@@ -43,6 +67,7 @@ html, body {
 }
 
 .km-nav-item {
+    display: block;
     margin: 20px;
     color: black;
 }
@@ -124,7 +149,23 @@ html, body {
 
 /* Small devices (tablets, 768px and up) */
 @media (min-width: 768px) {
+    .km-nav {
+        height: 80px;
+        display: block !important;
+        position: relative !important;
+        z-index: 1;
+        background: none;
+        margin-right: 0;
+        width: 100%;
+        opacity: 1;
+    }
+    .km-header {
+        width: 100%;
+    }
 
+    .km-nav-item {
+        display: inline;
+    }
 }
 
 /* Medium devices (desktops, 992px and up) */
@@ -134,11 +175,8 @@ html, body {
 
 /* Large devices (large desktops, 1200px and up) */
 @media (min-width: 1200px) {
-    .km-header {
-        width: 100%;
-    }
     .km-body {
-        width: 100%;
+
     }
     .km-body-content {
         width: 1280px;
