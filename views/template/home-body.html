@@ -11,36 +11,33 @@
             <!-- Indicators -->
             <ol class="carousel-indicators">
                 <li data-target="#home-carousel" data-slide-to="0" class="active"></li>
-                <!--<li data-target="#home-carousel" data-slide-to="1"></li>-->
+                <li data-target="#home-carousel" data-slide-to="1"></li>
             </ol>
 
             <!-- Wrapper for slides -->
             <div class="carousel-inner" role="listbox">
                 <div class="item active">
-                    <img src="/assets/images/slide.png">
+                    <img src="https://i.redditmedia.com/Aca1zdhthuAXSD9ihLcY2-nSIE3Ohe3b8SwSaRwfewM.jpg?w=1024&s=7ee8e9b0508064a73ee54feae588b61a">
                 </div>
 
-                <!--<div class="item">-->
-                    <!--<img src="/assets/images/img_chania2.jpg" alt="Chania">-->
-                <!--</div>-->
+                <div class="item">
+                    <img src="https://i.redditmedia.com/xejlXjecTxrkISKEy9m70JG3F7qXz39aRlMI-I6KhNY.jpg?w=1024&s=a3dd0df5c5a80503002198ed3b65efe1" alt="Chania">
+                </div>
             </div>
         </div>
 
         <!-- PAGE CATEGORIES -->
         <div class="km-categories-container">
-            <a href="/store/pendants" class="km-image-button km-home-category-button">
-                <div class="km-image-button-overlay" style="background-image: url(/assets/images/pendants_image.png)"></div>
-                <div class="km-image-button-label">
-                    <h3>Pendents</h3>
-                </div>
-            </a>
 
-            <a href="/store/bracelets" class="km-image-button km-home-category-button pull-right">
-                <div class="km-image-button-overlay" style="background-image: url(/assets/images/bracelets_image.png)"></div>
+            {{range $index, $category := .Categories}}
+            <a href="/store/{{$category.Name}}" class="km-image-button km-home-category-button {{if $category.EvenPosition}}pull-right{{end}}">
+                <div class="km-image-button-overlay" style="background-image: url({{$category.Thumbnail}})"></div>
                 <div class="km-image-button-label">
-                    <h3>Bracelets</h3>
+                    <h3>{{$category.Name}}</h3>
                 </div>
             </a>
+            {{end}}
+
         </div>
 
         {{template "page-footer"}}

@@ -1,4 +1,6 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/vaadin-grid/vaadin-grid.html">
+<link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
 
 <dom-module id="km-admin-categories-list">
     <template>
@@ -108,12 +110,26 @@
                         self.selected = selectedItems;
                     }
                 },
+                _booleanRenderer: function(){
+                    return function(cell){
+                        var toggle;
+                        if(!cell.element.innerHTML || cell.element.innerHTML===""){
+                            toggle = document.createElement('paper-toggle-button');
+                            cell.element.appendChild(toggle);
+                        }else {
+                            toggle = cell.element.children[0];
+                        }
+
+                        toggle.checked = cell.data;
+                    };
+                },
                 ready: function(){
                     var grid = this.$.categoriesGrid;
 
                     grid.columns = [
                         {name: "id", sortable: true},
                         {name: "name", sortable: true},
+                        {name: "featured", sortable:true, renderer: this._booleanRenderer()},
                         {name: "created", sortable: true}
                     ];
 

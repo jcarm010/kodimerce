@@ -9,6 +9,7 @@ import (
 	"settings"
 	"entities"
 	"strconv"
+	"fmt"
 )
 
 type View struct {
@@ -17,11 +18,25 @@ type View struct {
 
 func HomeView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 	var templates = template.Must(template.ParseGlob("views/template/*")) // cache this globally
-	p := View{
-		Title: settings.COMPANY_NAME + " | Home",
+
+	featuredCategories, err := entities.ListCategoriesByFeatured(c.Context, true)
+	if err != nil {
+		log.Errorf(c.Context, "Error getting featured categories: %+v", err)
+		featuredCategories = []*entities.Category{}
 	}
 
-	err := templates.ExecuteTemplate(w, "home-page", p)
+	log.Debugf(c.Context, "FeaturedCategories: %+v", featuredCategories)
+	type HomeView struct {
+		Title      string
+		Categories []*entities.Category
+	}
+
+	p := HomeView{
+		Title: settings.COMPANY_NAME + " | Home",
+		Categories: featuredCategories,
+	}
+
+	err = templates.ExecuteTemplate(w, "home-page", p)
 	if err != nil {
 		log.Errorf(c.Context, "Error parsing home html file: %+v", err)
 		c.ServeHTML(http.StatusInternalServerError, "Unexpected Error, please try again later.")
@@ -79,7 +94,7 @@ func StoreView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 	}
 
 	log.Infof(c.Context, "Querying categories: %s", category)
-	categories, err := entities.GetCategoryByName(c.Context, category)
+	categories, err := entities.ListCategoriesByName(c.Context, category)
 	if err != nil {
 		log.Errorf(c.Context, "Error getting categories: %+v", err)
 		c.ServeHTML(http.StatusInternalServerError, "Unexpected error, please try again later.")
@@ -102,10 +117,27 @@ func StoreView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		}
 	}
 
+	featuredCategories, err := entities.ListCategoriesByFeatured(c.Context, true)
+	if err != nil {
+		log.Errorf(c.Context, "Error getting featured categories: %+v", err)
+		featuredCategories = []*entities.Category{}
+	}
+
+	log.Debugf(c.Context, "FeaturedCategories: %+v", featuredCategories)
+
 	type CategoryOption struct {
 		Name string
 		Selected bool
 		Url string
+	}
+
+	options := make([]CategoryOption, len(featuredCategories))
+	for index, cat := range featuredCategories {
+		options[index] = CategoryOption{
+			Name: cat.Name,
+			Selected: category == cat.Name,
+			Url: fmt.Sprintf("/store/%s", cat.Name),
+		}
 	}
 
 	type ViewStore struct {
@@ -113,16 +145,14 @@ func StoreView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		Products []*entities.Product
 		Category string
 		CategoryOptions []CategoryOption
+		Categories []*entities.Category
 	}
 
 	p := ViewStore {
 		Title: settings.COMPANY_NAME + " | Store",
 		Products: products,
 		Category: category,
-		CategoryOptions: []CategoryOption{
-			{Name: "Pendants", Selected: category=="pendants", Url: "/store/pendants"},
-			{Name: "Bracelets", Selected: category=="bracelets", Url: "/store/bracelets"},
-		},
+		CategoryOptions: options,
 	}
 
  	err = templates.ExecuteTemplate(w, "store-page", p)

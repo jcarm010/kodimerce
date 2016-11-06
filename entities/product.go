@@ -25,6 +25,19 @@ type Product struct {
 	Last bool `datastore:"-" json:"-"`
 }
 
+func (p *Product) SetMissingDefaults () {
+	if p.Pictures == nil {
+		p.Pictures = make([]string, 0)
+	}
+
+	p.Thumbnail = "/assets/images/stock.jpeg"
+	if len(p.Pictures) > 0 {
+		p.Thumbnail = p.Pictures[0]
+	}
+
+	p.PriceLabel = fmt.Sprintf("$%.2f", float64(p.PriceCents)/100)
+}
+
 func (p *Product) String() string {
 	return p.Name
 }
@@ -49,19 +62,6 @@ func CreateProduct(ctx context.Context, name string) (*Product, error) {
 	return product, nil
 }
 
-func setProductDynamicFields (product *Product) {
-	if product.Pictures == nil {
-		product.Pictures = make([]string, 0)
-	}
-
-	product.Thumbnail = "/assets/images/stock.jpeg"
-	if len(product.Pictures) > 0 {
-		product.Thumbnail = product.Pictures[0]
-	}
-
-	product.PriceLabel = fmt.Sprintf("$%.2f", float64(product.PriceCents)/100)
-}
-
 func ListProducts(ctx context.Context) ([]*Product, error) {
 	products := make([]*Product, 0)
 	keys, err := datastore.NewQuery(ENTITY_PRODUCT).GetAll(ctx, &products)
@@ -72,7 +72,7 @@ func ListProducts(ctx context.Context) ([]*Product, error) {
 	for index, key := range keys {
 		var product = products[index];
 		product.Id = key.IntID()
-		setProductDynamicFields(product)
+		product.SetMissingDefaults()
 	}
 
 	return products, err
@@ -112,7 +112,7 @@ func GetProduct(ctx context.Context, productId int64) (*Product, error) {
 		return nil, err
 	}
 
-	setProductDynamicFields(product)
+	product.SetMissingDefaults()
 	return product, nil
 }
 
@@ -153,7 +153,8 @@ func GetProductsInCategories(ctx context.Context, categories []*Category) ([]*Pr
 		if product.Active {
 			p = append(p, product)
 		}
-		setProductDynamicFields(product)
+
+		product.SetMissingDefaults()
 	}
 
 	return p, nil

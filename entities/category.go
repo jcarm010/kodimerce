@@ -15,6 +15,16 @@ type Category struct {
 	Name string `datastore:"name" json:"name"`
 	Description string `datastore:"description,noindex" json:"description"`
 	Created time.Time `datastore:"created" json:"created"`
+	Thumbnail string `datastore:"thumbnail,noindex" json:"thumbnail"`
+	Featured bool `datastore:"featured" json:"featured"`
+	//these fields are here to help building the UI
+	EvenPosition bool `datastore:"-" json:"-"`
+}
+
+func (c *Category) SetMissingDefaults() {
+	if c.Thumbnail == "" {
+		c.Thumbnail = "/assets/images/stock.jpeg"
+	}
 }
 
 func (c *Category) String() string {
@@ -25,6 +35,7 @@ func NewCategory(name string) *Category {
 	return &Category{
 		Name: name,
 		Created: time.Now(),
+		Thumbnail: "/assets/images/stock.jpeg",
 	}
 }
 
@@ -46,6 +57,8 @@ func ListCategories(ctx context.Context) ([]*Category, error) {
 	for index, key := range keys {
 		var category = categories[index];
 		category.Id = key.IntID()
+		category.SetMissingDefaults()
+		category.EvenPosition = index % 2 == 0
 	}
 
 	return categories, err
@@ -111,7 +124,7 @@ func GetCategoryProducts(ctx context.Context) ([]*CategoryProduct, error) {
 	return categoryProducts, nil
 }
 
-func GetCategoryByName(ctx context.Context, name string) ([]*Category, error) {
+func ListCategoriesByName(ctx context.Context, name string) ([]*Category, error) {
 	categories := make([]*Category, 0)
 	query := datastore.NewQuery(ENTITY_CATEGORY)
 	if name != "" {
@@ -125,6 +138,25 @@ func GetCategoryByName(ctx context.Context, name string) ([]*Category, error) {
 
 	for index, category := range categories {
 		category.Id = keys[index].IntID()
+		category.SetMissingDefaults()
+		category.EvenPosition = index % 2 == 0
 	}
 	return categories, nil
+}
+
+func ListCategoriesByFeatured(ctx context.Context, featured bool) ([]*Category, error) {
+	categories := make([]*Category, 0)
+	keys, err := datastore.NewQuery(ENTITY_CATEGORY).Filter("featured=", featured).GetAll(ctx, &categories)
+	if err != nil {
+		return nil, err
+	}
+
+	for index, key := range keys {
+		var category = categories[index];
+		category.Id = key.IntID()
+		category.SetMissingDefaults()
+		category.EvenPosition = index % 2 == 0
+	}
+
+	return categories, err
 }

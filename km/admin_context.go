@@ -238,7 +238,9 @@ func (c *AdminContext) UpdateCategory(w web.ResponseWriter, r *web.Request) {
 	idStr := r.FormValue("id")
 	name := r.FormValue("name")
 	description := r.FormValue("description")
-	log.Infof(c.Context, "Modifying category [%s] with values: name[%s] description[%s]", idStr, name, description)
+	featuredStr := r.FormValue("featured")
+	thumbnail := r.FormValue("thumbnail")
+	log.Infof(c.Context, "Modifying category [%s] with values: name[%s] description[%s] featuredStr[%s] thumbnail[%s]", idStr, name, description, featuredStr, thumbnail)
 	var id int64
 	if idStr == "" {
 		c.ServeJson(http.StatusBadRequest, "Id cannot be empty")
@@ -258,9 +260,17 @@ func (c *AdminContext) UpdateCategory(w web.ResponseWriter, r *web.Request) {
 		return
 	}
 
+	featured, err := strconv.ParseBool(featuredStr)
+	if err != nil {
+		log.Errorf(c.Context, "Error parsing featured parameter: %+v", err)
+		featured = false
+	}
+
 	category := entities.NewCategory(name)
 	category.Id = id
 	category.Description = description
+	category.Thumbnail = thumbnail
+	category.Featured = featured
 	err = entities.UpdateCategory(c.Context, category)
 	if err != nil {
 		log.Errorf(c.Context, "Error storing category: %+v", err)

@@ -6,6 +6,16 @@
     <link rel="stylesheet" href="/bower_components/bootstrap/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="/assets/stylesheets/style.css">
     <link rel="stylesheet" href="/assets/stylesheets/product.css">
+    <script type="application/ld+json">
+    {
+      "@context": "http://schema.org",
+      "@type": "Product",
+      "url": "http://www.mandalacrame.com/product?{{.Product.Id}}",
+      "name": "{{.Product.Name}}",
+      "description": "{{.Product.Description}}",
+      "image": "{{.Product.Thumbnail}}"
+    }
+    </script>
 </head>
 <body>
 
