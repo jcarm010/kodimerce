@@ -11,6 +11,7 @@
             <div class="product-details col-md-6">
                 <h3>{{.Product.Name}}</h3>
                 <p>{{.Product.Description}}</p>
+                <button onclick="addToCart({{.Product}})">Add to cart</button>
             </div>
         </div>
 
@@ -26,4 +27,15 @@
 
     </div>
 </div>
+<script>
+    function addToCart(product) {
+        var shoppingCartItems = localStorage.getItem('shoppingCartItems');
+        var cartItems = [];
+        if(shoppingCartItems!==null){
+            cartItems = JSON.parse(shoppingCartItems);
+        }
+        cartItems.push(product);
+        localStorage.setItem('shoppingCartItems', JSON.stringify(cartItems));
+    }
+</script>
 {{end}}
