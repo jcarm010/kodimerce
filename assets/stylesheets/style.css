@@ -17,13 +17,13 @@ html, body {
 }
 .navbar-toggle {
     position: absolute;
-    top: 30px;
-    left: 20px;
+    top: 15px;
+    left: 40px;
     float: none;
 }
 .navbar-toggle .icon-bar {
-    width: 30px;
-    height: 4px;
+    width: 60px;
+    height: 12px;
     background: rgb(40, 40, 40);
 }
 
@@ -70,6 +70,7 @@ html, body {
     display: block;
     margin: 20px;
     color: black;
+    font-size: 50px;
 }
 
 .km-nav-item:hover, .km-nav-item:visited, .km-nav-item:active, .km-nav-item:focus {
@@ -86,6 +87,10 @@ html, body {
     margin-top: 40px;
     margin-bottom: 40px;
     border-top: 1px solid rgb(237,237,237);
+}
+.page-divisor-single {
+    margin-bottom: 40px;
+    border-top: 0;
 }
 
 /** IMAGE BUTTON CSS **/
@@ -149,6 +154,22 @@ html, body {
 
 /* Small devices (tablets, 768px and up) */
 @media (min-width: 768px) {
+    .navbar-toggle{
+        display: block;
+    }
+
+}
+
+/* Medium devices (desktops, 992px and up) */
+@media (min-width: 992px) {
+    .navbar-toggle{
+        display: none;
+    }
+
+    .nav-after-divisor{
+        display: none;
+    }
+
     .km-nav {
         height: 80px;
         display: block !important;
@@ -165,12 +186,8 @@ html, body {
 
     .km-nav-item {
         display: inline;
+        font-size: 20px;
     }
-}
-
-/* Medium devices (desktops, 992px and up) */
-@media (min-width: 992px) {
-
 }
 
 /* Large devices (large desktops, 1200px and up) */
