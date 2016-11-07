@@ -9,3 +9,30 @@
 .product-image > img {
     width: 100%;
 }
+
+.more-photos-section {
+    margin-top: 40px;
+}
+
+.more-photos {
+    overflow-x: scroll;
+    position: relative;
+    height: 250px;
+}
+
+.more-photos-scroll {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 250px;
+    white-space: nowrap;
+}
+
+.more-photos-image {
+    display: inline-block;
+    width: 250px;
+    height: 250px;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+}

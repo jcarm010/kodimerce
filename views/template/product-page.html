@@ -11,12 +11,18 @@
     {
       "@context": "http://schema.org",
       "@type": "Product",
-      "url": "http://www.mandalacrame.com/product?{{.Product.Id}}",
+      "url": "http://www.mandalacrame.com/product/{{.Product.Id}}",
       "name": "{{.Product.Name}}",
       "description": "{{.Product.Description}}",
       "image": "{{.Product.Thumbnail}}"
     }
     </script>
+
+    <meta property="og:url"                content="{{.CanonicalUrl}}" />
+    <meta property="og:type"               content="product" />
+    <meta property="og:title"              content="{{.Product.Name}}" />
+    <meta property="og:description"        content="{{.Product.Description}}" />
+    <meta property="og:image"              content="{{.Product.Thumbnail}}" />
 </head>
 <body>
 

@@ -47,6 +47,10 @@ func HomeView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 func ProductView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 	var templates = template.Must(template.ParseGlob("views/template/*")) // cache this globally
 	productIdStr := r.URL.Query().Get("p")
+	if productIdStr == "" {
+		productIdStr = r.PathParams["productId"]
+	}
+
 	productId, err := strconv.ParseInt(productIdStr, 10, 64)
 	if err != nil {
 		productId = int64(0)
@@ -66,13 +70,21 @@ func ProductView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		Title string
 		Product *entities.Product
 		ProductFound bool
+		CanonicalUrl string
 	}
 
+	httpHeader := "http"
+	if r.TLS != nil {
+		httpHeader = "https"
+	}
 	p := ProductView {
 		Title: settings.COMPANY_NAME + " | " + product.Name,
 		Product: product,
 		ProductFound: productFound,
+		CanonicalUrl: fmt.Sprintf("%s://%s%s", httpHeader, r.Host, r.URL.Path),
 	}
+
+	log.Debugf(c.Context, "Canonical Url: %s", p.CanonicalUrl)
 
 	if !productFound {
 		w.WriteHeader(http.StatusNotFound)
