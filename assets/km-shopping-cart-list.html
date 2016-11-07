@@ -2,50 +2,91 @@
 <link rel="import" href="../bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
 
 <dom-module id="km-shopping-cart-list">
     <template>
         <style>
             .product-image{
-                height: 80px;
-                width: 80px;
+                height: 100px;
+                width: 100px;
+                padding: 0;
+                margin-top: 10px;
+                margin-right: 10px;
+            }
+            paper-icon-button.close-icon {
+               color: #dedede;
+            }
+            .right-aligned{
+                text-align: right;
+            }
+            paper-button.checkout{
+                width: 150px;
+                background-color: #F4F3F4;
+                margin:20px 0;
             }
         </style>
         <div>
             <table style="width:100%">
-                <tr>
-                    <th>Product Name</th>
-                    <th>Product Price</th>
-                    <th>Remove</th>
-                </tr>
                 <template is="dom-repeat" items="{{cartItems}}">
-                    <tr>
+                    <tr style="border-bottom: 2px solid #F4F3F4">
                         <td>
                             <paper-icon-button src="[[item.thumbnail]]"
                                                class="product-image"
                                                title="Product Image">
                             </paper-icon-button>{{item.name}}
                         </td>
-                        <td>{{item.price_label}}</td>
-                        <td>
-                            <paper-icon-button class="action-icon-danger"
-                                               icon="delete"
-                                               title="Remove"
-                                               on-click="_removeCartItem">
-                            </paper-icon-button>
+                        <td class="right-aligned">
+                            <paper-icon-button class="close-icon"
+                                icon="close"
+                                title="Remove"
+                                on-click="_removeCartItem">
+                            </paper-icon-button><br>
+                            {{item.price_label}}
                         </td>
                     </tr>
                 </template>
-
+                <tr style="height: 50px;">
+                    <td></td>
+                    <td class="right-aligned" style="border-bottom: 2px solid #F4F3F4">
+                        <span style="margin-right: 50px; color: #969696">Subtotal</span>
+                        <span>[[totalPrice]]</span>
+                    </td>
+                </tr>
             </table>
-
+            <div class="right-aligned">
+                <paper-button class="checkout">Checkout</paper-button>
+            </div>
         </div>
     </template>
     <script>
         (function () {
             Polymer({
                 is: 'km-shopping-cart-list',
-                properties: {},
+                properties: {
+                    cartItems:{
+                        type:Array,
+                        value:function(){
+                            return [];
+                        }
+                    },
+                    totalPrice:{
+                        type:String,
+                        value:""
+                    }
+                },
+                observers: [
+                    '_cartItemsChanged(cartItems.splices)',
+                    '_cartItemsChanged(cartItems)'
+                ],
+                _cartItemsChanged:function(){
+                    var total = 0;
+                    for(var i=0; i<this.cartItems.length; i++){
+                        total+=this.cartItems[i].price_cents;
+                    }
+                    var dollars = (total/100).toFixed(2);
+                    this.set("totalPrice", "$"+dollars);
+                },
                 _removeCartItem:function(e){
                     var index = e.model.index;
                     this.splice("cartItems", index, 1);
@@ -57,14 +98,22 @@
                     items.splice(index, 1);
                     localStorage.setItem('shoppingCartItems', JSON.stringify(items));
                 },
+                computeFullName(cartItems){
+                    var total = 0;
+                    for(var i=0; i<cartItems.length; i++){
+                        total+=cartItems[i].price_cents;
+                    }
+                    return total;
+                },
                 ready: function(){
                     var shoppingCartItems = localStorage.getItem('shoppingCartItems');
                     var cartItems=[];
                     if(shoppingCartItems!==null){
                         cartItems = JSON.parse(shoppingCartItems)
                     }
+                    var args = ['cartItems', 0, this.cartItems.length].concat(cartItems);
+                    this.splice.apply(this, args);
                     console.log("Cart Items: ", cartItems);
-                    this.cartItems = cartItems;
                 }
 
             });
