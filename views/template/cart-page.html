@@ -3,18 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <title>{{.Title}}</title>
-    <link rel="stylesheet" href="/bower_components/bootstrap/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/assets/stylesheets/style.css">
-    <link rel="stylesheet" href="/assets/stylesheets/product.css">
+    {{template "page-imports"}}
     <link rel="import" href="/assets/km-shopping-cart-list.html">
-    <script src="/bower_components/jquery/dist/jquery.min.js"></script>
 </head>
 <body>
 
 {{template "page-header" .}}
 {{template "cart-body" .}}
-
-<script src="/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
 </body>
 </html>
 {{end}}

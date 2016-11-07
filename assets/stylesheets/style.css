@@ -18,13 +18,17 @@ html, body {
 .navbar-toggle {
     position: absolute;
     top: 15px;
-    left: 40px;
+    left: 20px;
     float: none;
 }
 .navbar-toggle .icon-bar {
     width: 60px;
     height: 12px;
     background: rgb(40, 40, 40);
+}
+
+.navbar-toggle .fa {
+    font-size: xx-large;
 }
 
 .km-body {
@@ -152,16 +156,15 @@ html, body {
     font-size: 2.125em;
 }
 
-/* Small devices (tablets, 768px and up) */
+/* overriding bootstrap default navbar-toggle*/
 @media (min-width: 768px) {
-    .navbar-toggle{
+    .navbar-toggle {
         display: block;
     }
-
 }
 
-/* Medium devices (desktops, 992px and up) */
-@media (min-width: 992px) {
+/* Small devices (tablets, 768px and up) */
+@media (min-width: 768px) and (min-device-width: 768px) {
     .navbar-toggle{
         display: none;
     }
@@ -188,10 +191,19 @@ html, body {
         display: inline;
         font-size: 20px;
     }
+
+    .navbar-toggle .fa {
+        font-size: x-large;
+    }
+}
+
+/* Medium devices (desktops, 992px and up) */
+@media (min-width: 992px) and (min-device-width: 992px) {
+
 }
 
 /* Large devices (large desktops, 1200px and up) */
-@media (min-width: 1200px) {
+@media (min-width: 1200px) and (min-device-width: 1200px) {
     .km-body {
 
     }

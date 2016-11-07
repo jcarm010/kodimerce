@@ -3,10 +3,9 @@
 <head>
     {{template "page-standard-meta-tags"}}
     <title>{{.Title}}</title>
-    <link rel="stylesheet" href="/bower_components/bootstrap/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/assets/stylesheets/style.css">
+    {{template "page-imports"}}
+
     <link rel="stylesheet" href="/assets/stylesheets/product.css">
-    <script src="/bower_components/jquery/dist/jquery.min.js"></script>
 
     <script type="application/ld+json">
     {
@@ -24,7 +23,6 @@
 {{template "page-header" .}}
 {{template "product-body" .}}
 
-<script src="/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
 </body>
 </html>
 {{end}}
