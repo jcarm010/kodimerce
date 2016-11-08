@@ -26,6 +26,7 @@
     left: 0;
     height: 250px;
     white-space: nowrap;
+    overflow-y: hidden;
 }
 
 .more-photos-image {
@@ -35,4 +36,8 @@
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center;
+}
+
+.button {
+    background-color: #F4F3F4;
 }

@@ -97,6 +97,9 @@
                     var items = JSON.parse(shoppingCartItems);
                     items.splice(index, 1);
                     localStorage.setItem('shoppingCartItems', JSON.stringify(items));
+
+                    var event = new CustomEvent("shoppingCartChanged", {});
+                    document.dispatchEvent(event);
                 },
                 computeFullName(cartItems){
                     var total = 0;

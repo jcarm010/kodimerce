@@ -6,6 +6,7 @@
     {{template "page-imports"}}
 
     <link rel="stylesheet" href="/assets/stylesheets/product.css">
+    <link rel="import" href="/bower_components/paper-button/paper-button.html">
 
     <script type="application/ld+json">
     {
@@ -27,7 +28,70 @@
 <body>
 
 {{template "page-header" .}}
-{{template "product-body" .}}
+
+<div class="km-body">
+    <div class="km-body-content">
+        <!-- PAGE NAVIGATION -->
+        {{template "page-nav"}}
+
+        <div class="row">
+            <div class="product-image col-md-6">
+                <img class="img" src="{{.Product.Thumbnail}}">
+            </div>
+            <div class="product-details col-md-6">
+                <h3>{{.Product.Name}}</h3>
+                <p class="description">{{.Product.Description}}</p>
+                <paper-button class="button" onclick="addToCart({{.Product}})">Add to Cart</paper-button>
+                <paper-button class="button" onclick="buyProduct({{.Product}})">Buy</paper-button>
+            </div>
+        </div>
+
+        <div class="row more-photos-section">
+            <div class="col-md-12">
+                <h5>More Photos</h5>
+                <div class="more-photos">
+                    <div class="more-photos-scroll">
+                        {{range $index, $element := .Product.Pictures}}
+                        <a href="" class="more-photos-image" data-index="{{$index}}" onclick="selectProductImage(event, {{$index}})" style="background-image: url({{$element}})"></a>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xs-12">
+            {{template "page-footer"}}
+        </div>
+
+    </div>
+</div>
+
+<script>
+    var productPictures = {{.Product.Pictures}};
+    function buyProduct(product) {
+        addToCart(product);
+        window.location = "/cart";
+    }
+
+    function addToCart(product) {
+        var shoppingCartItems = localStorage.getItem('shoppingCartItems');
+        var cartItems = [];
+        if(shoppingCartItems!==null){
+            cartItems = JSON.parse(shoppingCartItems);
+        }
+        cartItems.push(product);
+        localStorage.setItem('shoppingCartItems', JSON.stringify(cartItems));
+
+        var event = new CustomEvent("shoppingCartChanged", {});
+        document.dispatchEvent(event);
+    }
+
+    function selectProductImage(e, index){
+        e.preventDefault();
+        console.log("Selecting product image:", index, productPictures[index]);
+        $('.product-image > .img').attr("src", productPictures[index]);
+    }
+</script>
 
 </body>
 </html>

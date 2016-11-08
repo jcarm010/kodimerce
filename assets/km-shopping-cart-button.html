@@ -1,0 +1,84 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+
+<dom-module id="km-shopping-cart-button">
+    <template>
+        <style>
+        :host{
+            display: inline-block;
+            position: relative;
+        }
+
+        iron-icon {
+            height: 50px;
+            width: 50px;
+        }
+
+        .counter {
+            position: absolute;
+            top: 5;
+            right: -25px;
+            font-size: 30px;
+            color: rgb(206, 123, 122);
+        }
+
+        /* Small devices (tablets, 768px and up) */
+        @media (min-width: 768px) and (min-device-width: 768px) {
+            iron-icon {
+                height: 20px;
+                width: 20px;
+            }
+
+            .counter {
+                top: 2px;
+                right: -10px;
+                font-size: 12px;
+            }
+        }
+
+        /* Medium devices (desktops, 992px and up) */
+        @media (min-width: 992px) and (min-device-width: 992px) {
+
+        }
+
+        /* Large devices (large desktops, 1200px and up) */
+        @media (min-width: 1200px) and (min-device-width: 1200px) {
+
+        }
+        </style>
+        <iron-icon icon="shopping-cart"></iron-icon>
+        <span class="counter">[[cartItems.length]]</span>
+    </template>
+    <script>
+        (function () {
+            Polymer({
+                is: 'km-shopping-cart-button',
+                properties: {
+                    cartItems: {
+                        type: Array,
+                        value: function(){
+                            return [];
+                        }
+                    }
+                },
+                refresh: function(){
+                    var shoppingCartItems = localStorage.getItem('shoppingCartItems');
+                    var cartItems=[];
+                    if(shoppingCartItems!==null){
+                        cartItems = JSON.parse(shoppingCartItems)
+                    }
+                    var args = ['cartItems', 0, this.cartItems.length].concat(cartItems);
+                    this.splice.apply(this, args);
+                },
+                ready: function(){
+                    var self = this;
+                    self.refresh();
+                    document.addEventListener('shoppingCartChanged', function(e) {
+                        self.refresh();
+                    });
+                }
+            });
+        })();
+    </script>
+</dom-module>

@@ -22,7 +22,7 @@
 }
 
 /* Small devices (tablets, 768px and up) */
-@media (min-width: 768px) {
+@media (min-width: 768px) and (min-device-width: 768px) {
     .km-home-category-button {
         height: 300px;
         width: calc(50% - 20px);
@@ -34,11 +34,11 @@
 }
 
 /* Medium devices (desktops, 992px and up) */
-@media (min-width: 992px) {
+@media (min-width: 992px) and (min-device-width: 992px) {
 
 }
 
 /* Large devices (large desktops, 1200px and up) */
-@media (min-width: 1200px) {
+@media (min-width: 1200px) and (min-device-width: 1200px) {
 
 }
