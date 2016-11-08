@@ -23,6 +23,10 @@
             color: rgb(206, 123, 122);
         }
 
+        *[hidden] {
+            display: none;
+        }
+
         /* Small devices (tablets, 768px and up) */
         @media (min-width: 768px) and (min-device-width: 768px) {
             iron-icon {
@@ -48,7 +52,7 @@
         }
         </style>
         <iron-icon icon="shopping-cart"></iron-icon>
-        <span class="counter">[[cartItems.length]]</span>
+        <span class="counter" hidden="[[_hasNoProducts(cartItems.splices)]]">[[cartItems.length]]</span>
     </template>
     <script>
         (function () {
@@ -61,6 +65,13 @@
                             return [];
                         }
                     }
+                },
+                _hasNoProducts: function(){
+                    if(!this.cartItems){
+                        return true;
+                    }
+
+                    return this.cartItems.length===0;
                 },
                 refresh: function(){
                     var shoppingCartItems = localStorage.getItem('shoppingCartItems');
