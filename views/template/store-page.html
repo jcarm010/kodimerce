@@ -23,7 +23,40 @@
 <body>
 
 {{template "page-header" .}}
-{{template "store-body" .}}
+
+<div class="km-body">
+    <div class="km-body-content">
+        <!-- PAGE NAVIGATION -->
+        {{template "page-nav"}}
+
+        <div class="store-categories-section">
+            {{range $index, $element := .CategoryOptions}}
+            <span class="category {{if $element.Selected}}selected{{end}}"><a href="{{$element.Url}}">{{$element.Name}}</a></span>
+            {{end}}
+        </div>
+
+        <div class="product-thumbnails">
+            {{range $index, $element := .Products}}
+            <div class="km-product-thumb {{if $element.Last}}last{{end}}">
+                <a href="/product/{{$element.Id}}" class="km-image-button {{if $element.Last}}last{{end}}">
+                    <div class="km-image-button-overlay" style="background-image: url({{$element.Thumbnail}})"></div>
+                    <div class="km-image-button-label">
+                        <span></span>
+                    </div>
+                </a>
+                <div class="caption">
+                    <span>{{$element.Name}}</span>
+                    <span class="pull-right">{{$element.PriceLabel}}</span>
+                </div>
+            </div>
+            {{end}}
+        </div>
+        <div class="col-xs-12">
+            {{template "page-footer"}}
+        </div>
+
+    </div>
+</div>
 
 </body>
 </html>
