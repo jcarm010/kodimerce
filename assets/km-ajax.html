@@ -31,7 +31,7 @@
                     this.$.xhrPut.contentType = "application/x-www-form-urlencoded";
                     this.$.xhrPut.body = urlSerialize(data);
                     var r = this.$.xhrPut.generateRequest();
-                    return r.completes;
+                    return r;
                 },
                 post: function (url, data) {
                     this.$.xhr.url = url;
@@ -61,7 +61,7 @@
                     return this.get("/admin/km/product/");
                 },
                 adminUpdateProducts: function(product){
-                    return this.put("/admin/km/product/", product);
+                    return this.put("/admin/km/product/", product).completes;
                 },
                 adminCreateCategory: function(name) {
                     return this.post("/admin/km/category/?name="+encodeURIComponent(name)).completes;
@@ -70,7 +70,7 @@
                     return this.get("/admin/km/category/");
                 },
                 adminUpdateCategory: function(category){
-                    return this.put("/admin/km/category/", category);
+                    return this.put("/admin/km/category/", category).completes;
                 },
                 adminGetCategoryProducts: function(){
                     return this.get("/admin/km/category_products/");
@@ -92,6 +92,18 @@
                     }
 
                     return this.del("/admin/km/category_products/?"+query);
+                },
+                createOrder: function(items){
+                    var itemIds = [];
+                    for( var i = 0 ; i < items.length; i++ ){
+                        var item = items[i];
+                        itemIds.push(item.id);
+                    }
+                    console.log("Creating order with itemsIds:", itemIds);
+                    return this.post("/order/", {product_ids: itemIds});
+                },
+                updateOrder: function(order){
+                    return this.put("/order/", order);
                 }
             });
             function urlSerialize(obj) {

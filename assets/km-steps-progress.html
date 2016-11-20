@@ -1,0 +1,48 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+
+<dom-module id="km-steps-progress">
+    <template>
+        <style>
+            :host{
+                display: inline-block;
+            }
+
+            .step {
+                border-radius: 23px;
+                border: 1px solid rgb(237,237,237);
+                width: 23px;
+                height: 23px;
+                display: inline-block;
+                text-align: center;
+                color: black;
+                background: white;
+            }
+
+            .step[current] {
+                color: white;
+                background: black;
+            }
+        </style>
+        <div class="steps-container">
+            <template is="dom-repeat" items="[[steps]]">
+                <div class="step" current$="[[item.current]]">[[item.number]]</div>
+            </template>
+        </div>
+    </template>
+    <script>
+        (function () {
+            Polymer({
+                is: 'km-steps-progress',
+                properties: {
+                    steps: {
+                        type: Array,
+                        function(){
+                            return [];
+                        }
+                    }
+                },
+                ready: function(){}
+            });
+        })();
+    </script>
+</dom-module>

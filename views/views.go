@@ -221,7 +221,9 @@ func LoginView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 }
 func CartView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 	var templates = template.Must(template.ParseGlob("views/template/*")) // cache this globally
-	err := templates.ExecuteTemplate(w, "cart-page", nil)
+	err := templates.ExecuteTemplate(w, "cart-page", View{
+		Title: settings.COMPANY_NAME + " | Shopping Cart",
+	})
 	if err != nil {
 		log.Errorf(c.Context, "Error parsing cart html file: %+v", err)
 		c.ServeHTML(http.StatusInternalServerError, "Unexpected error, please try again later.")

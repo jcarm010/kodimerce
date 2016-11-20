@@ -3,6 +3,8 @@
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="km-ajax.html">
 
 <dom-module id="km-shopping-cart-list">
     <template>
@@ -25,7 +27,11 @@
                 background-color: #F4F3F4;
                 margin:20px 0;
             }
+            #dialog {
+                min-width: 300px;
+            }
         </style>
+        <km-ajax id="ajax"></km-ajax>
         <div>
             <table style="width:100%">
                 <template is="dom-repeat" items="{{cartItems}}">
@@ -55,9 +61,13 @@
                 </tr>
             </table>
             <div class="right-aligned">
-                <paper-button class="checkout">Checkout</paper-button>
+                <paper-button on-click="_checkout" class="checkout">Checkout</paper-button>
             </div>
         </div>
+        <paper-dialog id="dialog">
+            <h2>Oops...</h2>
+            <p>[[errorMessage]]</p>
+        </paper-dialog>
     </template>
     <script>
         (function () {
@@ -73,6 +83,10 @@
                     totalPrice:{
                         type:String,
                         value:""
+                    },
+                    errorMessage: {
+                        type: String,
+                        value: ""
                     }
                 },
                 observers: [
@@ -100,6 +114,19 @@
 
                     var event = new CustomEvent("shoppingCartChanged", {});
                     document.dispatchEvent(event);
+                },
+                _checkout: function(){
+                    var self = this;
+                    var req = this.$.ajax.createOrder(this.cartItems);
+                    req.completes.then(function(data){
+                        var order = data.response;
+                        console.log("New Order:", order);
+                        document.location = "/checkout/shipinfo?order=" + order.id;
+                    }, function(data){
+                        console.log(req.response);
+                        self.errorMessage = req.response;
+                        self.$.dialog.open();
+                    });
                 },
                 computeFullName(cartItems){
                     var total = 0;

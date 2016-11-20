@@ -1,0 +1,10 @@
+.checkout-section {
+    width: 100%;
+    text-align: center;
+}
+
+.checkout-form {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    width: 300px;
+}

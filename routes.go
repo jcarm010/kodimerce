@@ -20,7 +20,11 @@ func init() {
 		Post("/register", (*km.ServerContext).RegisterUser).
 		Get("/login", views.LoginView).
 		Post("/login", (*km.ServerContext).LoginUser).
-		Get("/cart", views.CartView)
+		Get("/cart", views.CartView).
+		Get("/checkout", views.RenderCheckoutView).
+		Get("/checkout/:step", views.RenderCheckoutView).
+		Post("/order", (*km.ServerContext).CreateOrder).
+		Put("/order", (*km.ServerContext).UpdateOrder)
 
 	router.Subrouter(km.AdminContext{}, "/admin").
 		Middleware((*km.AdminContext).Auth).

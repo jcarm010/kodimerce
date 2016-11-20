@@ -1,0 +1,44 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+
+<dom-module id="km-checkout-shipinfo">
+    <template>
+        <style>
+            :host{
+                text-align: left;
+            }
+            #container{
+                padding:20px;
+            }
+        </style>
+        <div id="container">
+            <paper-input label="Full Name" type="text" value="{{order.shipping_name}}"></paper-input>
+            <paper-input label="Address" type="text" value="{{order.shipping_address}}"></paper-input>
+            <paper-input label="Email" type="email" value="{{order.email}}"></paper-input>
+            <paper-input label="Phone" type="tel" value="{{order.phone}}"></paper-input>
+        </div>
+    </template>
+    <script>
+        (function () {
+            Polymer({
+                is: 'km-checkout-shipinfo',
+                properties: {
+                    order: {
+                        type: Object,
+                        value: function(){
+                            return {};
+                        },
+                        notify: true,
+                        observer: '_order_changed'
+                    }
+                },
+                _order_changed: function(){
+                    console.log("Order:", this.order);
+                },
+                ready: function(){
+
+                }
+            });
+        })();
+    </script>
+</dom-module>
