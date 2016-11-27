@@ -3,10 +3,12 @@
 <dom-module id="km-checkout-payinfo">
     <template>
         <style>
-
+            :host{
+                padding:10px;
+            }
         </style>
         <div>
-            Payment Info
+            <div id="paypal-button"></div>
         </div>
     </template>
     <script>
@@ -14,13 +16,62 @@
             Polymer({
                 is: 'km-checkout-payinfo',
                 properties: {
-
+                    order: {
+                        type: Object,
+                        value: function(){
+                            return {};
+                        },
+                        notify: true,
+                        observer: '_order_changed'
+                    }
+                },
+                _order_changed: function(){
+                    console.log("Order:", this.order);
                 },
                 submit: function(){
                     console.log("Submitting Payment Info");
                 },
                 ready: function(){
+                    var self = this;
+                    paypal.Button.render({
 
+//                        env: 'production', // Specify 'sandbox' for the test environment
+                        env: 'sandbox', // Specify 'sandbox' for the test environment
+
+                        payment: function(resolve, reject) {
+                            // Set up the payment here, when the buyer clicks on the button
+                            console.log("On Payment:", self.order);
+                            var CREATE_PAYMENT_URL = '/paypal/payment/?order='+self.order.id;
+
+                            paypal.request.get(CREATE_PAYMENT_URL)
+                                    .then(function(data) {
+                                        console.log("Create payment success!");
+                                        resolve(data.paymentID);
+                                    })
+                                    .catch(function(err) {
+                                        console.log("Create payment error: ", err);
+                                        reject(err);
+                                    });
+                        },
+
+                        onAuthorize: function(data, actions) {
+                            // Execute the payment here, when the buyer approves the transaction
+                            console.log("On Authorize");
+                            // Note: you can display a confirmation page before executing
+
+                            var EXECUTE_PAYMENT_URL = '/paypal/payment/?order='+self.order.id;
+
+                            paypal.request.post(EXECUTE_PAYMENT_URL, { paymentID: data.paymentID, payerID: data.payerID })
+                                .then(function(data) {
+                                    /* Go to a success page */
+                                    console.log("Execute Payment success!");
+                                }).catch(function(err) {
+                                    /* Go to an error page  */
+                                    console.log(err);
+                                });
+                        }
+
+                    }, '#paypal-button');
                 }
             });
         })();

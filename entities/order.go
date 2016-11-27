@@ -15,13 +15,19 @@ const (
 type Order struct {
 	Id int64 `datastore:"-" json:"id"`
 	ShippingName string `datastore:"shipping_name" json:"shipping_name"`
-	ShippingAddress string `datastore:"shipping_address,noindex" json:"shipping_address"`
+	ShippingLine1 string `datastore:"shipping_line_1,noindex" json:"shipping_line_1"`
+	ShippingLine2 string `datastore:"shipping_line_2,noindex" json:"shipping_line_2"`
+	City string `datastore:"city" json:"city"`
+	State string `datastore:"state" json:"state"`
+	PostalCode string `datastore:"postal_code" json:"postal_code"`
+	CountryCode string `datastore:"country_code" json:"country_code"`
 	Email string `datastore:"email" json:"email"`
 	Phone string `datastore:"phone" json:"phone"`
 	ProductIds []int64 `datastore:"product_ids,noindex" json:"product_ids"`
 	Status string `datastore:"status" json:"status"`
 	CheckoutStep string `datastore:"checkout_step" json:"checkout_step"`
 	Created time.Time `datastore:"created" json:"created"`
+	PaypalPaymentId string `datastore:"paypal_payment_id" json:"paypal_payment_id"`
 }
 
 func NewOrder() *Order {

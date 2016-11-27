@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <title>{{.Title}}</title>
     {{template "page-imports"}}
     <link rel="stylesheet" href="/assets/stylesheets/checkout.css">
@@ -10,6 +11,8 @@
     <link rel="import" href="/assets/km-checkout-shipinfo.html">
     <link rel="import" href="/assets/km-checkout-payinfo.html">
     <link rel="import" href="/bower_components/paper-button/paper-button.html">
+
+    <script src="https://www.paypalobjects.com/api/checkout.js" data-version-4></script>
 </head>
 <body>
 
@@ -57,16 +60,18 @@
         $('#progress')[0].steps = {{.CheckoutSteps}};
 
         $('#next-button').click(function(){
-            var order = stepForm.order;
-            order.checkout_step = nextStep;
-            console.log("Saving order:", order);
-            var req = ajax.updateOrder(order);
-            req.completes.then(function(){
-                console.log("Response:",req.response);
-                document.location = "/checkout/" + nextStep + "?order=" + order.id;
-            }, function(){
-                console.log(req.response);
-            })
+            stepForm.performAction();
+//            var order = stepForm.order;
+//            order.checkout_step = nextStep;
+//            console.log("Saving order:", order);
+//            var req = ajax.updateOrder(order);
+//            req.completes.then(function(){
+//                console.log("Response:",req.response);
+//                document.location = "/checkout/" + nextStep + "?order=" + order.id;
+//            }, function(){
+//                console.log(req.response);
+//                //todo: show error message
+//            })
         });
     })()
 </script>

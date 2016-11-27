@@ -24,7 +24,10 @@ func init() {
 		Get("/checkout", views.RenderCheckoutView).
 		Get("/checkout/:step", views.RenderCheckoutView).
 		Post("/order", (*km.ServerContext).CreateOrder).
-		Put("/order", (*km.ServerContext).UpdateOrder)
+		Put("/order", (*km.ServerContext).UpdateOrder).
+		Get("/paypal/payment", (*km.ServerContext).CreatePaypalPayment).
+		Post("/paypal/payment", (*km.ServerContext).ExecutePaypalPayment)
+
 
 	router.Subrouter(km.AdminContext{}, "/admin").
 		Middleware((*km.AdminContext).Auth).

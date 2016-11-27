@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"html/template"
 	"settings"
+	"paypal"
 )
 
 type ServerContext struct{
@@ -223,12 +224,18 @@ func (c *ServerContext) UpdateOrder(w web.ResponseWriter, r *web.Request){
 
 	idStr := r.FormValue("id")
 	shippingName := r.FormValue("shipping_name")
-	shippingAddress := r.FormValue("shipping_address")
+	shippingLine1 := r.FormValue("shipping_line_1")
+	shippingLine2 := r.FormValue("shipping_line_2")
+	city := r.FormValue("city")
+	state := r.FormValue("state")
+	postalCode := r.FormValue("postal_code")
+	countryCode := r.FormValue("country_code")
 	email := r.FormValue("email")
 	phone := r.FormValue("phone")
 	checkoutStep := r.FormValue("checkout_step")
 
-	log.Infof(c.Context, "Updating order idStr[%s] shippingName[%s] shippingAddress[%s] email[%s] phone[%s] checkoutStep[%s]", idStr, shippingName, shippingAddress, email, phone, checkoutStep)
+	log.Infof(c.Context, "Updating order idStr[%s] shippingName[%s] shippingLine1[%s] shippingLine2[%s] city[%s] state[%s] postalCode[%s] countryCode[%s] email[%s] phone[%s] checkoutStep[%s]",
+		idStr, shippingName, shippingLine1, shippingLine2, city, state, postalCode, countryCode, email, phone, checkoutStep)
 
 	orderId, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
@@ -245,7 +252,12 @@ func (c *ServerContext) UpdateOrder(w web.ResponseWriter, r *web.Request){
 	}
 
 	order.ShippingName = shippingName
-	order.ShippingAddress = shippingAddress
+	order.ShippingLine1 = shippingLine1
+	order.ShippingLine2 = shippingLine2
+	order.City = city
+	order.State = state
+	order.PostalCode = postalCode
+	order.CountryCode = countryCode
 	order.Email = email
 	order.Phone = phone
 	order.CheckoutStep = checkoutStep
@@ -258,4 +270,63 @@ func (c *ServerContext) UpdateOrder(w web.ResponseWriter, r *web.Request){
 	}
 
 	c.ServeJson(http.StatusOK, "")
+}
+
+func (c *ServerContext) CreatePaypalPayment(w web.ResponseWriter, r *web.Request){
+	type CreatePaymentResponse struct {
+		Error string `json:"error"`
+		PaymentID string `json:"paymentID"`
+	}
+
+	response := CreatePaymentResponse {}
+
+	orderIdStr := r.URL.Query().Get("order")
+	if orderIdStr == "" {
+		log.Errorf(c.Context, "Missing order")
+		response.Error = "Missing order"
+		c.ServeJson(http.StatusBadRequest, response)
+		return
+	}
+
+	orderId, err := strconv.ParseInt(orderIdStr, 10, 64)
+	if err != nil {
+		log.Errorf(c.Context, "Error parsing orderId: %+v", err)
+		response.Error = "Invalid order id"
+		c.ServeJson(http.StatusBadRequest, response)
+		return
+	}
+
+	log.Infof(c.Context, "orderIdStr: %v", orderId)
+	order, err := entities.GetOrder(c.Context, orderId)
+	if err != nil {
+		log.Errorf(c.Context, "Error getting order: %+v", err)
+		response.Error = "Error finding order"
+		c.ServeJson(http.StatusBadRequest, response)
+		return
+	}
+
+	log.Infof(c.Context, "Order: %+v", order)
+	id, err := paypal.CreatePayment(c.Context, order)
+	if err != nil {
+		log.Errorf(c.Context, "Error creating paypal payment: %+v", err)
+		response.Error = "Unexpected error creating paypal payment"
+		c.ServeJson(http.StatusInternalServerError, response)
+		return
+	}
+
+	order.PaypalPaymentId = id
+	err = entities.UpdateOrder(c.Context, order)
+	if err != nil {
+		log.Errorf(c.Context, "Error storing paypal payment id: %+v", err)
+		response.Error = "Unexpected error creating paypal payment"
+		c.ServeJson(http.StatusInternalServerError, response)
+		return
+	}
+
+	response.PaymentID = id
+	c.ServeJson(http.StatusOK, response)
+}
+
+func (c *ServerContext) ExecutePaypalPayment(w web.ResponseWriter, r *web.Request){
+	log.Infof(c.Context, "Executing Paypal payment....")
 }

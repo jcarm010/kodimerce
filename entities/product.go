@@ -117,6 +117,27 @@ func GetProduct(ctx context.Context, productId int64) (*Product, error) {
 	return product, nil
 }
 
+func GetProducts(ctx context.Context, productIds []int64) ([]*Product, error) {
+	productKeys := make([]*datastore.Key, len(productIds))
+	for index, productId := range productIds {
+		key := datastore.NewKey(ctx, ENTITY_PRODUCT, "", productId, nil)
+		productKeys[index] = key
+	}
+
+	products := make([]*Product, len(productIds))
+	err := datastore.GetMulti(ctx, productKeys, products)
+	if err != nil {
+		return nil, err
+	}
+
+	for index, product := range products {
+		product.SetMissingDefaults()
+		product.Id = productKeys[index].IntID()
+	}
+
+	return products, nil
+}
+
 func GetProductsInCategories(ctx context.Context, categories []*Category) ([]*Product, error){
 	log.Debugf(ctx, "Finding products in categories: %+v", categories)
 	query := datastore.NewQuery(ENTITY_CATEGORY_PRODUCT)

@@ -2,8 +2,12 @@ package settings
 
 const (
 	COMPANY_NAME = "MandalaCrame"
+	COMPANY_URL = "http://mandalacrame.com"
 	PAYPAL_API_URL = "https://api.sandbox.paypal.com/v1/"
+	PAYPAL_EMAIL = "jcarmona0317@hotmail.com"
 	PAYPAL_ACCOUNT = "jcarmona0317-facilitator@hotmail.com"
 	PAYPAL_API_CLIENT_ID = "AcwbfBP-fH9gKOmvsiKexVLZezNhhr44ha5rtximHSRtEDX61wu7URITF1xJV9LEzGZ1zrM_Stxj6kHs"
 	PAYPAL_API_CLIENT_SECRET = "EF_YKPVR4qxeo_skx_jG64kh0W0Q7jMTy8tRvxGQEA696AaHMVilWS7Im5cyF6G5GNgzJxIBDd4e0-X2"
+	PAYPAL_ALLOWED_PAYMENT_OPTION = "UNRESTRICTED" //posible: UNRESTRICTED, INSTANT_FUNDING_SOURCE, IMMEDIATE_PAY
+	PAYPAL_NOTE_TO_PAYER = "Thank you for shopping with MandalaCrame."
 )
