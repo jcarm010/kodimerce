@@ -5,6 +5,11 @@
         <style>
             :host{
                 padding:10px;
+                width: 300px;
+                display: inline-block;
+                border: 1px solid rgb(237,237,237);
+                margin-bottom: 20px;
+                margin-top: 20px;
             }
         </style>
         <div>
@@ -31,6 +36,12 @@
                 submit: function(){
                     console.log("Submitting Payment Info");
                 },
+                performAction: function(){
+                    var order = this.order;
+                    var nextStep = "confirm";
+                    order.checkout_step = nextStep;
+                    document.location = "/checkout/" + nextStep + "?order=" + order.id;
+                },
                 ready: function(){
                     var self = this;
                     paypal.Button.render({
@@ -56,19 +67,24 @@
 
                         onAuthorize: function(data, actions) {
                             // Execute the payment here, when the buyer approves the transaction
-                            console.log("On Authorize");
+                            console.log("On Authorize:", data);
                             // Note: you can display a confirmation page before executing
+//                            self.fire("completed", {});
+                            var order = self.order;
+                            var nextStep = "confirm";
+                            order.checkout_step = nextStep;
+                            document.location = "/checkout/" + nextStep + "?order=" + order.id;
 
-                            var EXECUTE_PAYMENT_URL = '/paypal/payment/?order='+self.order.id;
-
-                            paypal.request.post(EXECUTE_PAYMENT_URL, { paymentID: data.paymentID, payerID: data.payerID })
-                                .then(function(data) {
-                                    /* Go to a success page */
-                                    console.log("Execute Payment success!");
-                                }).catch(function(err) {
-                                    /* Go to an error page  */
-                                    console.log(err);
-                                });
+//                            var EXECUTE_PAYMENT_URL = '/paypal/payment/?order='+self.order.id;
+//
+//                            paypal.request.post(EXECUTE_PAYMENT_URL, { paymentID: data.paymentID, payerID: data.payerID })
+//                                .then(function(data) {
+//                                    /* Go to a success page */
+//                                    console.log("Execute Payment success!");
+//                                }).catch(function(err) {
+//                                    /* Go to an error page  */
+//                                    console.log(err);
+//                                });
                         }
 
                     }, '#paypal-button');

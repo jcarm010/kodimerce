@@ -1,0 +1,48 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+
+<dom-module id="km-checkout-confirm">
+    <template>
+        <style>
+            :host{
+                display: inline-block;
+                width: 100%;
+                padding: 10px;
+                margin-bottom: 20px;
+                margin-top: 20px;
+                border: 1px solid rgb(237,237,237);
+            }
+        </style>
+        <div>
+            CONFIRMATION CONTENT
+        </div>
+    </template>
+    <script>
+        (function () {
+            Polymer({
+                is: 'km-checkout-confirm',
+                properties: {
+                    order: {
+                        type: Object,
+                        value: function(){
+                            return {};
+                        },
+                        notify: true,
+                        observer: '_order_changed'
+                    }
+                },
+                _order_changed: function(){
+                    console.log("Order:", this.order);
+                },
+                submit: function(){
+                    console.log("Submitting Payment Info");
+                },
+                performAction: function(){
+
+                },
+                ready: function(){
+
+                }
+            });
+        })();
+    </script>
+</dom-module>

@@ -9,6 +9,11 @@
         <style>
             :host{
                 text-align: left;
+                width: 300px;
+                display: inline-block;
+                border: 1px solid rgb(237,237,237);
+                margin-bottom: 20px;
+                margin-top: 20px;
             }
             #container{
                 padding:20px;
@@ -60,6 +65,10 @@
                     selectedCountryIndex: {
                         type: Number,
                         value: 229
+                    },
+                    completed:{
+                        type: Boolean,
+                        value: true
                     }
                 },
                 _country_selected: function(evt){
@@ -84,6 +93,9 @@
                         console.log(req.response);
                         //todo: show error message
                     })
+                },
+                attached: function(){
+                    this.fire("completed", {});
                 },
                 ready: function(){
                     this.allCountryCodes = countryCodes;

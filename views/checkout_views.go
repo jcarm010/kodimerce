@@ -76,6 +76,7 @@ func RenderCheckoutView(c *km.ServerContext, w web.ResponseWriter, r *web.Reques
 	checkoutSteps := []*CheckoutStep{
 		{Name: "shipinfo", Label:"Shipping Information", Number: 1, Current: true, Component: "km-checkout-shipinfo"},
 		{Name: "payinfo", Label:"Payment Information", Number: 2, Current: false, Component: "km-checkout-payinfo"},
+		{Name: "confirm", Label:"Review and Confirm", Number: 3, Current: false, Component: "km-checkout-confirm"},
 	}
 
 	currentStep := checkoutSteps[0]

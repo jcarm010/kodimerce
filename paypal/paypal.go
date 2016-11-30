@@ -13,8 +13,9 @@ import (
 	"io/ioutil"
 	"net/url"
 	"net/http"
-	"crypto/tls"
 	"google.golang.org/appengine/urlfetch"
+	"runtime"
+	"crypto/tls"
 )
 
 type PaypalCreatePaymentRequest struct {
@@ -84,13 +85,19 @@ func getAccessToken(ctx context.Context) (string, error) {
 }
 
 func getClient (ctx context.Context) *http.Client {
-	tlsconf := &tls.Config{MinVersion: tls.VersionTLS10}
-	tr := &http.Transport{
-		TLSClientConfig: tlsconf,
-		DisableCompression: true,
-	}
 	client := urlfetch.Client(ctx)
-	client.Transport = tr
+	if runtime.GOOS == "darwin" {
+		/* Mac have an issue openssl issue dealing with TLS.
+		This should only occur on development environments. */
+		tlsconf := &tls.Config{MinVersion: tls.VersionTLS10}
+		tr := &http.Transport{
+			TLSClientConfig: tlsconf,
+			DisableCompression: true,
+		}
+
+		client.Transport = tr
+	}
+
 	return client
 }
 
