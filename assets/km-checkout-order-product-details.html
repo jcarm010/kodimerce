@@ -1,0 +1,116 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="./km-ajax.html">
+
+<dom-module id="km-checkout-order-product-details">
+    <template>
+        <style>
+            :host {
+                display: inline-block;
+                padding: 20px;
+            }
+
+            .product-image{
+                height: 100px;
+                width: 100px;
+                padding: 0;
+                margin-top: 10px;
+                margin-right: 10px;
+            }
+            paper-icon-button.close-icon {
+                color: #dedede;
+            }
+            .right-aligned{
+                text-align: right;
+            }
+            paper-button.checkout{
+                width: 150px;
+                background-color: #F4F3F4;
+                margin:20px 0;
+            }
+        </style>
+        <km-ajax id="ajax"></km-ajax>
+        <div>
+            <table style="width:100%">
+                <template is="dom-repeat" items="{{products}}">
+                    <tr style="border-bottom: 2px solid #F4F3F4">
+                        <td>
+                            <paper-icon-button src="[[item.thumbnail]]"
+                                               class="product-image"
+                                               title="Product Image">
+                            </paper-icon-button>{{item.name}}
+                        </td>
+                        <td class="right-aligned">
+                            {{item.price_label}}
+                        </td>
+                    </tr>
+                </template>
+                <tr style="height: 50px;">
+                    <td></td>
+                    <td class="right-aligned">
+                        <span style="margin-right: 50px; color: #969696">Subtotal</span>
+                        <span>[[totalPrice]]</span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </template>
+    <script>
+        (function () {
+            Polymer({
+                is: 'km-checkout-order-product-details',
+                properties: {
+                    order: {
+                        type: Object,
+                        value: function(){
+                            return {};
+                        },
+                        notify: true,
+                        observer: '_order_changed'
+                    },
+                    products: {
+                        type: Array,
+                        value: function(){
+                            return [];
+                        }
+                    },
+                    totalPrice: {
+                        type: String,
+                        value:""
+                    }
+                },
+                _fetchProducts: function(){
+                    var self = this;
+                    var req = self.$.ajax.getProducts(self.order.product_ids);
+                    req.completes.then(function(){
+                        var products = req.response;
+                        console.log("Products:", products);
+                        self.splice("products", 0, self.products.length);
+                        var total = 0;
+                        for(var i = 0; i < products.length; i++){
+                            var product = products[i];
+                            self.push("products", product);
+                            total += product.price_cents;
+                        }
+
+                        var dollars = (total/100).toFixed(2);
+                        self.set("totalPrice", "$"+dollars);
+                    }, function(){
+                        console.log(req.response);
+                    })
+                },
+                _order_changed: function(){
+                    if(this.order.id === undefined){
+                        return;
+                    }
+
+                    console.log("Confirm Details Order:", this.order);
+                    this._fetchProducts();
+                },
+                ready: function(){
+
+                }
+            });
+        })();
+    </script>
+</dom-module>

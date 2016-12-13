@@ -330,3 +330,34 @@ func (c *ServerContext) CreatePaypalPayment(w web.ResponseWriter, r *web.Request
 func (c *ServerContext) ExecutePaypalPayment(w web.ResponseWriter, r *web.Request){
 	log.Infof(c.Context, "Executing Paypal payment....")
 }
+
+func (c *ServerContext) GetProducts(w web.ResponseWriter, r *web.Request){
+	idsStrRaw := r.FormValue("ids")
+	idsStr := strings.Split(idsStrRaw, ",")
+	log.Infof(c.Context, "Gettting products: %s", idsStr)
+	if len(idsStr) == 1 && idsStr[0] == "" {
+		c.ServeJson(http.StatusBadRequest, "Missing product ids")
+		return
+	}
+
+	ids := make([]int64, len(idsStr))
+	for index, idStr := range idsStr {
+		id, err := strconv.ParseInt(idStr, 10, 64)
+		if err != nil {
+			log.Errorf(c.Context, "Could not parse product id[%s]: %s", idStr, err)
+			c.ServeJson(http.StatusBadRequest, "Invalid product id")
+			return
+		}
+
+		ids[index] = id
+	}
+
+	products, err := entities.GetProducts(c.Context, ids)
+	if err != nil {
+		log.Errorf(c.Context, "Error getting products: %s", err)
+		c.ServeJson(http.StatusInternalServerError, "Unexpected error getting products")
+		return
+	}
+
+	c.ServeJson(http.StatusOK, products)
+}

@@ -1,4 +1,5 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="./km-checkout-order-product-details.html">
 
 <dom-module id="km-checkout-confirm">
     <template>
@@ -9,11 +10,30 @@
                 padding: 10px;
                 margin-bottom: 20px;
                 margin-top: 20px;
+            }
+
+            #order-details {
                 border: 1px solid rgb(237,237,237);
+                width: 100%;
+            }
+
+            /* phones */
+            @media (min-width: 768px) and (min-device-width: 768px) {
+
+            }
+
+            /* Medium devices (desktops, 992px and up) */
+            @media (min-width: 992px) and (min-device-width: 992px) {
+
+            }
+
+            /* Large devices (large desktops, 1200px and up) */
+            @media (min-width: 1200px) and (min-device-width: 1200px) {
+
             }
         </style>
         <div>
-            CONFIRMATION CONTENT
+            <km-checkout-order-product-details id="order-details" order="[[order]]"></km-checkout-order-product-details>
         </div>
     </template>
     <script>
@@ -31,7 +51,7 @@
                     }
                 },
                 _order_changed: function(){
-                    console.log("Order:", this.order);
+                    console.log("Confirm Order:", this.order);
                 },
                 submit: function(){
                     console.log("Submitting Payment Info");

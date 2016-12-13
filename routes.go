@@ -29,6 +29,9 @@ func init() {
 		Post("/paypal/payment", (*km.ServerContext).ExecutePaypalPayment)
 
 
+	router.Subrouter(km.ServerContext{}, "/api").
+		Get("/product", (*km.ServerContext).GetProducts)
+
 	router.Subrouter(km.AdminContext{}, "/admin").
 		Middleware((*km.AdminContext).Auth).
 		Get("/km/product", (*km.AdminContext).GetProducts).
