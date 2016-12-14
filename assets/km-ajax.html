@@ -107,6 +107,9 @@
                 },
                 getProducts: function(productIds){
                     return this.get("/api/product?"+urlSerialize({ids:productIds}))
+                },
+                confirmOrder: function(orderId){
+                    return this.post("/paypal/payment", {id:orderId});
                 }
             });
             function urlSerialize(obj) {

@@ -26,6 +26,10 @@ type PaypalCreatePaymentRequest struct {
 	RedirectUrls *RedirectUrls `json:"redirect_urls"`
 }
 
+type PaypalExecutePaymentRequest struct {
+	PayerId string `json:"payer_id"`
+}
+
 type PaypalCreatePaymentResponse struct {
 	Id string `json:"id"`
 }
@@ -226,4 +230,54 @@ func CreatePayment(ctx context.Context, order *entities.Order) (string, error) {
 	}
 
 	return r.Id, nil
+}
+
+func ExecutePayment(ctx context.Context, order *entities.Order) (error) {
+	executeRequest := PaypalExecutePaymentRequest{
+		PayerId: order.PaypalPayerId,
+	}
+
+	jsonStr, err := json.Marshal(executeRequest)
+	if err != nil {
+		return err
+	}
+
+	u, err := url.Parse(settings.PAYPAL_API_URL)
+	if err != nil {
+		return err
+	}
+
+	u.Path = path.Join(u.Path, "payments/payment/" + order.PaypalPaymentId +"/execute")
+	paypalUrl := u.String()
+	log.Debugf(ctx, "Paypal url: %s", paypalUrl)
+	req, err := http.NewRequest(http.MethodPost, paypalUrl, bytes.NewBuffer(jsonStr))
+	if err != nil {
+		return err
+	}
+
+	accessToken, err := getAccessToken(ctx)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+	client := getClient(ctx)
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+	bts, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	log.Debugf(ctx, "Paypal response: %s", bts)
+	if resp.StatusCode != 200 {
+		return errors.New(fmt.Sprintf("Paypal responded with status[%s]: %s", resp.Status, bts))
+	}
+
+	return nil
 }

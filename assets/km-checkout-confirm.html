@@ -1,5 +1,9 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="./km-ajax.html">
 <link rel="import" href="./km-checkout-order-product-details.html">
+<link rel="import" href="./km-checkout-order-shipping-details.html">
+<link rel="import" href="./km-checkout-order-payment-details.html">
 
 <dom-module id="km-checkout-confirm">
     <template>
@@ -8,12 +12,16 @@
                 display: inline-block;
                 width: 100%;
                 padding: 10px;
-                margin-bottom: 20px;
                 margin-top: 20px;
             }
 
-            #order-details {
+            .details-section {
                 border: 1px solid rgb(237,237,237);
+                width: 100%;
+                margin-bottom: 20px;
+            }
+
+            .details-section > * {
                 width: 100%;
             }
 
@@ -32,8 +40,14 @@
 
             }
         </style>
+        <km-ajax id="ajax"></km-ajax>
         <div>
-            <km-checkout-order-product-details id="order-details" order="[[order]]"></km-checkout-order-product-details>
+            <km-checkout-order-product-details class="details-section" order="[[order]]"></km-checkout-order-product-details>
+            <div class="details-section">
+                <km-checkout-order-shipping-details order="[[order]]"></km-checkout-order-shipping-details>
+                <km-checkout-order-payment-details order="[[order]]"></km-checkout-order-payment-details>
+            </div>
+            <paper-button on-click="submit">Confirm</paper-button>
         </div>
     </template>
     <script>
@@ -54,10 +68,13 @@
                     console.log("Confirm Order:", this.order);
                 },
                 submit: function(){
-                    console.log("Submitting Payment Info");
-                },
-                performAction: function(){
-
+                    console.log("Submitting Confirmation");
+                    var req = this.$.ajax.confirmOrder(this.order.id);
+                    req.completes.then(function(){
+                        console.log("Order Confirmed:", req.response);
+                    },function(){
+                        console.log(req.response);
+                    })
                 },
                 ready: function(){
 

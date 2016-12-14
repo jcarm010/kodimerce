@@ -28,6 +28,7 @@ type Order struct {
 	CheckoutStep string `datastore:"checkout_step" json:"checkout_step"`
 	Created time.Time `datastore:"created" json:"created"`
 	PaypalPaymentId string `datastore:"paypal_payment_id" json:"paypal_payment_id"`
+	PaypalPayerId string `datastore:"paypal_payer_id" json:"paypal_payer_id"`
 }
 
 func NewOrder() *Order {

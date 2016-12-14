@@ -1,4 +1,5 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="./km-ajax.html">
 
 <dom-module id="km-checkout-payinfo">
     <template>
@@ -12,6 +13,7 @@
                 margin-top: 20px;
             }
         </style>
+        <km-ajax id="ajax"></km-ajax>
         <div>
             <div id="paypal-button"></div>
         </div>
@@ -68,23 +70,17 @@
                         onAuthorize: function(data, actions) {
                             // Execute the payment here, when the buyer approves the transaction
                             console.log("On Authorize:", data);
-                            // Note: you can display a confirmation page before executing
-//                            self.fire("completed", {});
                             var order = self.order;
-                            var nextStep = "confirm";
-                            order.checkout_step = nextStep;
-                            document.location = "/checkout/" + nextStep + "?order=" + order.id;
-
-//                            var EXECUTE_PAYMENT_URL = '/paypal/payment/?order='+self.order.id;
-//
-//                            paypal.request.post(EXECUTE_PAYMENT_URL, { paymentID: data.paymentID, payerID: data.payerID })
-//                                .then(function(data) {
-//                                    /* Go to a success page */
-//                                    console.log("Execute Payment success!");
-//                                }).catch(function(err) {
-//                                    /* Go to an error page  */
-//                                    console.log(err);
-//                                });
+                            order.paypal_payer_id = data.payerID;
+                            var req = self.$.ajax.updateOrder(self.order);
+                            req.completes.then(function(){
+                                console.log("Payment info saved!");
+                                var nextStep = "confirm";
+                                order.checkout_step = nextStep;
+                                document.location = "/checkout/" + nextStep + "?order=" + order.id;
+                            }, function(){
+                                console.log(req.response);
+                            });
                         }
 
                     }, '#paypal-button');

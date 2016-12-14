@@ -104,6 +104,32 @@ func UpdateProduct(ctx context.Context, product *Product) error {
 	return nil
 }
 
+func DecreaseProductInventory(ctx context.Context, productId int64, quantity int) error {
+	key := datastore.NewKey(ctx, ENTITY_PRODUCT, "", productId, nil)
+	err := datastore.RunInTransaction(ctx, func(ctx context.Context) error {
+		p := &Product{}
+		err := datastore.Get(ctx, key, p)
+		if err != nil {
+			return err
+		}
+
+		p.Quantity = p.Quantity - quantity
+		if p.Quantity < 0 {
+			//todo: maybe send some alert?
+			p.Quantity = 0
+		}
+
+		_, err = datastore.Put(ctx, key, p)
+		return err
+	}, nil)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func GetProduct(ctx context.Context, productId int64) (*Product, error) {
 	key := datastore.NewKey(ctx, ENTITY_PRODUCT, "", productId, nil)
 	product := &Product{}

@@ -233,9 +233,10 @@ func (c *ServerContext) UpdateOrder(w web.ResponseWriter, r *web.Request){
 	email := r.FormValue("email")
 	phone := r.FormValue("phone")
 	checkoutStep := r.FormValue("checkout_step")
+	paypalPayerId := r.FormValue("paypal_payer_id")
 
-	log.Infof(c.Context, "Updating order idStr[%s] shippingName[%s] shippingLine1[%s] shippingLine2[%s] city[%s] state[%s] postalCode[%s] countryCode[%s] email[%s] phone[%s] checkoutStep[%s]",
-		idStr, shippingName, shippingLine1, shippingLine2, city, state, postalCode, countryCode, email, phone, checkoutStep)
+	log.Infof(c.Context, "Updating order idStr[%s] shippingName[%s] shippingLine1[%s] shippingLine2[%s] city[%s] state[%s] postalCode[%s] countryCode[%s] email[%s] phone[%s] checkoutStep[%s] paypalPayerId[%s]",
+		idStr, shippingName, shippingLine1, shippingLine2, city, state, postalCode, countryCode, email, phone, checkoutStep, paypalPayerId)
 
 	orderId, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
@@ -261,6 +262,7 @@ func (c *ServerContext) UpdateOrder(w web.ResponseWriter, r *web.Request){
 	order.Email = email
 	order.Phone = phone
 	order.CheckoutStep = checkoutStep
+	order.PaypalPayerId = paypalPayerId
 
 	err = entities.UpdateOrder(c.Context, order)
 	if err != nil {
@@ -329,6 +331,55 @@ func (c *ServerContext) CreatePaypalPayment(w web.ResponseWriter, r *web.Request
 
 func (c *ServerContext) ExecutePaypalPayment(w web.ResponseWriter, r *web.Request){
 	log.Infof(c.Context, "Executing Paypal payment....")
+	err := r.ParseForm()
+	if err != nil {
+		log.Errorf(c.Context, "Error parsing parameters: %+v", err)
+		c.ServeJson(http.StatusBadRequest, "Invalid parameters")
+		return
+	}
+
+	idStr := r.FormValue("id")
+	if idStr == "" {
+		c.ServeJson(http.StatusBadRequest, "Missing order id")
+		return
+	}
+
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		log.Errorf(c.Context, "Error parsing order id[%s]: %+v", idStr, err)
+		c.ServeJson(http.StatusBadRequest, "Invalid order id")
+		return
+	}
+
+	log.Infof(c.Context, "Confirming order id: %v", id)
+	order, err := entities.GetOrder(c.Context, id)
+	if err != nil {
+		log.Errorf(c.Context, "Error getting order id: %+v", err)
+		c.ServeJson(http.StatusBadRequest, "Could not find order")
+		return
+	}
+
+	err = paypal.ExecutePayment(c.Context, order)
+	if err != nil {
+		log.Errorf(c.Context, "Error executing payment: %+v", err)
+		c.ServeJson(http.StatusInternalServerError, "Unexpecting error executing payment")
+		return
+	}
+
+	order.Status = entities.ORDER_STATUS_PENDING
+	err = entities.UpdateOrder(c.Context, order)
+	if err != nil {
+		log.Errorf(c.Context, "Error updating order status: %+v", err)
+		c.ServeJson(http.StatusInternalServerError, "Unexpecting error executing payment")
+		return
+	}
+
+	for _, productId := range order.ProductIds {
+		err = entities.DecreaseProductInventory(c.Context, productId, 1)
+		if err != nil {
+			log.Errorf(c.Context, "Error decresing inventory for productId[%v]: %+v", productId, err)
+		}
+	}
 }
 
 func (c *ServerContext) GetProducts(w web.ResponseWriter, r *web.Request){
