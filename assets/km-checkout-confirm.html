@@ -72,8 +72,12 @@
                     var req = this.$.ajax.confirmOrder(this.order.id);
                     req.completes.then(function(){
                         console.log("Order Confirmed:", req.response);
+                        localStorage.setItem('shoppingCartItems', JSON.stringify([]));
+                        var event = new CustomEvent("shoppingCartChanged", {});
+                        document.dispatchEvent(event);
                     },function(){
                         console.log(req.response);
+                        kmApp.showError(req.response);
                     })
                 },
                 ready: function(){

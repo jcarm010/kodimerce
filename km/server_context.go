@@ -252,6 +252,12 @@ func (c *ServerContext) UpdateOrder(w web.ResponseWriter, r *web.Request){
 		return
 	}
 
+	if order.Status != entities.ORDER_STATUS_STARTED {
+		log.Errorf(c.Context, "Order is not in started status[%+v]: %+v", order, err)
+		c.ServeJson(http.StatusBadRequest, "Order has already been placed.")
+		return
+	}
+
 	order.ShippingName = shippingName
 	order.ShippingLine1 = shippingLine1
 	order.ShippingLine2 = shippingLine2
@@ -307,6 +313,12 @@ func (c *ServerContext) CreatePaypalPayment(w web.ResponseWriter, r *web.Request
 		return
 	}
 
+	if order.Status != entities.ORDER_STATUS_STARTED {
+		log.Errorf(c.Context, "Order is not in started status[%+v]: %+v", order, err)
+		c.ServeJson(http.StatusBadRequest, "Order has already been placed.")
+		return
+	}
+
 	log.Infof(c.Context, "Order: %+v", order)
 	id, err := paypal.CreatePayment(c.Context, order)
 	if err != nil {
@@ -356,6 +368,12 @@ func (c *ServerContext) ExecutePaypalPayment(w web.ResponseWriter, r *web.Reques
 	if err != nil {
 		log.Errorf(c.Context, "Error getting order id: %+v", err)
 		c.ServeJson(http.StatusBadRequest, "Could not find order")
+		return
+	}
+
+	if order.Status != entities.ORDER_STATUS_STARTED {
+		log.Errorf(c.Context, "Order is not in started status [%+v]", order)
+		c.ServeJson(http.StatusBadRequest, "Order has already been placed.")
 		return
 	}
 

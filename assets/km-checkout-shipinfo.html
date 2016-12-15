@@ -91,7 +91,7 @@
                         document.location = "/checkout/" + nextStep + "?order=" + order.id;
                     }, function(){
                         console.log(req.response);
-                        //todo: show error message
+                        kmApp.showError(req.response);
                     })
                 },
                 attached: function(){

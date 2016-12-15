@@ -1,0 +1,43 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-toast/paper-toast.html">
+
+<dom-module id="km-notifier">
+    <template>
+        <style>
+            .yellow-button {
+                text-transform: none;
+                color: #00cccc;
+                font-weight: bold;
+            }
+
+            #toastError {
+                --paper-toast-background-color: #cc0000;
+                --paper-toast-color: white;
+            }
+        </style>
+
+        <paper-toast id="toastError" duration="0" class="fit-bottom" text="[[errorText]]">
+            <paper-button onclick="toastError.toggle()" class="yellow-button">Dismiss</paper-button>
+        </paper-toast>
+    </template>
+    <script>
+        (function () {
+            Polymer({
+                is: 'km-notifier',
+                properties: {
+                    errorText: {
+                        type: String,
+                        value:""
+                    }
+                },
+                showError: function(message){
+                    this.errorText = message;
+                    this.$.toastError.open();
+                },
+                ready: function(){
+
+                }
+            });
+        })();
+    </script>
+</dom-module>

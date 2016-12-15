@@ -56,7 +56,7 @@
                             console.log("On Payment:", self.order);
                             var CREATE_PAYMENT_URL = '/paypal/payment/?order='+self.order.id;
 
-                            paypal.request.get(CREATE_PAYMENT_URL)
+                            paypal.request.get(CREATE_PAYMENT_URL) //todo: handle error
                                     .then(function(data) {
                                         console.log("Create payment success!");
                                         resolve(data.paymentID);
@@ -64,6 +64,7 @@
                                     .catch(function(err) {
                                         console.log("Create payment error: ", err);
                                         reject(err);
+                                        kmApp.showError(err);
                                     });
                         },
 
@@ -80,7 +81,11 @@
                                 document.location = "/checkout/" + nextStep + "?order=" + order.id;
                             }, function(){
                                 console.log(req.response);
+                                kmApp.showError(req.response);
                             });
+                        },
+                        onCancel: function(data, actions){
+                            console.log("Paypal payment canceled");
                         }
 
                     }, '#paypal-button');

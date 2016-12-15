@@ -1,4 +1,5 @@
 {{define "page-header"}}
+<km-notifier id="km-notifier"></km-notifier>
 <div class="km-header">
     <div class="km-header-content">
         <button type="button" class="navbar-toggle expand expand">
@@ -38,5 +39,11 @@
             hideBtn.addClass('hide');
         });
     })();
+
+    var kmApp = {
+        showError: function(message){
+            document.getElementById("km-notifier").showError(message);
+        }
+    };
 </script>
 {{end}}
