@@ -12,7 +12,7 @@ html, body {
 
 .km-header-content {
     display: inline-block;
-    margin-top: 40px;
+    margin-top: 10px;
     width: 100%;
 }
 .navbar-toggle {
@@ -95,6 +95,10 @@ html, body {
 .page-divisor-single {
     margin-bottom: 40px;
     border-top: 0;
+}
+
+img.logo {
+    height: 80px;
 }
 
 /** IMAGE BUTTON CSS **/
