@@ -23,6 +23,7 @@ func init() {
 		Get("/cart", views.CartView).
 		Get("/checkout", views.RenderCheckoutView).
 		Get("/checkout/:step", views.RenderCheckoutView).
+		Get("/order", views.OrderReviewView).
 		Post("/order", (*km.ServerContext).CreateOrder).
 		Put("/order", (*km.ServerContext).UpdateOrder).
 		Get("/paypal/payment", (*km.ServerContext).CreatePaypalPayment).

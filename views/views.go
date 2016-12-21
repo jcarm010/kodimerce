@@ -16,8 +16,13 @@ type View struct {
 	Title string
 }
 
+type OrderView struct {
+	Title string
+	Order *entities.Order `json:"order"`
+}
+
 func HomeView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
-	var templates = template.Must(template.ParseGlob("views/template/*")) // cache this globally
+	var templates = template.Must(template.ParseGlob("views/templates/*")) // cache this globally
 
 	featuredCategories, err := entities.ListCategoriesByFeatured(c.Context, true)
 	if err != nil {
@@ -45,7 +50,7 @@ func HomeView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 }
 
 func ProductView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
-	var templates = template.Must(template.ParseGlob("views/template/*")) // cache this globally
+	var templates = template.Must(template.ParseGlob("views/templates/*")) // cache this globally
 	productIdStr := r.URL.Query().Get("p")
 	if productIdStr == "" {
 		productIdStr = r.PathParams["productId"]
@@ -99,7 +104,7 @@ func ProductView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 }
 
 func StoreView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
-	var templates = template.Must(template.ParseGlob("views/template/*")) // cache this globally
+	var templates = template.Must(template.ParseGlob("views/templates/*")) // cache this globally
 	category := r.URL.Query().Get("c")
 	if category == "" {
 		category = r.PathParams["category"]
@@ -220,13 +225,51 @@ func LoginView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 	t.Execute(w, p)
 }
 func CartView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
-	var templates = template.Must(template.ParseGlob("views/template/*")) // cache this globally
+	var templates = template.Must(template.ParseGlob("views/templates/*")) // cache this globally
 	err := templates.ExecuteTemplate(w, "cart-page", View{
 		Title: settings.COMPANY_NAME + " | Shopping Cart",
 	})
 	if err != nil {
 		log.Errorf(c.Context, "Error parsing cart html file: %+v", err)
 		c.ServeHTML(http.StatusInternalServerError, "Unexpected error, please try again later.")
+		return
+	}
+}
+
+func OrderReviewView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
+	var templates = template.Must(template.ParseGlob("views/templates/*")) // cache this globally
+
+	orderIdStr := r.URL.Query().Get("id")
+	if orderIdStr == "" {
+		log.Errorf(c.Context, "Missing order id")
+		c.ServeHTMLError(http.StatusBadRequest, "Could not find your order, please try again later.")
+		return
+	}
+
+	orderId, err := strconv.ParseInt(orderIdStr, 10, 64)
+	if err != nil {
+		log.Errorf(c.Context, "Could not parse id: %+v", err)
+		c.ServeHTMLError(http.StatusBadRequest, "Could not find your order, please try again later.")
+		return
+	}
+
+	order, err := entities.GetOrder(c.Context, orderId)
+	if err != nil {
+		log.Errorf(c.Context, "Error finding order: %+v", err)
+		c.ServeHTMLError(http.StatusBadRequest, "Could not find your order, please try again later.")
+		return
+	}
+
+	log.Infof(c.Context, "Rendering orderId[%v] order[%+v]", orderId, order)
+
+	err = templates.ExecuteTemplate(w, "order-review-page", OrderView{
+		Title: settings.COMPANY_NAME + " | Order Details",
+		Order: order,
+	})
+
+	if err != nil {
+		log.Errorf(c.Context, "Error parsing html file: %+v", err)
+		c.ServeHTMLError(http.StatusInternalServerError, "Unexpected error, please try again later.")
 		return
 	}
 }

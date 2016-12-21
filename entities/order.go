@@ -4,6 +4,8 @@ import (
 	"time"
 	"google.golang.org/appengine/datastore"
 	"golang.org/x/net/context"
+	"github.com/dustin/gojson"
+	"strings"
 )
 
 const (
@@ -29,6 +31,15 @@ type Order struct {
 	Created time.Time `datastore:"created" json:"created"`
 	PaypalPaymentId string `datastore:"paypal_payment_id" json:"paypal_payment_id"`
 	PaypalPayerId string `datastore:"paypal_payer_id" json:"paypal_payer_id"`
+}
+
+func (o *Order) StatusCapitalized() string {
+	return strings.ToUpper(o.Status)
+}
+
+func (o *Order) String() string {
+	bts, _ := json.Marshal(o)
+	return string(bts)
 }
 
 func NewOrder() *Order {

@@ -44,10 +44,10 @@
         <div>
             <km-checkout-order-product-details class="details-section" order="[[order]]"></km-checkout-order-product-details>
             <div class="details-section">
-                <km-checkout-order-shipping-details order="[[order]]"></km-checkout-order-shipping-details>
-                <km-checkout-order-payment-details order="[[order]]"></km-checkout-order-payment-details>
+                <km-checkout-order-shipping-details order="[[order]]" editable="[[editable]]"></km-checkout-order-shipping-details>
+                <km-checkout-order-payment-details order="[[order]]" editable="[[editable]]"></km-checkout-order-payment-details>
             </div>
-            <paper-button on-click="submit">Confirm</paper-button>
+            <paper-button on-click="submit" hidden$="[[editable]]">Confirm</paper-button>
         </div>
     </template>
     <script>
@@ -62,6 +62,10 @@
                         },
                         notify: true,
                         observer: '_order_changed'
+                    },
+                    editable: {
+                        type: Boolean,
+                        value: false
                     }
                 },
                 _order_changed: function(){
@@ -69,12 +73,14 @@
                 },
                 submit: function(){
                     console.log("Submitting Confirmation");
+                    var self = this;
                     var req = this.$.ajax.confirmOrder(this.order.id);
                     req.completes.then(function(){
                         console.log("Order Confirmed:", req.response);
                         localStorage.setItem('shoppingCartItems', JSON.stringify([]));
                         var event = new CustomEvent("shoppingCartChanged", {});
                         document.dispatchEvent(event);
+                        window.location = "/order?id=" + self.order.id;
                     },function(){
                         console.log(req.response);
                         kmApp.showError(req.response);

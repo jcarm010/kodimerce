@@ -27,7 +27,7 @@
         <km-ajax id="ajax"></km-ajax>
         <div id="header">
             <span>Payment</span>
-            <a id="edit-link" href="#" on-click="_edit"><img src="/assets/icons/edit-80x80.png"></a>
+            <a id="edit-link" href="#" hidden$="[[editable]]" on-click="_edit"><img src="/assets/icons/edit-80x80.png"></a>
         </div>
         <div>
             <img src="https://www.paypalobjects.com/webstatic/en_US/i/buttons/PP_logo_h_100x26.png" alt="PayPal Logo">
@@ -55,6 +55,10 @@
                     totalPrice: {
                         type: String,
                         value:""
+                    },
+                    editable: {
+                        type: Boolean,
+                        value: false
                     }
                 },
                 _edit: function(){

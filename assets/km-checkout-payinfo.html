@@ -56,15 +56,21 @@
                             console.log("On Payment:", self.order);
                             var CREATE_PAYMENT_URL = '/paypal/payment/?order='+self.order.id;
 
-                            paypal.request.get(CREATE_PAYMENT_URL) //todo: handle error
+                            paypal.request.get(CREATE_PAYMENT_URL)
                                     .then(function(data) {
-                                        console.log("Create payment success!");
-                                        resolve(data.paymentID);
+                                        console.log("Create payment completed!");
+                                        if(data.error && data.error != ""){
+                                            kmApp.showError(data.error);
+                                            reject(data.error);
+                                        }else {
+                                            resolve(data.paymentID);
+                                        }
                                     })
                                     .catch(function(err) {
                                         console.log("Create payment error: ", err);
                                         reject(err);
                                         kmApp.showError(err);
+                                        reject();
                                     });
                         },
 

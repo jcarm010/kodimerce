@@ -42,7 +42,7 @@ func (c *ServerContext) ServeHTML(status int, value interface{}){
 }
 
 func (c *ServerContext) ServeHTMLError(status int, value interface{}){
-	var templates = template.Must(template.ParseGlob("views/template/*")) // cache this globally
+	var templates = template.Must(template.ParseGlob("views/templates/*")) // cache this globally
 	c.w.Header().Add("Content-Type", "text/html; charset=utf-8")
 	c.w.WriteHeader(status)
 	type ErrorView struct {
@@ -315,7 +315,8 @@ func (c *ServerContext) CreatePaypalPayment(w web.ResponseWriter, r *web.Request
 
 	if order.Status != entities.ORDER_STATUS_STARTED {
 		log.Errorf(c.Context, "Order is not in started status[%+v]: %+v", order, err)
-		c.ServeJson(http.StatusBadRequest, "Order has already been placed.")
+		response.Error = "Order has already been placed."
+		c.ServeJson(http.StatusBadRequest, response)
 		return
 	}
 
