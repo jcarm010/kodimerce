@@ -1,0 +1,10 @@
+.title-section {
+    text-align: center;
+    border-top: 1px solid rgb(222,222,222);
+}
+.title-section > .category {
+    font-size: 30px;
+    font-weight: 100;
+    letter-spacing: 2px;
+    color: #464646;
+}

@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <title>{{.Title}}</title>
     {{template "page-imports"}}
+    <link rel="stylesheet" href="/assets/stylesheets/cart.css">
+
     <link rel="import" href="/assets/km-shopping-cart-list.html">
 </head>
 <body>
@@ -14,6 +16,9 @@
     <div class="km-body-content">
         <!-- PAGE NAVIGATION -->
         {{template "page-nav"}}
+        <div class="title-section">
+            <span class="category">Your Shopping Cart</span>
+        </div>
         <km-shopping-cart-list></km-shopping-cart-list>
         <div class="col-xs-12">
             {{template "page-footer"}}

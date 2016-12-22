@@ -1,15 +1,16 @@
 .store-categories-section {
     text-align: center;
     border-top: 1px solid rgb(222,222,222);
-    border-bottom: 1px solid rgb(237,237,237);
 }
 
 .store-categories-section > .category {
-    font-size: xx-large;
+    font-size: 30px;
+    font-weight: 100;
+    letter-spacing: 2px;
     width: 50%;
     margin-right: 20px;
     margin-left: 20px;
-    color: rgb(222,222,222);
+    color: #dedede;
 }
 
 .store-categories-section > .category > a,
@@ -27,7 +28,7 @@
 .store-categories-section > .category.selected > a:visited,
 .store-categories-section > .category.selected > a:focus {
     text-decoration: none;
-    color: black;
+    color: #464646;
 }
 
 .km-product-thumb{
@@ -39,6 +40,10 @@
 
 .km-product-thumb .caption {
     margin-top: 5px;
+    font-size: 18px;
+    font-weight: 100;
+    color: #969696;
+    letter-spacing: 1px;
 }
 
 .product-thumbnails {

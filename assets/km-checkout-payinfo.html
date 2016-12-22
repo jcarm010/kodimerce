@@ -8,7 +8,7 @@
                 padding:10px;
                 width: 300px;
                 display: inline-block;
-                border: 1px solid rgb(237,237,237);
+                border: 1px solid #dedede;
                 margin-bottom: 20px;
                 margin-top: 20px;
             }
@@ -50,7 +50,11 @@
 
 //                        env: 'production', // Specify 'sandbox' for the test environment
                         env: 'sandbox', // Specify 'sandbox' for the test environment
-
+                        style: {
+                            size: 'medium',
+                            color: 'silver',
+                            shape: 'rect'
+                        },
                         payment: function(resolve, reject) {
                             // Set up the payment here, when the buyer clicks on the button
                             console.log("On Payment:", self.order);

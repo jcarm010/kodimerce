@@ -27,6 +27,16 @@
                 background-color: #F4F3F4;
                 margin:20px 0;
             }
+            .product-name, .product-price {
+                font-size: 18px;
+                font-weight: 200;
+                color: #464646;
+            }
+            .subtotal-text {
+                font-size: 16px;
+                font-weight: 200;
+                color: #969696;
+            }
             #dialog {
                 min-width: 300px;
             }
@@ -35,12 +45,13 @@
         <div>
             <table style="width:100%">
                 <template is="dom-repeat" items="{{cartItems}}">
-                    <tr style="border-bottom: 2px solid #F4F3F4">
+                    <tr style="border-bottom: 1px solid #dedede">
                         <td>
                             <paper-icon-button src="[[item.thumbnail]]"
                                                class="product-image"
                                                title="Product Image">
-                            </paper-icon-button>{{item.name}}
+                            </paper-icon-button>
+                            <span class="product-name">{{item.name}}</span>
                         </td>
                         <td class="right-aligned">
                             <paper-icon-button class="close-icon"
@@ -48,15 +59,15 @@
                                 title="Remove"
                                 on-click="_removeCartItem">
                             </paper-icon-button><br>
-                            {{item.price_label}}
+                            <span class="product-price">{{item.price_label}}</span>
                         </td>
                     </tr>
                 </template>
                 <tr style="height: 50px;">
                     <td></td>
-                    <td class="right-aligned" style="border-bottom: 2px solid #F4F3F4">
-                        <span style="margin-right: 50px; color: #969696">Subtotal</span>
-                        <span>[[totalPrice]]</span>
+                    <td class="right-aligned" style="border-bottom: 1px solid #dedede">
+                        <span class="subtotal-text" style="margin-right: 50px;">Subtotal</span>
+                        <span class="subtotal-text">[[totalPrice]]</span>
                     </td>
                 </tr>
             </table>

@@ -1,6 +1,4 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
-<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
-<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 
 <dom-module id="km-shopping-cart-button">
     <template>
@@ -10,16 +8,16 @@
             position: relative;
         }
 
-        iron-icon {
-            height: 50px;
-            width: 50px;
+        .icon {
+            height: 60px;
+            width: 60px;
         }
 
         .counter {
             position: absolute;
-            top: 5;
+            top: 5px;
             right: -25px;
-            font-size: 30px;
+            font-size: 35px;
             color: rgb(206, 123, 122);
         }
 
@@ -29,15 +27,15 @@
 
         /* Small devices (tablets, 768px and up) */
         @media (min-width: 768px) and (min-device-width: 768px) {
-            iron-icon {
-                height: 20px;
-                width: 20px;
+            .icon {
+                height: 30px;
+                width: 30px;
             }
 
             .counter {
                 top: 2px;
                 right: -10px;
-                font-size: 12px;
+                font-size: 18px;
             }
         }
 
@@ -51,7 +49,7 @@
 
         }
         </style>
-        <iron-icon icon="shopping-cart"></iron-icon>
+        <img class="icon" src="./images/cart-80x80.png">
         <span class="counter" hidden="[[_hasNoProducts(cartItems.splices)]]">[[cartItems.length]]</span>
     </template>
     <script>

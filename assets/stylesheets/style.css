@@ -42,6 +42,7 @@ html, body {
     text-align: left;
     min-height: 400px;
     background: rgb(255, 255, 255);
+    border: 1px solid #dedede;
     box-shadow: 0 0 5px rgb(200, 200, 200);
     -moz-box-shadow: 0 0 5px rgb(200, 200, 200);
     -webkit-box-shadow: 0 0 5px rgb(200, 200, 200);
@@ -65,7 +66,7 @@ html, body {
 }
 
 .km-nav-menu {
-    font-size: 20px;
+    color: #464646;
     text-align: center;
     padding-top: 25px;
 }
@@ -73,13 +74,14 @@ html, body {
 .km-nav-item {
     display: block;
     margin: 20px;
-    color: black;
+    color: #464646;
     font-size: 50px;
+    font-weight: 200;
 }
 
 .km-nav-item:hover, .km-nav-item:visited, .km-nav-item:active, .km-nav-item:focus {
     text-decoration: none;
-    color: black;
+    color: #464646;
 }
 
 .page-footer {
@@ -157,18 +159,23 @@ img.logo {
     vertical-align: middle;
     text-align: center;
     margin: 0 auto;
-    font-size: 2.125em;
+    font-size: 60px;
+    font-weight: 100;
+    letter-spacing: 4px;
 }
 
 .km-page-title {
     border-top: 1px solid rgb(222,222,222);
     border-bottom: 1px solid rgb(237,237,237);
     margin-top: 0;
-    margin-bottom: 20px;
-    padding-top: 20px;
-    padding-bottom: 20px;
+    margin-bottom: 10px;
+    padding-top: 5px;
+    padding-bottom: 5px;
     text-align: center;
-    font-weight: 300;
+    font-size: 30px;
+    font-weight: 100;
+    letter-spacing: 2px;
+    color: #464646;
 }
 
 .km-form {
@@ -215,7 +222,7 @@ img.logo {
 
     .km-nav-item {
         display: inline;
-        font-size: 20px;
+        font-size: 18px;
     }
 
     .navbar-toggle .fa {
@@ -234,6 +241,6 @@ img.logo {
 
     }
     .km-body-content {
-        width: 1280px;
+        width: 1200px;
     }
 }
