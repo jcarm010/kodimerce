@@ -31,6 +31,7 @@ type Order struct {
 	Created time.Time `datastore:"created" json:"created"`
 	PaypalPaymentId string `datastore:"paypal_payment_id" json:"paypal_payment_id"`
 	PaypalPayerId string `datastore:"paypal_payer_id" json:"paypal_payer_id"`
+	AddressVerified bool `datastore:"address_verified" json:"address_verified"`
 }
 
 func (o *Order) StatusCapitalized() string {

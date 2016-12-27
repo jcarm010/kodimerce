@@ -3,6 +3,7 @@
 <link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
 <link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
 <link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
 
 <dom-module id="km-checkout-shipinfo">
     <template>
@@ -23,6 +24,9 @@
             }
             paper-input {
                 --paper-input-container-focus-color: #ff0055;
+            }
+            paper-button{
+                background-color: #F4F3F4;
             }
         </style>
         <km-ajax id="ajax"></km-ajax>
@@ -45,6 +49,31 @@
             <paper-input label="Email" type="email" value="{{order.email}}"></paper-input>
             <paper-input label="Phone" type="tel" value="{{order.phone}}"></paper-input>
         </div>
+        <paper-dialog id="addressDialog" modal>
+            <h2>Confirm Address</h2>
+            <div>
+                Use recommended:<br>
+                <paper-button on-click="_chooseSuggestedAddress" dialog-confirm autofocus>
+                    [[suggestion.delivery_line_1]]
+                    <br>
+                    [[suggestion.delivery_line_2]]
+                    <br>
+                    [[suggestion.last_line]]
+                </paper-button>
+            </div>
+
+            <div>
+                Use entered:<br>
+                <paper-button on-click="_chooseEnteredAddress" dialog-confirm>
+                    [[order.shipping_line_1]]
+                    <br>
+                    [[order.shipping_line_2]]
+                    <br>
+                    [[order.city]] [[order.state]] [[order.postal_code]]
+                </paper-button>
+            </div>
+
+        </paper-dialog>
     </template>
     <script>
         (function () {
@@ -72,6 +101,12 @@
                     completed:{
                         type: Boolean,
                         value: true
+                    },
+                    suggestion: {
+                        type: Object,
+                        value: function(){
+                            return null;
+                        }
                     }
                 },
                 _country_selected: function(evt){
@@ -83,7 +118,37 @@
                         this.set("order.country_code", "US");
                     }
                 },
+                _chooseEnteredAddress: function(){
+                    console.log("Chose entered address");
+                    this.order.address_verified = false;
+                    this._save();
+                },
+                _chooseSuggestedAddress: function(){
+                    console.log("Chose suggested address");
+                    this.order.address_verified = true;
+                    this.order.shipping_line_1 = this.suggestion.delivery_line_1;
+                    this.order.shipping_line_2 = this.suggestion.delivery_line_2;
+                    this.order.city = this.suggestion.components.city_name;
+                    this.order.state = this.suggestion.components.state_abbreviation;
+                    this.order.postal_code = this.suggestion.components.zipcode+"-"+this.suggestion.components.plus4_code;
+                    this._save();
+                },
                 performAction: function(){
+                    var self = this;
+                    var order = this.order;
+                    var req = this.$.ajax.checkOrderAddress(order);
+                    req.completes.then(function(){
+                        var suggestion = req.response;
+                        console.log("Check Address Response:", suggestion);
+                        self.set("suggestion", suggestion);
+                        self.$.addressDialog.open();
+                    }, function(){
+                        console.log(req.response);
+                        kmApp.showError(req.response);
+                    });
+
+                },
+                _save: function(){
                     var order = this.order;
                     var nextStep = "payinfo";
                     order.checkout_step = nextStep;

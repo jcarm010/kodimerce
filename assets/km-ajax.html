@@ -36,7 +36,7 @@
                 post: function (url, data) {
                     this.$.xhr.url = url;
                     this.$.xhr.contentType = "application/x-www-form-urlencoded";
-                    this.$.xhr.body = data;
+                    this.$.xhr.body = urlSerialize(data);
                     var r = this.$.xhr.generateRequest();
                     return r;
                 },
@@ -110,6 +110,9 @@
                 },
                 confirmOrder: function(orderId){
                     return this.post("/paypal/payment", {id:orderId});
+                },
+                checkOrderAddress: function(order){
+                    return this.post("/order/address/verify", order);
                 }
             });
             function urlSerialize(obj) {
@@ -117,7 +120,9 @@
                 for(var p in obj)
                     if (obj.hasOwnProperty(p)) {
                         var value = obj[p];
-                        if(value.constructor === Array){
+                        if(value === undefined){
+                              value = "";
+                        }else if(value.constructor === Array){
                             value = value.join();
                         }
 
