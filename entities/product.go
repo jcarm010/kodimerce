@@ -38,6 +38,10 @@ func (p *Product) SetMissingDefaults () {
 	p.PriceLabel = fmt.Sprintf("$%.2f", float64(p.PriceCents)/100)
 }
 
+func (p *Product) OutOfStock() bool {
+	return p.Quantity <= 0
+}
+
 func (p *Product) String() string {
 	return p.Name
 }

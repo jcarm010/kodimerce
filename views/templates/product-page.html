@@ -48,8 +48,12 @@
             </div>
             <div class="col-md-6">
                 <div class="action-buttons">
+                {{if .Product.OutOfStock }}
+                    <span style="color: red;">Out of Stock</span>
+                {{else}}
                     <paper-button class="button" onclick="addToCart({{.Product}})">Add to Cart</paper-button>
                     <paper-button class="button" onclick="buyProduct({{.Product}})">Buy</paper-button>
+                {{end}}
                 </div>
             </div>
 
