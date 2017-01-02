@@ -56,7 +56,7 @@
                     <div tabindex$="[[tabIndex]]">
                         <div class="upload" style="background: url(/gallery/upload/?k=[[item.BlobKey]])">
                         </div>
-                        <paper-button hidden$="[[!selectable]]">Select</paper-button>
+                        <paper-button hidden$="[[!selectable]]" on-click="_imageSelected">Select</paper-button>
                         <paper-button data-args="[[item.BlobKey]]" class="remove-button" on-click="_uploadRemove">Remove</paper-button>
                     </div>
                 </template>
@@ -88,6 +88,10 @@
                         type: Boolean,
                         value: false
                     }
+                },
+                _imageSelected: function(evt){
+                    var item = evt.model.get('item');
+                    this.fire("image-selected", item);
                 },
                 _uploadRemove: function(evt){
                     var self = this;
@@ -146,12 +150,16 @@
                             var upload = uploads[i];
                             self.push("uploads", upload);
                         }
-                        setTimeout(function(){
-                            self.$.uploadList.notifyResize();
-                        });
+                        self.notifyResize();
                     }, function(){
                         console.log(req.response);
                     })
+                },
+                notifyResize: function(){
+                    var self = this;
+                    setTimeout(function(){
+                        self.$.uploadList.notifyResize();
+                    }, 100);
                 },
                 ready: function(){
                     this._fetchUploads();

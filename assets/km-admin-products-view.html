@@ -3,8 +3,10 @@
 <link rel="import" href="../bower_components/paper-input/paper-textarea.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
 <link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
 <link rel="import" href="./km-admin-categories-list.html">
+<link rel="import" href="./km-admin-gallery.html">
 
 <dom-module id="km-admin-products-view">
     <template>
@@ -32,6 +34,11 @@
             paper-card {
                 max-width: 250px;
             }
+            #modal{
+                width: 100%;
+                height: 60%;
+                overflow-y: scroll;
+            }
         </style>
         <div>
             <div>
@@ -58,6 +65,7 @@
                             <paper-card heading="" image="[[item]]" alt="thumnail" class="white" style="margin-bottom:8px;">
                                 <div class="card-actions">
                                     <paper-input label="Url" name="[[index]]" value="[[getPicture(index)]]" on-change="setPicture"></paper-input>
+                                    <paper-button on-click="_onPickFromGallery">Pick from Gallery</paper-button>
                                 </div>
                             </paper-card>
                         </div>
@@ -68,6 +76,12 @@
                 <h4>Categories</h4>
                 <km-admin-categories-list id="categoriesSelect" mode="multi" categories="[[categories]]"></km-admin-categories-list>
             </div>
+            <paper-dialog id="modal">
+                <h2>Gallery</h2>
+                <div>
+                    <km-admin-gallery id="imgGallery" selectable on-image-selected="_onImageSelected"></km-admin-gallery>
+                </div>
+            </paper-dialog>
         </div>
     </template>
     <script>
@@ -98,6 +112,10 @@
                         value: function(){
                             return [];
                         }
+                    },
+                    selectedImageIndex: {
+                        type: Number,
+                        value: 0
                     }
                 },
                 observers: [
@@ -105,6 +123,20 @@
                     '_categoryProductsModified(categoryProducts)',
                     '_categoryProductsModified(categoryProducts.splices)'
                 ],
+                _onImageSelected: function(evt){
+                    var item = evt.detail;
+                    var url = "/gallery/upload/?k=" + item.BlobKey;
+                    console.log("Image Selected:", evt, url);
+                    this.splice('editing.pictures', this.selectedImageIndex, 1, url);
+                },
+                _onPickFromGallery: function(evt){
+                    var self = this;
+                    var index = evt.model.get('index');
+                    console.log("Picking from gallery", index);
+                    self.$.modal.open();
+                    self.$.imgGallery.notifyResize();
+                    self.selectedImageIndex = index;
+                },
                 _categoryProductsModified: function(){
                     if(!this.product || !this.categoryProducts){
                         return;
@@ -136,7 +168,7 @@
                     return this.editing.pictures[index];
                 },
                 addPicture: function(){
-                    this.push('editing.pictures',"/assets/images/stock.jpeg")
+                    this.push('editing.pictures',"/assets/images/stock.jpeg");
                 },
                 save: function(){
                     var editing = JSON.parse(JSON.stringify(this.editing));

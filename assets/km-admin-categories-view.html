@@ -4,7 +4,9 @@
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
 <link rel="import" href="../bower_components/paper-input/paper-textarea.html">
 <link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
+<link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
 <link rel="import" href="./km-admin-products-list.html">
+<link rel="import" href="./km-admin-gallery.html">
 
 <dom-module id="km-admin-categories-view">
     <template>
@@ -32,6 +34,11 @@
             paper-card {
                 max-width: 250px;
             }
+            #modal{
+                width: 100%;
+                height: 60%;
+                overflow-y: scroll;
+            }
         </style>
         <div>
             <div>
@@ -47,6 +54,7 @@
                 <paper-card heading="" image="[[editing.thumbnail]]" alt="thumbnail" class="white">
                     <div class="card-actions">
                         <paper-input label="Url" value="{{editing.thumbnail}}"></paper-input>
+                        <paper-button on-click="_onPickFromGallery">Pick from Gallery</paper-button>
                     </div>
                 </paper-card>
             </div>
@@ -54,6 +62,13 @@
                 <h4>Products</h4>
                 <km-admin-products-list id="productSelect" mode="multi" products="[[products]]"></km-admin-products-list>
             </div>
+
+            <paper-dialog id="modal">
+                <h2>Gallery</h2>
+                <div>
+                    <km-admin-gallery id="imgGallery" selectable on-image-selected="_onImageSelected"></km-admin-gallery>
+                </div>
+            </paper-dialog>
         </div>
     </template>
     <script>
@@ -94,6 +109,18 @@
                 save: function(){
                     this.category = JSON.parse(JSON.stringify(this.editing));
                     this.fire("category-changed", {category: this.category, products: this.$.productSelect.selected});
+                },
+                _onImageSelected: function(evt){
+                    var item = evt.detail;
+                    var url = "/gallery/upload/?k=" + item.BlobKey;
+                    console.log("Image Selected:", evt, url);
+                    this.set('editing.thumbnail', url);
+                },
+                _onPickFromGallery: function(evt){
+                    var self = this;
+                    console.log("Picking from gallery");
+                    self.$.modal.open();
+                    self.$.imgGallery.notifyResize();
                 },
                 _categoryProductsModified: function(){
                     if(!this.category || !this.categoryProducts){
