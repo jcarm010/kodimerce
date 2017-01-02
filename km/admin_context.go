@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"google.golang.org/appengine/blobstore"
+	"google.golang.org/appengine"
 )
 
 type AdminContext struct {
@@ -362,4 +364,70 @@ func (c *AdminContext) UnsetCategoryProducts(w web.ResponseWriter, r *web.Reques
 		c.ServeJson(http.StatusInternalServerError, "Unexpected value deleting category products")
 		return
 	}
+}
+
+func (c *AdminContext) GetGalleryUploadUrl(w web.ResponseWriter, r *web.Request) {
+	uploadURL, err := blobstore.UploadURL(c.Context, "/admin/gallery/upload", nil)
+	if err != nil {
+		log.Errorf(c.Context, "Error creating blobstore url")
+		c.ServeJson(http.StatusInternalServerError, "Unexpected error creating upload url")
+		return
+	}
+
+	log.Infof(c.Context, "Upload url: %+v", uploadURL)
+	c.ServeJson(http.StatusOK, uploadURL.String())
+}
+
+func (c *AdminContext) PostGalleryUpload(w web.ResponseWriter, r *web.Request) {
+	blobs, _, err := blobstore.ParseUpload(r.Request)
+	if err != nil {
+		log.Errorf(c.Context, "Error parsing upload: %+v", err)
+		c.ServeJson(http.StatusBadRequest, "Could not parse upload.")
+		return
+	}
+	file := blobs["file"]
+	if len(file) == 0 {
+		log.Errorf(c.Context, "No file uploaded")
+		c.ServeJson(http.StatusBadRequest, "No file uploaded")
+		return
+	}
+	//key := file[0].BlobKey
+	c.ServeJson(http.StatusOK, file)
+}
+
+func (c *AdminContext) DeleteGalleryUpload(w web.ResponseWriter, r *web.Request) {
+	key := r.URL.Query().Get("k")
+	if key == "" {
+		c.ServeHTML(http.StatusNotFound, "Upload not found")
+		return
+	}
+
+	err := blobstore.Delete(c.Context, appengine.BlobKey(key))
+	if err != nil {
+		log.Errorf(c.Context, "Error removing file: %+v", err)
+		c.ServeJson(http.StatusInternalServerError, "Unexpected error removing file")
+		return
+	}
+}
+
+func (c *AdminContext) GetGalleryUploads(w web.ResponseWriter, r *web.Request) {
+	blobs, err := entities.ListUploads(c.Context)
+	if err != nil {
+		log.Errorf(c.Context, "Error fetching blobs: %+v", err)
+		c.ServeJson(http.StatusInternalServerError, "Unexpected error getting uploads")
+		return
+	}
+
+	c.ServeJson(http.StatusOK, blobs)
+}
+
+
+func (c *ServerContext) GetGalleryUpload(w web.ResponseWriter, r *web.Request) {
+	key := r.URL.Query().Get("k")
+	if key == "" {
+		c.ServeHTML(http.StatusNotFound, "Upload not found")
+		return
+	}
+
+	blobstore.Send(w, appengine.BlobKey(key))
 }

@@ -28,7 +28,8 @@ func init() {
 		Post("/order", (*km.ServerContext).CreateOrder).
 		Put("/order", (*km.ServerContext).UpdateOrder).
 		Get("/paypal/payment", (*km.ServerContext).CreatePaypalPayment).
-		Post("/paypal/payment", (*km.ServerContext).ExecutePaypalPayment)
+		Post("/paypal/payment", (*km.ServerContext).ExecutePaypalPayment).
+		Get("/gallery/upload", (*km.ServerContext).GetGalleryUpload)
 
 
 	router.Subrouter(km.ServerContext{}, "/api").
@@ -45,7 +46,12 @@ func init() {
 		Get("/km/category_products", (*km.AdminContext).GetCategoryProduct).
 		Post("/km/category_products", (*km.AdminContext).SetCategoryProducts).
 		Delete("/km/category_products", (*km.AdminContext).UnsetCategoryProducts).
+		Get("/gallery/upload", (*km.AdminContext).GetGalleryUploads).
+		Post("/gallery/upload", (*km.AdminContext).PostGalleryUpload).
+		Delete("/gallery/upload", (*km.AdminContext).DeleteGalleryUpload).
+		Get("/gallery/upload/url", (*km.AdminContext).GetGalleryUploadUrl).
 		Get("/", views.AdminView).
+		/* Write new admin endpoints above. These two need to be the last admin endpoints. */
 		Get("/:page", views.AdminView).
 		Get("/:page/:subpage", views.AdminView)
 

@@ -137,6 +137,10 @@
                         <iron-icon class="menu-icon" icon="icons:folder-open"></iron-icon>
                         <span class="nav-label">Categories</span>
                     </a>
+                    <a name="categories" href="/admin/gallery/">
+                        <iron-icon class="menu-icon" icon="icons:file-download"></iron-icon>
+                        <span class="nav-label">Gallery</span>
+                    </a>
                 </iron-selector>
             </app-drawer>
 
@@ -154,6 +158,7 @@
                     <km-admin-store name="store"></km-admin-store>
                     <km-admin-products name="products" products="{{products}}" categories="[[categories]]" category-products="{{categoryProducts}}"></km-admin-products>
                     <km-admin-categories name="categories" categories="{{categories}}" products="[[products]]" category-products="{{categoryProducts}}"></km-admin-categories>
+                    <km-admin-gallery name="gallery"></km-admin-gallery>
                 </iron-pages>
             </app-header-layout>
 
