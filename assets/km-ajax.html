@@ -122,6 +122,9 @@
                 },
                 removeGalleryUploads: function(key){
                     return this.del("/admin/gallery/upload?k="+key);
+                },
+                getOrders: function(){
+                    return this.get("/admin/order")
                 }
             });
             function urlSerialize(obj) {

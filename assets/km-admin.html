@@ -129,6 +129,10 @@
                         <span class="nav-label">Store</span>
                     </a>
                     -->
+                    <a name="categories" href="/admin/orders/">
+                        <iron-icon class="menu-icon" icon="icons:assignment-turned-in"></iron-icon>
+                        <span class="nav-label">Orders</span>
+                    </a>
                     <a name="products" href="/admin/products/">
                         <iron-icon class="menu-icon" icon="icons:add-shopping-cart"></iron-icon>
                         <span class="nav-label">Products</span>
@@ -159,6 +163,7 @@
                     <km-admin-products name="products" products="{{products}}" categories="[[categories]]" category-products="{{categoryProducts}}"></km-admin-products>
                     <km-admin-categories name="categories" categories="{{categories}}" products="[[products]]" category-products="{{categoryProducts}}"></km-admin-categories>
                     <km-admin-gallery name="gallery"></km-admin-gallery>
+                    <km-admin-orders name="orders"></km-admin-orders>
                 </iron-pages>
             </app-header-layout>
 

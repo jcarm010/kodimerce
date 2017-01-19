@@ -1,0 +1,141 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/vaadin-grid/vaadin-grid.html">
+<link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="./km-ajax.html">
+
+<dom-module id="km-admin-orders-list">
+    <template>
+        <style>
+            :host{
+                display: block;
+            }
+            td.label{
+                font-weight: bold;
+            }
+            #order-details td {
+                padding-left: 5px;
+                padding-right: 5px;
+            }
+        </style>
+        <km-ajax id="ajax"></km-ajax>
+        <div>
+            <vaadin-grid id="grid" items="[[orders]]">
+                <table>
+                </table>
+            </vaadin-grid>
+            <paper-dialog id="orderDialog" no-cancel-on-outside-click>
+                <h2>Order Details</h2>
+                <div>
+                    <table id="order-details">
+                        <tr>
+                            <td class="label">Name</td>
+                            <td class="value">[[selectedOrder.shipping_name]]</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Email</td>
+                            <td class="value">[[selectedOrder.email]]</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Order Status</td>
+                            <td class="value">[[selectedOrder.status]]</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Address Verified</td>
+                            <td class="value">[[selectedOrder.address_verified]]</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Shipping Line 1</td>
+                            <td class="value">[[selectedOrder.shipping_line_1]]</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Shipping Line 2</td>
+                            <td class="value">[[selectedOrder.shipping_line_2]]</td>
+                        </tr>
+                        <tr>
+                            <td class="label">City</td>
+                            <td class="value">[[selectedOrder.city]]</td>
+                        </tr>
+                        <tr>
+                            <td class="label">State</td>
+                            <td class="value">[[selectedOrder.state]]</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Postal Code</td>
+                            <td class="value">[[selectedOrder.postal_code]]</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Country Code</td>
+                            <td class="value">[[selectedOrder.country_code]]</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="buttons">
+                    <paper-button dialog-dismiss>Close</paper-button>
+                    <paper-button>Save</paper-button>
+                </div>
+            </paper-dialog>
+        </div>
+    </template>
+    <script>
+        (function () {
+            Polymer({
+                is: 'km-admin-orders-list',
+                properties: {
+                    orders: {
+                        type: Array,
+                        value: function(){
+                            return [];
+                        }
+                    },
+                    selectedOrder: {
+                        type: Object,
+                        value: function(){
+                            return {};
+                        }
+                    }
+                },
+                _fetchOrders: function(){
+                    var self = this;
+                    var req = this.$.ajax.getOrders();
+                    req.completes.then(function(){
+                        var orders = req.response;
+                        console.log("Orders:", orders);
+                        for(var i = 0 ; i < orders.length; i++){
+                            var order = orders[i];
+                            self.push("orders", order);
+                        }
+                    }, function(){
+                        console.log(req.response);
+                    })
+                },
+                _orderSelected: function(){
+                    var grid = this.$.grid;
+                    var selectedIndexes = grid.selection.selected();
+                    if(selectedIndexes.length !== 1){
+                        return;
+                    }
+                    var selectedIndex = selectedIndexes[0];
+                    this.selectedOrder = this.orders[selectedIndex];
+                    console.log('Selected:', this.selectedOrder);
+                    this.$.orderDialog.open();
+                },
+                ready: function(){
+                    var grid = this.$.grid;
+                    grid.columns = [
+                        {name: "email", sortable: true},
+                        {name: "shipping_name", sortable: true},
+                        {name: "status", sortable: true},
+                        {name: "address_verified", sortable: true},
+                        {name: "checkout_step", sortable: true},
+                        {name: "state", sortable: true}
+                    ];
+
+                    grid.addEventListener('selected-items-changed', this._orderSelected.bind(this));
+
+                    this._fetchOrders();
+                }
+            });
+        })();
+    </script>
+</dom-module>

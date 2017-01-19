@@ -82,3 +82,17 @@ func UpdateOrder(ctx context.Context, order *Order) (error) {
 
 	return nil
 }
+
+func ListOrders(ctx context.Context) ([]*Order, error) {
+	orders := make([]*Order, 0)
+	keys, err := datastore.NewQuery(ENTITY_ORDER).GetAll(ctx, &orders)
+	if err != nil {
+		return orders, err
+	}
+
+	for index, key := range keys {
+		orders[index].Id = key.IntID()
+	}
+
+	return orders, nil
+}

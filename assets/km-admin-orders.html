@@ -1,0 +1,28 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="./km-admin-orders-list.html">
+<link rel="import" href="./km-ajax.html">
+
+<dom-module id="km-admin-orders">
+    <template>
+        <style>
+            :host{
+                display: block;
+            }
+        </style>
+        <km-ajax id="ajax"></km-ajax>
+        <div>
+            <km-admin-orders-list></km-admin-orders-list>
+        </div>
+    </template>
+    <script>
+        (function () {
+            Polymer({
+                is: 'km-admin-orders',
+                properties: {
+                },
+                ready: function(){
+                }
+            });
+        })();
+    </script>
+</dom-module>

@@ -431,3 +431,14 @@ func (c *ServerContext) GetGalleryUpload(w web.ResponseWriter, r *web.Request) {
 
 	blobstore.Send(w, appengine.BlobKey(key))
 }
+
+func (c *ServerContext) GetOrders(w web.ResponseWriter, r *web.Request) {
+	orders, err := entities.ListOrders(c.Context)
+	if err != nil {
+		log.Errorf(c.Context, "Error fetching orders: %+v", err)
+		c.ServeJson(http.StatusInternalServerError, "Unexpected error getting orders")
+		return
+	}
+
+	c.ServeJson(http.StatusOK, orders)
+}

@@ -50,6 +50,7 @@ func init() {
 		Post("/gallery/upload", (*km.AdminContext).PostGalleryUpload).
 		Delete("/gallery/upload", (*km.AdminContext).DeleteGalleryUpload).
 		Get("/gallery/upload/url", (*km.AdminContext).GetGalleryUploadUrl).
+		Get("/order", (*km.AdminContext).GetOrders).
 		Get("/", views.AdminView).
 		/* Write new admin endpoints above. These two need to be the last admin endpoints. */
 		Get("/:page", views.AdminView).
