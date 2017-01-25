@@ -2,6 +2,12 @@
 <link rel="import" href="../bower_components/vaadin-grid/vaadin-grid.html">
 <link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../bower_components/paper-menu/paper-menu.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
+
 <link rel="import" href="./km-ajax.html">
 
 <dom-module id="km-admin-orders-list">
@@ -13,9 +19,20 @@
             td.label{
                 font-weight: bold;
             }
+            td.value{
+                width: 300px;
+                font-weight: bold;
+            }
+            td.value>*{
+                width:100%;
+            }
             #order-details td {
                 padding-left: 5px;
                 padding-right: 5px;
+            }
+            #orderDialog {
+                top: 64px;
+                overflow-y: scroll;
             }
         </style>
         <km-ajax id="ajax"></km-ajax>
@@ -30,49 +47,86 @@
                     <table id="order-details">
                         <tr>
                             <td class="label">Name</td>
-                            <td class="value">[[selectedOrder.shipping_name]]</td>
+                            <td class="value">
+                                <!--[[selectedOrder.shipping_name]]-->
+                                <paper-input value="{{selectedOrder.shipping_name}}" type="text"></paper-input>
+                            </td>
                         </tr>
                         <tr>
                             <td class="label">Email</td>
-                            <td class="value">[[selectedOrder.email]]</td>
+                            <td class="value">
+                                <!--[[selectedOrder.email]]-->
+                                <paper-input value="{{selectedOrder.email}}" type="email"></paper-input>
+                            </td>
                         </tr>
                         <tr>
                             <td class="label">Order Status</td>
-                            <td class="value">[[selectedOrder.status]]</td>
+                            <td class="value">
+                                <!--[[selectedOrder.status]]-->
+                                <paper-dropdown-menu>
+                                    <paper-menu id="statusDropdown" class="dropdown-content" selected="{{selectedOrder.status}}" attr-for-selected="data-value">
+                                        <paper-item data-value="started">started</paper-item>
+                                        <paper-item data-value="pending">pending</paper-item>
+                                        <paper-item data-value="processing">processing</paper-item>
+                                        <paper-item data-value="shipped">shipped</paper-item>
+                                    </paper-menu>
+                                </paper-dropdown-menu>
+                            </td>
                         </tr>
                         <tr>
                             <td class="label">Address Verified</td>
-                            <td class="value">[[selectedOrder.address_verified]]</td>
+                            <td class="value">
+                                <!--[[selectedOrder.address_verified]]-->
+                                <paper-toggle-button checked="{{selectedOrder.address_verified}}"></paper-toggle-button>
+                            </td>
                         </tr>
                         <tr>
                             <td class="label">Shipping Line 1</td>
-                            <td class="value">[[selectedOrder.shipping_line_1]]</td>
+                            <td class="value">
+                                <!--[[selectedOrder.shipping_line_1]]-->
+                                <paper-input value="{{selectedOrder.shipping_line_1}}" type="text"></paper-input>
+                            </td>
                         </tr>
                         <tr>
                             <td class="label">Shipping Line 2</td>
-                            <td class="value">[[selectedOrder.shipping_line_2]]</td>
+                            <td class="value">
+                                <!--[[selectedOrder.shipping_line_2]]-->
+                                <paper-input value="{{selectedOrder.shipping_line_2}}" type="text"></paper-input>
+                            </td>
                         </tr>
                         <tr>
                             <td class="label">City</td>
-                            <td class="value">[[selectedOrder.city]]</td>
+                            <td class="value">
+                                <!--[[selectedOrder.city]]-->
+                                <paper-input value="{{selectedOrder.city}}" type="text"></paper-input>
+                            </td>
                         </tr>
                         <tr>
                             <td class="label">State</td>
-                            <td class="value">[[selectedOrder.state]]</td>
+                            <td class="value">
+                                <!--[[selectedOrder.state]]-->
+                                <paper-input value="{{selectedOrder.state}}" type="text"></paper-input>
+                            </td>
                         </tr>
                         <tr>
                             <td class="label">Postal Code</td>
-                            <td class="value">[[selectedOrder.postal_code]]</td>
+                            <td class="value">
+                                <!--[[selectedOrder.postal_code]]-->
+                                <paper-input value="{{selectedOrder.postal_code}}" type="text"></paper-input>
+                            </td>
                         </tr>
                         <tr>
                             <td class="label">Country Code</td>
-                            <td class="value">[[selectedOrder.country_code]]</td>
+                            <td class="value">
+                                <!--[[selectedOrder.country_code]]-->
+                                <paper-input value="{{selectedOrder.country_code}}" type="text"></paper-input>
+                            </td>
                         </tr>
                     </table>
                 </div>
                 <div class="buttons">
                     <paper-button dialog-dismiss>Close</paper-button>
-                    <paper-button>Save</paper-button>
+                    <paper-button on-click="_save">Save</paper-button>
                 </div>
             </paper-dialog>
         </div>
@@ -116,9 +170,43 @@
                         return;
                     }
                     var selectedIndex = selectedIndexes[0];
-                    this.selectedOrder = this.orders[selectedIndex];
+                    this.selectedOrder = JSON.parse(JSON.stringify(this.orders[selectedIndex]));
                     console.log('Selected:', this.selectedOrder);
                     this.$.orderDialog.open();
+                },
+                _save: function(){
+                    var self = this;
+                    var order = self.selectedOrder;
+                    console.log("Saving order:", order);
+                    var req = self.$.ajax.updateOrder(order);
+                    req.completes.then(function(){
+                        console.log("Order updated successfully.");
+                        for(var i = 0 ; i < self.orders.length; i++){
+                            var corder = self.orders[i];
+                            if(corder.id === order.id){
+                                self.splice("orders", i, 1, order);
+                            }
+                        }
+                        self.$.orderDialog.close();
+                    }, function(){
+                        console.log(req.response);
+                    });
+                },
+                _sortOrderChanged: function () {
+                    var table = this.$.grid;
+                    var idx = table.columns[table.sortOrder[0].column].name;
+                    var lesser = table.sortOrder[0].direction == 'asc' ? -1 : 1;
+                    this.orders.sort(function (a, b) {
+                        var av = a[idx];
+                        if (av === undefined) {
+                            return lesser;
+                        }
+                        var bv = b[idx];
+                        if (bv === undefined) {
+                            return -lesser;
+                        }
+                        return (av < bv) ? lesser : -lesser;
+                    });
                 },
                 ready: function(){
                     var grid = this.$.grid;
@@ -132,6 +220,8 @@
                     ];
 
                     grid.addEventListener('selected-items-changed', this._orderSelected.bind(this));
+
+                    grid.addEventListener('sort-order-changed', this._sortOrderChanged.bind(this));
 
                     this._fetchOrders();
                 }

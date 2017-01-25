@@ -12,6 +12,8 @@ const (
 	ENTITY_ORDER = "order"
 	ORDER_STATUS_STARTED = "started"
 	ORDER_STATUS_PENDING = "pending"
+	ORDER_STATUS_PROCESSING = "processing"
+	ORDER_STATUS_SHIPPED = "shipped"
 )
 
 type Order struct {

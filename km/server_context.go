@@ -236,9 +236,10 @@ func (c *ServerContext) UpdateOrder(w web.ResponseWriter, r *web.Request){
 	checkoutStep := r.FormValue("checkout_step")
 	paypalPayerId := r.FormValue("paypal_payer_id")
 	addressVerifiedStr := r.FormValue("address_verified")
+	status := r.FormValue("status")
 
-	log.Infof(c.Context, "Updating order idStr[%s] shippingName[%s] shippingLine1[%s] shippingLine2[%s] city[%s] state[%s] postalCode[%s] countryCode[%s] email[%s] phone[%s] checkoutStep[%s] paypalPayerId[%s] addressVerifiedStr[%s]",
-		idStr, shippingName, shippingLine1, shippingLine2, city, state, postalCode, countryCode, email, phone, checkoutStep, paypalPayerId, addressVerifiedStr)
+	log.Infof(c.Context, "Updating order idStr[%s] shippingName[%s] shippingLine1[%s] shippingLine2[%s] city[%s] state[%s] postalCode[%s] countryCode[%s] email[%s] phone[%s] checkoutStep[%s] paypalPayerId[%s] addressVerifiedStr[%s] status[%s]",
+		idStr, shippingName, shippingLine1, shippingLine2, city, state, postalCode, countryCode, email, phone, checkoutStep, paypalPayerId, addressVerifiedStr, status)
 
 	if shippingName == "" {
 		log.Errorf(c.Context, "Missing shipping name")
@@ -284,6 +285,7 @@ func (c *ServerContext) UpdateOrder(w web.ResponseWriter, r *web.Request){
 	order.CheckoutStep = checkoutStep
 	order.PaypalPayerId = paypalPayerId
 	order.AddressVerified = addressVerifiedStr == "true"
+	order.Status = status
 
 	err = entities.UpdateOrder(c.Context, order)
 	if err != nil {
