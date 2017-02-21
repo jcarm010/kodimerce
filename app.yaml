@@ -1,5 +1,6 @@
 runtime: go
 api_version: go1
+version: 3
 
 handlers:
 #- url: /(.*\.(gif|png|jpg))$

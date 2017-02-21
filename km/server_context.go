@@ -18,6 +18,8 @@ import (
 	"settings"
 	"paypal"
 	"smartyaddress"
+	"emailer"
+	"bytes"
 )
 
 type ServerContext struct{
@@ -113,6 +115,18 @@ func (c *ServerContext) RegisterUser(w web.ResponseWriter, r *web.Request){
 		log.Errorf(c.Context, "Error creating user[%s]: %+v", email, err)
 		c.ServeJson(http.StatusInternalServerError, "Unexpected error creating user.")
 		return
+	}
+
+	err = emailer.SendEmail(
+		c.Context,
+		fmt.Sprintf("%s<%s>", settings.COMPANY_NAME, settings.EMAIL_SENDER),
+		user.Email,
+		fmt.Sprintf("Welcome to %s", settings.COMPANY_NAME),
+		fmt.Sprintf("Thank you for registering to %s", settings.COMPANY_NAME),
+	)
+
+	if err != nil {
+		log.Errorf(c.Context, "Couldn't send email: %v", err)
 	}
 }
 
@@ -508,6 +522,46 @@ func (c *ServerContext) ExecutePaypalPayment(w web.ResponseWriter, r *web.Reques
 		if err != nil {
 			log.Errorf(c.Context, "Error decresing inventory for productId[%v]: %+v", productId, err)
 		}
+	}
+
+	proto := "http"
+	if r.Request.TLS != nil {
+		proto = "https"
+	}
+	serverRoot := fmt.Sprintf("%s://%s", proto, r.Host)
+	confirmationUrl := fmt.Sprintf("%s/order?id=%v", serverRoot, order.Id)
+
+	var templates = template.Must(template.ParseGlob("views/templates/*")) // cache this globally
+	type OrderConfirmationEmail struct {
+		CompanyName string
+		ConfirmationUrl string
+		HostRoot string
+		ContactEmail string
+	}
+	var doc bytes.Buffer
+	err = templates.ExecuteTemplate(&doc, "email-order", OrderConfirmationEmail{
+		CompanyName: settings.COMPANY_NAME,
+		ConfirmationUrl: confirmationUrl,
+		HostRoot: serverRoot,
+		ContactEmail: settings.COMPANY_SUPPORT_EMAIL,
+	})
+
+	if err != nil {
+		log.Errorf(c.Context, "Error parsing email template: %+v", err)
+		c.ServeJson(http.StatusInternalServerError, "Unexpected Error, please try again later.")
+		return
+	}
+
+	err = emailer.SendEmail(
+		c.Context,
+		fmt.Sprintf("%s<%s>", settings.COMPANY_NAME, settings.EMAIL_SENDER),
+		order.Email,
+		"Order Confirmation",
+		doc.String(),
+	)
+
+	if err != nil {
+		log.Errorf(c.Context, "Couldn't send email: %v", err)
 	}
 }
 
