@@ -17,8 +17,6 @@ type Category struct {
 	Created time.Time `datastore:"created" json:"created"`
 	Thumbnail string `datastore:"thumbnail,noindex" json:"thumbnail"`
 	Featured bool `datastore:"featured" json:"featured"`
-	//these fields are here to help building the UI
-	EvenPosition bool `datastore:"-" json:"-"`
 }
 
 func (c *Category) SetMissingDefaults() {
@@ -58,7 +56,6 @@ func ListCategories(ctx context.Context) ([]*Category, error) {
 		var category = categories[index];
 		category.Id = key.IntID()
 		category.SetMissingDefaults()
-		category.EvenPosition = index % 2 == 0
 	}
 
 	return categories, err
@@ -139,8 +136,8 @@ func ListCategoriesByName(ctx context.Context, name string) ([]*Category, error)
 	for index, category := range categories {
 		category.Id = keys[index].IntID()
 		category.SetMissingDefaults()
-		category.EvenPosition = index % 2 == 0
 	}
+
 	return categories, nil
 }
 
@@ -155,7 +152,6 @@ func ListCategoriesByFeatured(ctx context.Context, featured bool) ([]*Category, 
 		var category = categories[index];
 		category.Id = key.IntID()
 		category.SetMissingDefaults()
-		category.EvenPosition = index % 2 == 0
 	}
 
 	return categories, err

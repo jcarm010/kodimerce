@@ -37,10 +37,10 @@
         </div>
 
         <!-- PAGE CATEGORIES -->
-        <div class="km-categories-container">
+        <div class="km-categories-container row">
 
             {{range $index, $category := .Categories}}
-            <a href="/store/{{$category.Name}}" class="km-image-button km-home-category-button {{if $category.EvenPosition}}pull-right{{end}}">
+            <a href="/store/{{$category.Name}}" class="km-image-button km-home-category-button">
                 <div class="km-image-button-overlay" style="background-image: url({{$category.Thumbnail}})"></div>
                 <div class="km-image-button-label">
                     <h3>{{$category.Name}}</h3>

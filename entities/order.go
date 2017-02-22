@@ -34,6 +34,8 @@ type Order struct {
 	PaypalPaymentId string `datastore:"paypal_payment_id" json:"paypal_payment_id"`
 	PaypalPayerId string `datastore:"paypal_payer_id" json:"paypal_payer_id"`
 	AddressVerified bool `datastore:"address_verified" json:"address_verified"`
+	Products []*Product `datastore:"-" json:"products"`
+	ProductsSerial []byte `datastore:"products_serial" json:"-"`
 }
 
 func (o *Order) StatusCapitalized() string {
@@ -53,9 +55,21 @@ func NewOrder() *Order {
 	}
 }
 
-func CreateOrder(ctx context.Context, productIds []int64) (*Order, error) {
+func CreateOrder(ctx context.Context, products []*Product) (*Order, error) {
 	order := NewOrder()
+	productIds := make([]int64, len(products))
+	for i, product := range products {
+		productIds[i] = product.Id
+	}
+
 	order.ProductIds = productIds
+	order.Products = products
+	bts, err := json.Marshal(products)
+	if err != nil {
+		return nil, err
+	}
+
+	order.ProductsSerial = bts
 	key, err := datastore.Put(ctx, datastore.NewIncompleteKey(ctx, ENTITY_ORDER, nil), order)
 	if err != nil {
 		return nil, err
@@ -72,6 +86,13 @@ func GetOrder(ctx context.Context, orderId int64) (*Order, error) {
 		return nil, err
 	}
 
+	products := make([]*Product, 0)
+	err = json.Unmarshal(order.ProductsSerial, &products)
+	if err != nil {
+		return nil, err
+	}
+
+	order.Products = products
 	order.Id = orderId
 	return order, nil
 }
@@ -94,6 +115,13 @@ func ListOrders(ctx context.Context) ([]*Order, error) {
 
 	for index, key := range keys {
 		orders[index].Id = key.IntID()
+		products := make([]*Product, 0)
+		err = json.Unmarshal(orders[index].ProductsSerial, &products)
+		if err != nil {
+			return nil, err
+		}
+
+		orders[index].Products = products
 	}
 
 	return orders, nil

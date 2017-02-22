@@ -13,12 +13,21 @@
 
 .km-categories-container{
     margin-top: 40px;
+    margin-left: 0;
+    margin-right: 0;
 }
 
 .km-home-category-button {
     height: 300px;
     width: 100%;
     margin-bottom: 40px;
+}
+
+.km-home-category-button:nth-child(odd) {
+    float: left;
+}
+.km-home-category-button:nth-child(even) {
+    float: right;
 }
 
 /* Small devices (tablets, 768px and up) */

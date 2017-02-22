@@ -106,12 +106,7 @@ func getClient (ctx context.Context) *http.Client {
 }
 
 func CreatePayment(ctx context.Context, order *entities.Order) (string, error) {
-
-	products, err := entities.GetProducts(ctx, order.ProductIds)
-	if err != nil {
-		return "", err
-	}
-
+	products := order.Products
 	log.Infof(ctx, "Products: %+v", products)
 	items := make([]*Item, len(products))
 	var subtotalCents int64 = 0

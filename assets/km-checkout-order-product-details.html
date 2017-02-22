@@ -81,23 +81,18 @@
                 },
                 _fetchProducts: function(){
                     var self = this;
-                    var req = self.$.ajax.getProducts(self.order.product_ids);
-                    req.completes.then(function(){
-                        var products = req.response;
-                        console.log("Products:", products);
-                        self.splice("products", 0, self.products.length);
-                        var total = 0;
-                        for(var i = 0; i < products.length; i++){
-                            var product = products[i];
-                            self.push("products", product);
-                            total += product.price_cents;
-                        }
+                    var products = self.order.products;
+                    console.log("Products:", products);
+                    self.splice("products", 0, self.products.length);
+                    var total = 0;
+                    for(var i = 0; i < products.length; i++){
+                        var product = products[i];
+                        self.push("products", product);
+                        total += product.price_cents;
+                    }
 
-                        var dollars = (total/100).toFixed(2);
-                        self.set("totalPrice", "$"+dollars);
-                    }, function(){
-                        console.log(req.response);
-                    })
+                    var dollars = (total/100).toFixed(2);
+                    self.set("totalPrice", "$"+dollars);
                 },
                 _order_changed: function(){
                     if(this.order.id === undefined){

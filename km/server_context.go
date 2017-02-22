@@ -215,18 +215,24 @@ func (c *ServerContext) CreateOrder(w web.ResponseWriter, r *web.Request){
 			log.Errorf(c.Context, "Could not parse product id[%s]: %+v", productIdStr, err)
 			continue
 		}
-
 		productIds = append(productIds, id)
 	}
 
-	product, err := entities.CreateOrder(c.Context, productIds)
+	products, err := entities.GetProducts(c.Context, productIds)
 	if err != nil {
-		log.Errorf(c.Context, "Error creating product: %+v", err)
+		log.Errorf(c.Context, "Error getting products: %+v", err)
 		c.ServeJson(http.StatusInternalServerError, "Could not create the order at this moment. Please try again later.")
 		return
 	}
 
-	c.ServeJson(http.StatusOK, product)
+	order, err := entities.CreateOrder(c.Context, products)
+	if err != nil {
+		log.Errorf(c.Context, "Error creating order: %+v", err)
+		c.ServeJson(http.StatusInternalServerError, "Could not create the order at this moment. Please try again later.")
+		return
+	}
+
+	c.ServeJson(http.StatusOK, order)
 }
 
 func (c *ServerContext) UpdateOrder(w web.ResponseWriter, r *web.Request){
