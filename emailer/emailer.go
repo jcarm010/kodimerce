@@ -7,7 +7,7 @@ import (
 	"google.golang.org/appengine/urlfetch"
 )
 
-func SendEmail(ctx context.Context, from string, to string, subject string, body string) error {
+func SendEmail(ctx context.Context, from string, to string, subject string, body string, bcc []string) error {
 	sg := sendgrid.NewSendGridClientWithApiKey(settings.SENDGRID_KEY)
 	sg.Client = urlfetch.Client(ctx)
 	message := sendgrid.NewMail()
@@ -15,5 +15,9 @@ func SendEmail(ctx context.Context, from string, to string, subject string, body
 	message.SetSubject(subject)
 	message.SetHTML(body)
 	message.SetFrom(from)
+	for _, bcc := range bcc {
+		message.AddBcc(bcc)
+	}
+
 	return sg.Send(message)
 }

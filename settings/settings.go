@@ -3,6 +3,7 @@ package settings
 const (
 	COMPANY_NAME = "MandalaCrame"
 	COMPANY_SUPPORT_EMAIL = "support@mandalacrame.com"
+	COMPANY_ORDERS_EMAIL = "orders@mandalacrame.com"
 	COMPANY_URL = "http://mandalacrame.com"
 	PAYPAL_API_URL = "https://api.sandbox.paypal.com/v1/"
 	PAYPAL_EMAIL = "jcarmona0317@hotmail.com"
