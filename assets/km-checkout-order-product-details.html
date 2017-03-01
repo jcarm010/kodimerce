@@ -82,6 +82,10 @@
                 _fetchProducts: function(){
                     var self = this;
                     var products = self.order.products;
+                    if(!self.products){
+                        self.products = [];
+                    }
+
                     console.log("Products:", products);
                     self.splice("products", 0, self.products.length);
                     var total = 0;
@@ -103,7 +107,7 @@
                     this._fetchProducts();
                 },
                 ready: function(){
-
+                    console.log("Checkout Product Details Ready");
                 }
             });
         })();
