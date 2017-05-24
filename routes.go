@@ -3,8 +3,8 @@ package server
 import (
 	"github.com/gocraft/web"
 	"net/http"
-	"km"
-	"views"
+	"github.com/jcarm010/kodimerce/km"
+	"github.com/jcarm010/kodimerce/views"
 )
 
 func init() {

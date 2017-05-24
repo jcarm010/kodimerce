@@ -1,7 +1,7 @@
 package paypal
 
 import (
-	"settings"
+	"github.com/jcarm010/kodimerce/settings"
 	"fmt"
 )
 

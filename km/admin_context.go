@@ -2,7 +2,7 @@ package km
 
 import (
 	"github.com/gocraft/web"
-	"entities"
+	"github.com/jcarm010/kodimerce/entities"
 	"google.golang.org/appengine/log"
 	"net/http"
 	"strconv"

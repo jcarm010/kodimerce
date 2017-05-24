@@ -2,7 +2,7 @@ package emailer
 
 import (
 	"golang.org/x/net/context"
-	"settings"
+	"github.com/jcarm010/kodimerce/settings"
 	"gopkg.in/sendgrid/sendgrid-go.v2"
 	"google.golang.org/appengine/urlfetch"
 )

@@ -3,10 +3,10 @@ package paypal
 import (
 	"golang.org/x/net/context"
 	"path"
-	"settings"
+	"github.com/jcarm010/kodimerce/settings"
 	"encoding/json"
 	"google.golang.org/appengine/log"
-	"entities"
+	"github.com/jcarm010/kodimerce/entities"
 	"fmt"
 	"bytes"
 	"errors"

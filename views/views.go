@@ -2,12 +2,12 @@ package views
 
 import (
 	"github.com/gocraft/web"
-	"km"
+	"github.com/jcarm010/kodimerce/km"
 	"html/template"
 	"google.golang.org/appengine/log"
 	"net/http"
-	"settings"
-	"entities"
+	"github.com/jcarm010/kodimerce/settings"
+	"github.com/jcarm010/kodimerce/entities"
 	"strconv"
 	"fmt"
 )
