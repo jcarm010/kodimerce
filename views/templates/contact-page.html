@@ -1,0 +1,27 @@
+{{define "contact-page"}}
+<html lang="en">
+<head>
+    {{template "page-standard-meta-tags"}}
+    <title>{{.Title}}</title>
+    {{template "page-imports"}}
+
+    <link rel="stylesheet" href="/assets/stylesheets/home.css">
+</head>
+<body>
+
+{{template "page-header" .}}
+
+<div class="km-body">
+    <div class="km-body-content">
+        <!-- PAGE NAVIGATION -->
+        {{template "page-nav"}}
+
+        Contact Page Stuff
+
+        {{template "page-footer"}}
+    </div>
+</div>
+
+</body>
+</html>
+{{end}}

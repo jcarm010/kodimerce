@@ -21,8 +21,14 @@ type OrderView struct {
 	Order *entities.Order `json:"order"`
 }
 
+var fns = template.FuncMap{
+	"plus1": func(x int) int {
+		return x + 1
+	},
+}
+
 func HomeView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
-	var templates = template.Must(template.ParseGlob("views/templates/*")) // cache this globally
+	var templates = template.Must(template.New("").Funcs(fns).ParseGlob("views/templates/*")) //todo: cache this globally
 
 	featuredCategories, err := entities.ListCategoriesByFeatured(c.Context, true)
 	if err != nil {
@@ -49,8 +55,24 @@ func HomeView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 	}
 }
 
+func ContactView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
+	var templates = template.Must(template.New("").Funcs(fns).ParseGlob("views/templates/*")) //todo: cache this globally
+	p := struct {
+		Title      string
+	}{
+		Title: settings.COMPANY_NAME + " | Contact",
+	}
+
+	err := templates.ExecuteTemplate(w, "contact-page", p)
+	if err != nil {
+		log.Errorf(c.Context, "Error parsing home html file: %+v", err)
+		c.ServeHTML(http.StatusInternalServerError, "Unexpected Error, please try again later.")
+		return
+	}
+}
+
 func ProductView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
-	var templates = template.Must(template.ParseGlob("views/templates/*")) // cache this globally
+	var templates = template.Must(template.New("").Funcs(fns).ParseGlob("views/templates/*")) //todo: cache this globally
 	productIdStr := r.URL.Query().Get("p")
 	if productIdStr == "" {
 		productIdStr = r.PathParams["productId"]
@@ -76,6 +98,7 @@ func ProductView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		Product *entities.Product
 		ProductFound bool
 		CanonicalUrl string
+		Domain string
 	}
 
 	httpHeader := "http"
@@ -87,6 +110,7 @@ func ProductView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		Product: product,
 		ProductFound: productFound,
 		CanonicalUrl: fmt.Sprintf("%s://%s%s", httpHeader, r.Host, r.URL.Path),
+		Domain: settings.COMPANY_URL,
 	}
 
 	log.Debugf(c.Context, "Canonical Url: %s", p.CanonicalUrl)
@@ -104,7 +128,7 @@ func ProductView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 }
 
 func StoreView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
-	var templates = template.Must(template.ParseGlob("views/templates/*")) // cache this globally
+	var templates = template.Must(template.New("").Funcs(fns).ParseGlob("views/templates/*")) //todo: cache this globally
 	category := r.URL.Query().Get("c")
 	if category == "" {
 		category = r.PathParams["category"]
@@ -157,19 +181,26 @@ func StoreView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		}
 	}
 
-	type ViewStore struct {
+	type StoreView struct {
 		Title string
 		Products []*entities.Product
 		Category string
 		CategoryOptions []CategoryOption
 		Categories []*entities.Category
+		Domain string
 	}
 
-	p := ViewStore {
-		Title: settings.COMPANY_NAME + " | Store",
+	title := settings.COMPANY_NAME + " | Store"
+	if category != "" {
+		title += " | " + category
+	}
+
+	p := StoreView{
+		Title: title,
 		Products: products,
 		Category: category,
 		CategoryOptions: options,
+		Domain: settings.COMPANY_URL,
 	}
 
  	err = templates.ExecuteTemplate(w, "store-page", p)
