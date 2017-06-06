@@ -13,6 +13,7 @@ func init() {
 		Middleware((*km.ServerContext).InitServerContext).
 		Get("/", views.HomeView).
 		Get("/contact", views.ContactView).
+		Post("/contact", (*km.ServerContext).PostContactMessage).
 		Get("/product", views.ProductView).
 		Get("/product/:productId", views.ProductView).
 		Get("/store", views.StoreView).

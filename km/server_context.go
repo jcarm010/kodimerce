@@ -111,7 +111,7 @@ func (c *ServerContext) RegisterUser(w web.ResponseWriter, r *web.Request){
 		log.Errorf(c.Context, "User already exists: %s", email)
 		c.ServeJson(http.StatusBadRequest, "User already exists.")
 		return
-	}else if(err != nil){
+	}else if err != nil{
 		log.Errorf(c.Context, "Error creating user[%s]: %+v", email, err)
 		c.ServeJson(http.StatusInternalServerError, "Unexpected error creating user.")
 		return
@@ -603,4 +603,54 @@ func (c *ServerContext) GetProducts(w web.ResponseWriter, r *web.Request){
 	}
 
 	c.ServeJson(http.StatusOK, products)
+}
+
+func (c *ServerContext) PostContactMessage(w web.ResponseWriter, r *web.Request){
+	err := r.ParseForm()
+	if err != nil {
+		log.Errorf(c.Context, "Error parsing request: %s", err)
+		c.ServeJson(http.StatusBadRequest, "Unexpected error parsing request")
+		return
+	}
+
+	q := r.Form
+	name := q.Get("name")
+	if name == "" {
+		log.Errorf(c.Context, "Missing name")
+		c.ServeJson(http.StatusBadRequest, "Please provide a name.")
+		return
+	}
+
+	email := q.Get("email")
+	if email == "" {
+		log.Errorf(c.Context, "Missing email")
+		c.ServeJson(http.StatusBadRequest, "Please provide an email so that we can get back to you.")
+		return
+	}
+
+	message := q.Get("message")
+	if message == "" {
+		log.Errorf(c.Context, "Missing message")
+		c.ServeJson(http.StatusBadRequest, "Please provide a message so that we can address your questions or concerns.")
+		return
+	}
+
+	log.Infof(c.Context, "Sending message name[%s] email[%s] message[%s]", name, email, message)
+	body := fmt.Sprintf("Customer %s (%s) has sent you a message: %s", name, email, message)
+	err = emailer.SendEmail(
+		c.Context,
+		fmt.Sprintf("%s<%s>", settings.COMPANY_NAME, settings.EMAIL_SENDER),
+		settings.COMPANY_SUPPORT_EMAIL,
+		"Customer Message",
+		body,
+		[]string{settings.COMPANY_ORDERS_EMAIL},
+	)
+
+	if err != nil {
+		log.Errorf(c.Context, "Error Sending email: %+v", err)
+		c.ServeJson(http.StatusInternalServerError, "Could not send message at this time. Please try again later.")
+		return
+	}
+
+	c.ServeJson(http.StatusOK, "")
 }
