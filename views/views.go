@@ -3,7 +3,7 @@ package views
 import (
 	"github.com/gocraft/web"
 	"github.com/jcarm010/kodimerce/km"
-	"html/template"
+	"text/template"
 	"google.golang.org/appengine/log"
 	"net/http"
 	"github.com/jcarm010/kodimerce/settings"
@@ -106,7 +106,7 @@ func ProductView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		httpHeader = "https"
 	}
 	p := ProductView {
-		Title: settings.COMPANY_NAME + " | " + product.Name,
+		Title: product.Name,
 		Product: product,
 		ProductFound: productFound,
 		CanonicalUrl: fmt.Sprintf("%s://%s%s", httpHeader, r.Host, r.URL.Path),
@@ -256,7 +256,7 @@ func LoginView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 	t.Execute(w, p)
 }
 func CartView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
-	var templates = template.Must(template.ParseGlob("views/templates/*")) // cache this globally
+	var templates = template.Must(template.New("").Funcs(fns).ParseGlob("views/templates/*")) //todo: cache this globally
 	err := templates.ExecuteTemplate(w, "cart-page", View{
 		Title: settings.COMPANY_NAME + " | Shopping Cart",
 	})

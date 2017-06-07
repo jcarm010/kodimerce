@@ -6,6 +6,7 @@ import (
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/log"
 	"fmt"
+	"encoding/json"
 )
 
 const ENTITY_PRODUCT = "product"
@@ -44,6 +45,11 @@ func (p *Product) OutOfStock() bool {
 
 func (p *Product) String() string {
 	return p.Name
+}
+
+func (p *Product) PicturesJson() string {
+	bts, _ := json.Marshal(p.Pictures)
+	return string(bts)
 }
 
 func NewProduct(name string) *Product {
