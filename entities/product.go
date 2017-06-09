@@ -36,7 +36,7 @@ func (p *Product) SetMissingDefaults () {
 		p.Thumbnail = p.Pictures[0]
 	}
 
-	p.PriceLabel = fmt.Sprintf("$%.2f", float64(p.PriceCents)/100)
+	p.PriceLabel = fmt.Sprintf("%.2f", float64(p.PriceCents)/100)
 }
 
 func (p *Product) OutOfStock() bool {

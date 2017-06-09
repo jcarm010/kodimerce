@@ -1,6 +1,10 @@
 package settings
 
-import "os"
+import (
+	"os"
+	"net/http"
+	"fmt"
+)
 
 var (
 	COMPANY_NAME = os.Getenv("COMPANY_NAME")
@@ -19,3 +23,12 @@ var (
 	EMAIL_SENDER = os.Getenv("EMAIL_SENDER")
 	SENDGRID_KEY = os.Getenv("SENDGRID_KEY")
 )
+
+func ServerUrl(r *http.Request) string {
+	httpHeader := "http"
+	if r.TLS != nil {
+		httpHeader = "https"
+	}
+
+	return fmt.Sprintf("%s://%s", httpHeader, r.Host)
+}

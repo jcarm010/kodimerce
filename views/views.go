@@ -3,7 +3,7 @@ package views
 import (
 	"github.com/gocraft/web"
 	"github.com/jcarm010/kodimerce/km"
-	"text/template"
+	"html/template"
 	"google.golang.org/appengine/log"
 	"net/http"
 	"github.com/jcarm010/kodimerce/settings"
@@ -110,7 +110,7 @@ func ProductView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		Product: product,
 		ProductFound: productFound,
 		CanonicalUrl: fmt.Sprintf("%s://%s%s", httpHeader, r.Host, r.URL.Path),
-		Domain: settings.COMPANY_URL,
+		Domain: settings.ServerUrl(r.Request),
 	}
 
 	log.Debugf(c.Context, "Canonical Url: %s", p.CanonicalUrl)
@@ -200,7 +200,7 @@ func StoreView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		Products: products,
 		Category: category,
 		CategoryOptions: options,
-		Domain: settings.COMPANY_URL,
+		Domain: settings.ServerUrl(r.Request),
 	}
 
  	err = templates.ExecuteTemplate(w, "store-page", p)
