@@ -117,7 +117,16 @@ func CreatePayment(ctx context.Context, order *entities.Order) (string, error) {
 	var insuranceCents int64 = 0
 
 	for index, product := range products {
-		subtotalCents += product.PriceCents
+		var qty int64 = 0
+		if order.Quantities != nil &&  len(order.Quantities) > 0 {
+			qty = order.Quantities[index]
+		}
+
+		if qty == 0 {
+			qty = 1
+		}
+
+		subtotalCents += product.PriceCents * qty
 		u, err := url.Parse(settings.COMPANY_URL)
 		if err != nil {
 			return "", err
@@ -125,17 +134,14 @@ func CreatePayment(ctx context.Context, order *entities.Order) (string, error) {
 
 		u.Path = path.Join(u.Path, fmt.Sprintf("product/%v",product.Id))
 		productUrl := u.String()
-		items[index] = NewItem(fmt.Sprintf("%v", product.Id), product.Name, product.Description, 1, product.PriceCents, 0, productUrl)
+		items[index] = NewItem(fmt.Sprintf("%v", product.Id), product.Name, product.Description, int(qty), product.PriceCents, 0, productUrl)
 	}
 
 	amount := NewAmount(subtotalCents, taxCents, shippingCents, handlingFeeCents, shippingDiscountCents, insuranceCents)
 
-	transaction := NewTransaction(
-		fmt.Sprintf("%v",order.Id),
-		"An order of unique fashion pieces.",
-		amount,
-		items,
-		&ShippingAddress{
+	var shippingAddress *ShippingAddress = nil
+	if !order.NoShipping {
+		shippingAddress = &ShippingAddress{
 			Line1: order.ShippingLine1,
 			Line2: order.ShippingLine2,
 			City: order.City,
@@ -144,7 +150,16 @@ func CreatePayment(ctx context.Context, order *entities.Order) (string, error) {
 			State: order.State,
 			Phone: order.Phone,
 			RecipientName: order.ShippingName,
-		},
+		}
+	}
+
+
+	transaction := NewTransaction(
+		fmt.Sprintf("%v",order.Id),
+		"An order of unique fashion pieces.",
+		amount,
+		items,
+		shippingAddress,
 	)
 
 	u, err := url.Parse(settings.COMPANY_URL)

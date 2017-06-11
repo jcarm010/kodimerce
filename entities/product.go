@@ -14,7 +14,12 @@ const ENTITY_PRODUCT = "product"
 type Product struct {
 	Id int64 `datastore:"-" json:"id"`
 	Name string `datastore:"name" json:"name"`
+	IsInfinite bool `datastore:"is_infinite" json:"is_infinite"`
 	Quantity int `datastore:"quantity" json:"quantity"`
+	NoShipping bool `datastore:"no_shipping" json:"no_shipping"`
+	NeedsDate bool `datastore:"needs_date" json:"needs_date"`
+	NeedsTime bool `datastore:"needs_time" json:"needs_time"`
+	AvailableTimes AvailableTime `datastore:"available_times" json:"available_times"`
 	Active bool `datastore:"active" json:"active"`
 	PriceCents int64 `datastore:"price_cents" json:"price_cents"`
 	Pictures []string `datastore:"pictures,noindex" json:"pictures"`
@@ -24,6 +29,11 @@ type Product struct {
 	PriceLabel string `datastore:"-" json:"price_label"`
 	Thumbnail string `datastore:"-" json:"thumbnail"`
 	Last bool `datastore:"-" json:"-"`
+}
+
+type AvailableTime struct {
+	Hour int `datastore:"hour" json:"hour"`
+	Minute int `datastore:"minute" json:"minute"`
 }
 
 func (p *Product) SetMissingDefaults () {
@@ -40,7 +50,7 @@ func (p *Product) SetMissingDefaults () {
 }
 
 func (p *Product) OutOfStock() bool {
-	return p.Quantity <= 0
+	return !p.IsInfinite && p.Quantity <= 0
 }
 
 func (p *Product) String() string {
@@ -103,6 +113,8 @@ func UpdateProduct(ctx context.Context, product *Product) error {
 		p.Active = product.Active
 		p.Pictures = product.Pictures
 		p.Description = product.Description
+		p.IsInfinite = product.IsInfinite
+		p.NoShipping = product.NoShipping
 		_, err = datastore.Put(ctx, key, p)
 		return err
 	}, nil)
@@ -121,6 +133,11 @@ func DecreaseProductInventory(ctx context.Context, productId int64, quantity int
 		err := datastore.Get(ctx, key, p)
 		if err != nil {
 			return err
+		}
+
+		if p.IsInfinite {
+			//Do not need to update quantities since this product is infinite.
+			return nil
 		}
 
 		p.Quantity = p.Quantity - quantity

@@ -28,6 +28,7 @@ type Order struct {
 	Email string `datastore:"email" json:"email"`
 	Phone string `datastore:"phone" json:"phone"`
 	ProductIds []int64 `datastore:"product_ids,noindex" json:"product_ids"`
+	Quantities []int64 `datastore:"quantities,noindex" json:"quantities"`
 	Status string `datastore:"status" json:"status"`
 	CheckoutStep string `datastore:"checkout_step" json:"checkout_step"`
 	Created time.Time `datastore:"created" json:"created"`
@@ -36,6 +37,7 @@ type Order struct {
 	AddressVerified bool `datastore:"address_verified" json:"address_verified"`
 	Products []*Product `datastore:"-" json:"products"`
 	ProductsSerial []byte `datastore:"products_serial" json:"-"`
+	NoShipping bool `datastore:"no_shipping" json:"no_shipping"`
 }
 
 func (o *Order) StatusCapitalized() string {
@@ -55,7 +57,15 @@ func NewOrder() *Order {
 	}
 }
 
-func CreateOrder(ctx context.Context, products []*Product) (*Order, error) {
+func CreateOrder(ctx context.Context, products []*Product, quantities []int64) (*Order, error) {
+	noShipping := true
+	for _, product := range products {
+		if !product.NoShipping {
+			noShipping = false
+			break
+		}
+	}
+
 	order := NewOrder()
 	productIds := make([]int64, len(products))
 	for i, product := range products {
@@ -64,6 +74,8 @@ func CreateOrder(ctx context.Context, products []*Product) (*Order, error) {
 
 	order.ProductIds = productIds
 	order.Products = products
+	order.Quantities = quantities
+	order.NoShipping = noShipping
 	bts, err := json.Marshal(products)
 	if err != nil {
 		return nil, err

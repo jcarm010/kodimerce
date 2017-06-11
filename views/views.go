@@ -12,6 +12,8 @@ import (
 	"fmt"
 )
 
+var templates = template.Must(template.New("").Funcs(fns).ParseGlob("views/templates/*")) //todo: cache this globally
+
 type View struct {
 	Title string
 }
@@ -28,7 +30,6 @@ var fns = template.FuncMap{
 }
 
 func HomeView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
-	var templates = template.Must(template.New("").Funcs(fns).ParseGlob("views/templates/*")) //todo: cache this globally
 
 	featuredCategories, err := entities.ListCategoriesByFeatured(c.Context, true)
 	if err != nil {
@@ -56,7 +57,6 @@ func HomeView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 }
 
 func ContactView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
-	var templates = template.Must(template.New("").Funcs(fns).ParseGlob("views/templates/*")) //todo: cache this globally
 	p := struct {
 		Title      string
 	}{
@@ -72,7 +72,6 @@ func ContactView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 }
 
 func ProductView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
-	var templates = template.Must(template.New("").Funcs(fns).ParseGlob("views/templates/*")) //todo: cache this globally
 	productIdStr := r.URL.Query().Get("p")
 	if productIdStr == "" {
 		productIdStr = r.PathParams["productId"]
@@ -128,7 +127,6 @@ func ProductView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 }
 
 func StoreView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
-	var templates = template.Must(template.New("").Funcs(fns).ParseGlob("views/templates/*")) //todo: cache this globally
 	category := r.URL.Query().Get("c")
 	if category == "" {
 		category = r.PathParams["category"]
@@ -256,7 +254,6 @@ func LoginView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 	t.Execute(w, p)
 }
 func CartView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
-	var templates = template.Must(template.New("").Funcs(fns).ParseGlob("views/templates/*")) //todo: cache this globally
 	err := templates.ExecuteTemplate(w, "cart-page", View{
 		Title: settings.COMPANY_NAME + " | Shopping Cart",
 	})
@@ -268,8 +265,6 @@ func CartView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 }
 
 func OrderReviewView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
-	var templates = template.Must(template.ParseGlob("views/templates/*")) // cache this globally
-
 	orderIdStr := r.URL.Query().Get("id")
 	if orderIdStr == "" {
 		log.Errorf(c.Context, "Missing order id")

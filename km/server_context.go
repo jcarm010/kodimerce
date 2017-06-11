@@ -200,25 +200,29 @@ func (c *ServerContext) CreateOrder(w web.ResponseWriter, r *web.Request){
 		return
 	}
 
-	productIdsCommaStr := r.FormValue("product_ids")
-	log.Infof(c.Context, "productIdsCommaStr[%+v]", productIdsCommaStr)
-	productIdsStr := strings.Split(productIdsCommaStr, ",")
-	if len(productIdsStr) < 1 || productIdsStr[0] == "" {
-		log.Errorf(c.Context, "No products found: %+v", productIdsStr)
-		c.ServeJson(http.StatusBadRequest, "Can't create an order without products. Please add products to your shopping cart and try again.")
+	itemsStr := r.FormValue("products")
+	productQuantityMap := make(map[string]int64)
+	err = json.Unmarshal([]byte(itemsStr), &productQuantityMap)
+	if err != nil {
+		log.Errorf(c.Context, "Error reading products: %+v", err)
+		c.ServeJson(http.StatusBadRequest, "Could not find products.")
 		return
 	}
 
+	quantities := make([]int64, 0)
 	productIds := make([]int64, 0)
-	for _, productIdStr := range productIdsStr {
-		id, err := strconv.ParseInt(productIdStr, 10, 64)
+	for productIdStr, quantity := range productQuantityMap {
+		productId, err := strconv.ParseInt(productIdStr, 10, 64)
 		if err != nil {
-			log.Errorf(c.Context, "Could not parse product id[%s]: %+v", productIdStr, err)
-			continue
+			log.Errorf(c.Context, "Error parsing product id from string to integer: %+v", err)
+			c.ServeJson(http.StatusBadRequest, "Invalid product id.")
+			return
 		}
-		productIds = append(productIds, id)
+		productIds = append(productIds, productId)
+		quantities = append(quantities, quantity)
 	}
 
+	log.Infof(c.Context, "Creating order with ProductIds: %+v and Quantities: %+v", productIds, quantities)
 	products, err := entities.GetProducts(c.Context, productIds)
 	if err != nil {
 		log.Errorf(c.Context, "Error getting products: %+v", err)
@@ -226,7 +230,7 @@ func (c *ServerContext) CreateOrder(w web.ResponseWriter, r *web.Request){
 		return
 	}
 
-	order, err := entities.CreateOrder(c.Context, products)
+	order, err := entities.CreateOrder(c.Context, products, quantities)
 	if err != nil {
 		log.Errorf(c.Context, "Error creating order: %+v", err)
 		c.ServeJson(http.StatusInternalServerError, "Could not create the order at this moment. Please try again later.")
@@ -234,6 +238,7 @@ func (c *ServerContext) CreateOrder(w web.ResponseWriter, r *web.Request){
 	}
 
 	c.ServeJson(http.StatusOK, order)
+
 }
 
 func (c *ServerContext) UpdateOrder(w web.ResponseWriter, r *web.Request){
@@ -538,7 +543,7 @@ func (c *ServerContext) ExecutePaypalPayment(w web.ResponseWriter, r *web.Reques
 	serverRoot := fmt.Sprintf("%s://%s", proto, r.Host)
 	confirmationUrl := fmt.Sprintf("%s/order?id=%v", serverRoot, order.Id)
 
-	var templates = template.Must(template.ParseGlob("views/templates/*")) // cache this globally
+	var templates = template.Must(template.ParseGlob("emailer/templates/*")) // cache this globally
 	type OrderConfirmationEmail struct {
 		CompanyName string
 		ConfirmationUrl string

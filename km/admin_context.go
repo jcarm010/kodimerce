@@ -117,6 +117,8 @@ func (c *AdminContext) UpdateProduct(w web.ResponseWriter, r *web.Request) {
 	activeStr := r.FormValue("active")
 	picturesStr := r.FormValue("pictures")
 	description := r.FormValue("description")
+	isInfiniteStr := r.FormValue("is_infinite")
+	noShippingStr := r.FormValue("no_shipping")
 	log.Infof(c.Context, "Modifying product [%s] with values: name[%s] price_cents[%s] quantity[%s] active[%s] pictures[%s] description[%s]", idStr, name, priceCentsStr, quantityStr, activeStr, picturesStr, description)
 	var id int64
 	if idStr == "" {
@@ -159,6 +161,28 @@ func (c *AdminContext) UpdateProduct(w web.ResponseWriter, r *web.Request) {
 	}
 
 	log.Infof(c.Context, "Active: %+v", active)
+	var isInfinite bool = false
+	if isInfiniteStr != "" {
+		isInfinite, err = strconv.ParseBool(isInfiniteStr)
+		if err != nil {
+			log.Errorf(c.Context, "Error parsing isInfiniteStr: %+v", err)
+			c.ServeJson(http.StatusBadRequest, "Invalid value for is_infinite")
+			return
+		}
+	}
+
+	log.Infof(c.Context, "isInfinite: %+v", isInfinite)
+	var noShipping bool = false
+	if noShippingStr != "" {
+		noShipping, err = strconv.ParseBool(noShippingStr)
+		if err != nil {
+			log.Errorf(c.Context, "Error parsing noShippingStr: %+v", err)
+			c.ServeJson(http.StatusBadRequest, "Invalid value for no_shipping")
+			return
+		}
+	}
+
+	log.Infof(c.Context, "noShipping: %+v", noShipping)
 	var quantity int = 0
 	if quantityStr != "" {
 		quantity64, err := strconv.ParseInt(quantityStr, 10, 32)
@@ -177,6 +201,8 @@ func (c *AdminContext) UpdateProduct(w web.ResponseWriter, r *web.Request) {
 	product.PriceCents = priceCents
 	product.Quantity = quantity
 	product.Description = description
+	product.IsInfinite = isInfinite
+	product.NoShipping = noShipping
 	if picturesStr != "" {
 		product.Pictures = strings.Split(picturesStr,",")
 	}

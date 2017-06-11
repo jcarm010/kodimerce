@@ -42,7 +42,7 @@ type CheckoutView struct {
 }
 
 func RenderCheckoutView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
-	var templates = template.Must(template.ParseGlob("views/templates/*")) // cache this globally
+	var templates = template.Must(template.New("").Funcs(fns).ParseGlob("views/templates/*")) //todo: cache this globally
 
 	orderIdStr := r.URL.Query().Get("order")
 	if orderIdStr == "" {
