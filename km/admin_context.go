@@ -9,6 +9,8 @@ import (
 	"strings"
 	"google.golang.org/appengine/blobstore"
 	"google.golang.org/appengine"
+	"encoding/json"
+	"sort"
 )
 
 type AdminContext struct {
@@ -118,7 +120,10 @@ func (c *AdminContext) UpdateProduct(w web.ResponseWriter, r *web.Request) {
 	picturesStr := r.FormValue("pictures")
 	description := r.FormValue("description")
 	isInfiniteStr := r.FormValue("is_infinite")
+	needsDateStr := r.FormValue("needs_date")
+	needsTimeStr := r.FormValue("needs_time")
 	noShippingStr := r.FormValue("no_shipping")
+	availableTimesStr := r.FormValue("available_times")
 	log.Infof(c.Context, "Modifying product [%s] with values: name[%s] price_cents[%s] quantity[%s] active[%s] pictures[%s] description[%s]", idStr, name, priceCentsStr, quantityStr, activeStr, picturesStr, description)
 	var id int64
 	if idStr == "" {
@@ -183,6 +188,41 @@ func (c *AdminContext) UpdateProduct(w web.ResponseWriter, r *web.Request) {
 	}
 
 	log.Infof(c.Context, "noShipping: %+v", noShipping)
+	var needsDate bool = false
+	if needsDateStr != "" {
+		needsDate, err = strconv.ParseBool(needsDateStr)
+		if err != nil {
+			log.Errorf(c.Context, "Error parsing needsDateStr: %+v", err)
+			c.ServeJson(http.StatusBadRequest, "Invalid value for needs_date")
+			return
+		}
+	}
+
+	log.Infof(c.Context, "needsDate: %+v", needsDate)
+	var needsTime bool = false
+	if needsTimeStr != "" {
+		needsTime, err = strconv.ParseBool(needsTimeStr)
+		if err != nil {
+			log.Errorf(c.Context, "Error parsing needsTimeStr: %+v", err)
+			c.ServeJson(http.StatusBadRequest, "Invalid value for needs_time")
+			return
+		}
+	}
+
+	log.Infof(c.Context, "needsDate: %+v", needsDate)
+	availableTimes := make([]entities.AvailableTime, 0)
+	if availableTimesStr != "" {
+		err = json.Unmarshal([]byte(availableTimesStr), &availableTimes)
+		if err != nil {
+			log.Errorf(c.Context, "Error parsing availableTimesStr: %+v", err)
+			c.ServeJson(http.StatusBadRequest, "Invalid value for available_times")
+			return
+		}
+	}
+
+	sort.Sort(entities.ByAvailableTime(availableTimes))
+	log.Infof(c.Context, "availableTimesStr: %+v:", availableTimesStr)
+	log.Infof(c.Context, "availableTimes: %+v:", availableTimes)
 	var quantity int = 0
 	if quantityStr != "" {
 		quantity64, err := strconv.ParseInt(quantityStr, 10, 32)
@@ -203,6 +243,9 @@ func (c *AdminContext) UpdateProduct(w web.ResponseWriter, r *web.Request) {
 	product.Description = description
 	product.IsInfinite = isInfinite
 	product.NoShipping = noShipping
+	product.NeedsDate = needsDate
+	product.NeedsTime = needsTime
+	product.AvailableTimes = availableTimes
 	if picturesStr != "" {
 		product.Pictures = strings.Split(picturesStr,",")
 	}

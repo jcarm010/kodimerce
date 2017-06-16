@@ -19,7 +19,7 @@ type Product struct {
 	NoShipping bool `datastore:"no_shipping" json:"no_shipping"`
 	NeedsDate bool `datastore:"needs_date" json:"needs_date"`
 	NeedsTime bool `datastore:"needs_time" json:"needs_time"`
-	AvailableTimes AvailableTime `datastore:"available_times" json:"available_times"`
+	AvailableTimes []AvailableTime `datastore:"available_times" json:"available_times"`
 	Active bool `datastore:"active" json:"active"`
 	PriceCents int64 `datastore:"price_cents" json:"price_cents"`
 	Pictures []string `datastore:"pictures,noindex" json:"pictures"`
@@ -36,6 +36,11 @@ type AvailableTime struct {
 	Minute int `datastore:"minute" json:"minute"`
 }
 
+type ByAvailableTime []AvailableTime
+func (a ByAvailableTime) Len() int           { return len(a) }
+func (a ByAvailableTime) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByAvailableTime) Less(i, j int) bool { return a[i].Hour * 60 + a[i].Minute < a[j].Hour * 60 + a[j].Minute }
+
 func (p *Product) SetMissingDefaults () {
 	if p.Pictures == nil {
 		p.Pictures = make([]string, 0)
@@ -47,6 +52,9 @@ func (p *Product) SetMissingDefaults () {
 	}
 
 	p.PriceLabel = fmt.Sprintf("%.2f", float64(p.PriceCents)/100)
+	if p.AvailableTimes == nil {
+		p.AvailableTimes = make([]AvailableTime, 0)
+	}
 }
 
 func (p *Product) OutOfStock() bool {
@@ -67,12 +75,12 @@ func NewProduct(name string) *Product {
 		Name: name,
 		Created: time.Now(),
 		Pictures: make([]string,0),
+		AvailableTimes: make([]AvailableTime, 0),
 	}
 }
 
 func CreateProduct(ctx context.Context, name string) (*Product, error) {
 	product := NewProduct(name)
-
 	key, err := datastore.Put(ctx, datastore.NewIncompleteKey(ctx, ENTITY_PRODUCT, nil), product)
 	if err != nil {
 		return nil, err
@@ -115,6 +123,9 @@ func UpdateProduct(ctx context.Context, product *Product) error {
 		p.Description = product.Description
 		p.IsInfinite = product.IsInfinite
 		p.NoShipping = product.NoShipping
+		p.NeedsDate = product.NeedsDate
+		p.NeedsTime = product.NeedsTime
+		p.AvailableTimes = product.AvailableTimes
 		_, err = datastore.Put(ctx, key, p)
 		return err
 	}, nil)
