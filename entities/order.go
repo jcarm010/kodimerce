@@ -38,6 +38,46 @@ type Order struct {
 	Products []*Product `datastore:"-" json:"products"`
 	ProductsSerial []byte `datastore:"products_serial" json:"-"`
 	NoShipping bool `datastore:"no_shipping" json:"no_shipping"`
+	ProductDetails []*ProductDetails `datastore:"-" json:"product_details"`
+}
+
+func (o *Order) Load(ps []datastore.Property) error {
+	datastore.LoadStruct(o, ps)//todo: should probably do something about this error?
+	for _, ps := range ps {
+		if ps.Name == "product_details" {
+			valueBts, ok := ps.Value.([]byte)
+			if !ok {
+				continue
+			}
+
+			err := json.Unmarshal(valueBts, &o.ProductDetails)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (o *Order) Save() ([]datastore.Property, error) {
+	productDetailsBts, err := json.Marshal(o.ProductDetails)
+	if err != nil {
+		return nil, err
+	}
+
+	properties, err := datastore.SaveStruct(o)
+	if err != nil {
+		return nil, err
+	}
+
+	properties = append(properties, datastore.Property{
+		Name:  "product_details",
+		Value: productDetailsBts,
+		NoIndex: true,
+	})
+
+	return properties, nil
 }
 
 func (o *Order) StatusCapitalized() string {
@@ -57,7 +97,26 @@ func NewOrder() *Order {
 	}
 }
 
-func CreateOrder(ctx context.Context, products []*Product, quantities []int64) (*Order, error) {
+type ProductDetails struct {
+	ProductId int64 `datastore:"product_id" json:"product_id"`
+	Date string `datastore:"date" json:"date"`
+	Time AvailableTime `datastore:"time" json:"time"`
+}
+
+type OrderProduct struct {
+	*Product
+	Quantity int64 `json:"quantity"`
+	Date string `json:"date"`
+	Time AvailableTime `json:"time"`
+}
+
+
+func (o *OrderProduct) String() string {
+	bts, _ := json.Marshal(o)
+	return string(bts)
+}
+
+func CreateOrder(ctx context.Context, products []*Product, quantities []int64, productDetails []*ProductDetails) (*Order, error) {
 	noShipping := true
 	for _, product := range products {
 		if !product.NoShipping {
@@ -76,6 +135,7 @@ func CreateOrder(ctx context.Context, products []*Product, quantities []int64) (
 	order.Products = products
 	order.Quantities = quantities
 	order.NoShipping = noShipping
+	order.ProductDetails = productDetails
 	bts, err := json.Marshal(products)
 	if err != nil {
 		return nil, err

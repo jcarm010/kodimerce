@@ -201,25 +201,28 @@ func (c *ServerContext) CreateOrder(w web.ResponseWriter, r *web.Request){
 	}
 
 	itemsStr := r.FormValue("products")
-	productQuantityMap := make(map[string]int64)
-	err = json.Unmarshal([]byte(itemsStr), &productQuantityMap)
+	log.Infof(c.Context, "itemsStr: %s", itemsStr)
+	orderProducts := make([]*entities.OrderProduct, 0)
+	err = json.Unmarshal([]byte(itemsStr), &orderProducts)
 	if err != nil {
 		log.Errorf(c.Context, "Error reading products: %+v", err)
 		c.ServeJson(http.StatusBadRequest, "Could not find products.")
 		return
 	}
 
+	log.Infof(c.Context, "Products received: %+v", orderProducts)
 	quantities := make([]int64, 0)
 	productIds := make([]int64, 0)
-	for productIdStr, quantity := range productQuantityMap {
-		productId, err := strconv.ParseInt(productIdStr, 10, 64)
-		if err != nil {
-			log.Errorf(c.Context, "Error parsing product id from string to integer: %+v", err)
-			c.ServeJson(http.StatusBadRequest, "Invalid product id.")
-			return
-		}
+	productDetails := make([]*entities.ProductDetails, 0)
+	for _, product := range orderProducts {
+		productId := product.Id
 		productIds = append(productIds, productId)
-		quantities = append(quantities, quantity)
+		quantities = append(quantities, product.Quantity)
+		productDetails = append(productDetails, &entities.ProductDetails{
+			ProductId: product.Id,
+			Time: product.Time,
+			Date: product.Date,
+		})
 	}
 
 	log.Infof(c.Context, "Creating order with ProductIds: %+v and Quantities: %+v", productIds, quantities)
@@ -230,7 +233,7 @@ func (c *ServerContext) CreateOrder(w web.ResponseWriter, r *web.Request){
 		return
 	}
 
-	order, err := entities.CreateOrder(c.Context, products, quantities)
+	order, err := entities.CreateOrder(c.Context, products, quantities, productDetails)
 	if err != nil {
 		log.Errorf(c.Context, "Error creating order: %+v", err)
 		c.ServeJson(http.StatusInternalServerError, "Could not create the order at this moment. Please try again later.")
@@ -238,7 +241,6 @@ func (c *ServerContext) CreateOrder(w web.ResponseWriter, r *web.Request){
 	}
 
 	c.ServeJson(http.StatusOK, order)
-
 }
 
 func (c *ServerContext) UpdateOrder(w web.ResponseWriter, r *web.Request){
