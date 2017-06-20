@@ -123,7 +123,7 @@ func (c *ServerContext) RegisterUser(w web.ResponseWriter, r *web.Request){
 		user.Email,
 		fmt.Sprintf("Welcome to %s", settings.COMPANY_NAME),
 		fmt.Sprintf("Thank you for registering to %s", settings.COMPANY_NAME),
-		[]string{},
+		"",
 	)
 
 	if err != nil {
@@ -573,7 +573,7 @@ func (c *ServerContext) ExecutePaypalPayment(w web.ResponseWriter, r *web.Reques
 		order.Email,
 		"Order Confirmation",
 		doc.String(),
-		[]string{settings.COMPANY_ORDERS_EMAIL},
+		settings.COMPANY_ORDERS_EMAIL,
 	)
 
 	if err != nil {
@@ -650,7 +650,7 @@ func (c *ServerContext) PostContactMessage(w web.ResponseWriter, r *web.Request)
 		settings.COMPANY_SUPPORT_EMAIL,
 		"Customer Message",
 		body,
-		[]string{settings.COMPANY_ORDERS_EMAIL},
+		"",
 	)
 
 	if err != nil {

@@ -14,6 +14,7 @@ const (
 	ORDER_STATUS_PENDING = "pending"
 	ORDER_STATUS_PROCESSING = "processing"
 	ORDER_STATUS_SHIPPED = "shipped"
+	ORDER_STATUS_PROCESSED = "processed"
 )
 
 type Order struct {

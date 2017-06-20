@@ -501,7 +501,7 @@ func (c *ServerContext) GetGalleryUpload(w web.ResponseWriter, r *web.Request) {
 	blobstore.Send(w, appengine.BlobKey(key))
 }
 
-func (c *ServerContext) GetOrders(w web.ResponseWriter, r *web.Request) {
+func (c *AdminContext) GetOrders(w web.ResponseWriter, r *web.Request) {
 	orders, err := entities.ListOrders(c.Context)
 	if err != nil {
 		log.Errorf(c.Context, "Error fetching orders: %+v", err)
@@ -510,4 +510,80 @@ func (c *ServerContext) GetOrders(w web.ResponseWriter, r *web.Request) {
 	}
 
 	c.ServeJson(http.StatusOK, orders)
+}
+
+func (c *AdminContext) OverrideOrder(w web.ResponseWriter, r *web.Request){
+	err := r.ParseForm()
+	if err != nil {
+		log.Errorf(c.Context, "Error parsing form: %+v", err)
+		c.ServeJson(http.StatusBadRequest, "Could not understand the request. Please try again later.")
+		return
+	}
+
+	idStr := r.FormValue("id")
+	shippingName := r.FormValue("shipping_name")
+	shippingLine1 := r.FormValue("shipping_line_1")
+	shippingLine2 := r.FormValue("shipping_line_2")
+	city := r.FormValue("city")
+	state := r.FormValue("state")
+	postalCode := r.FormValue("postal_code")
+	countryCode := r.FormValue("country_code")
+	email := r.FormValue("email")
+	phone := r.FormValue("phone")
+	checkoutStep := r.FormValue("checkout_step")
+	paypalPayerId := r.FormValue("paypal_payer_id")
+	addressVerifiedStr := r.FormValue("address_verified")
+	status := r.FormValue("status")
+
+	log.Infof(c.Context, "Updating order idStr[%s] shippingName[%s] shippingLine1[%s] shippingLine2[%s] city[%s] state[%s] postalCode[%s] countryCode[%s] email[%s] phone[%s] checkoutStep[%s] paypalPayerId[%s] addressVerifiedStr[%s] status[%s]",
+		idStr, shippingName, shippingLine1, shippingLine2, city, state, postalCode, countryCode, email, phone, checkoutStep, paypalPayerId, addressVerifiedStr, status)
+
+	if shippingName == "" {
+		log.Errorf(c.Context, "Missing shipping name")
+		c.ServeJson(http.StatusBadRequest, "Missing name")
+		return
+	}
+
+	if email == "" {
+		log.Errorf(c.Context, "Missing email")
+		c.ServeJson(http.StatusBadRequest, "Missing email")
+		return
+	}
+
+	orderId, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		log.Errorf(c.Context, "Error parsing id: %+v", err)
+		c.ServeJson(http.StatusBadRequest, "Could not understand the request. Please try again later.")
+		return
+	}
+
+	order, err := entities.GetOrder(c.Context, orderId)
+	if err != nil {
+		log.Errorf(c.Context, "Error finding order: %+v", err)
+		c.ServeJson(http.StatusBadRequest, "Could not find order. Please try again later.")
+		return
+	}
+
+	order.ShippingName = shippingName
+	order.ShippingLine1 = shippingLine1
+	order.ShippingLine2 = shippingLine2
+	order.City = city
+	order.State = state
+	order.PostalCode = postalCode
+	order.CountryCode = countryCode
+	order.Email = email
+	order.Phone = phone
+	order.CheckoutStep = checkoutStep
+	order.PaypalPayerId = paypalPayerId
+	order.AddressVerified = addressVerifiedStr == "true"
+	order.Status = status
+
+	err = entities.UpdateOrder(c.Context, order)
+	if err != nil {
+		log.Errorf(c.Context, "Error updating order: %+v", err)
+		c.ServeJson(http.StatusBadRequest, "Could not update order. Please try again later.")
+		return
+	}
+
+	c.ServeJson(http.StatusOK, "")
 }
