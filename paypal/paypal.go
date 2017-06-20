@@ -16,6 +16,7 @@ import (
 	"google.golang.org/appengine/urlfetch"
 	"runtime"
 	"crypto/tls"
+	"time"
 )
 
 type PaypalCreatePaymentRequest struct {
@@ -46,10 +47,10 @@ func getAccessToken(ctx context.Context) (string, error) {
 	}
 
 	u.Path = path.Join(u.Path, "oauth2/token")
-	url := u.String()
-	log.Infof(ctx, "OAuth Url: %s", url)
+	oauthUrl := u.String()
+	log.Infof(ctx, "OAuth Url: %s", oauthUrl)
 
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer([]byte("grant_type=client_credentials")))
+	req, err := http.NewRequest(http.MethodPost, oauthUrl, bytes.NewBuffer([]byte("grant_type=client_credentials")))
 	if err != nil {
 		return "", err
 	}
@@ -89,7 +90,11 @@ func getAccessToken(ctx context.Context) (string, error) {
 }
 
 func getClient (ctx context.Context) *http.Client {
-	client := urlfetch.Client(ctx)
+	ctx_with_deadline, _ := context.WithTimeout(ctx, time.Duration(40) * time.Second)
+	client := &http.Client{
+		Transport:&urlfetch.Transport{Context: ctx_with_deadline},
+	}
+
 	if runtime.GOOS == "darwin" {
 		/* Mac have an issue openssl issue dealing with TLS.
 		This should only occur on development environments. */
@@ -105,7 +110,7 @@ func getClient (ctx context.Context) *http.Client {
 	return client
 }
 
-func CreatePayment(ctx context.Context, order *entities.Order) (string, error) {
+func CreatePayment(ctx context.Context, order *entities.Order, companyUrl string) (string, error) {
 	products := order.Products
 	log.Infof(ctx, "Products: %+v", products)
 	items := make([]*Item, len(products))
@@ -127,7 +132,7 @@ func CreatePayment(ctx context.Context, order *entities.Order) (string, error) {
 		}
 
 		subtotalCents += product.PriceCents * qty
-		u, err := url.Parse(settings.COMPANY_URL)
+		u, err := url.Parse(companyUrl)
 		if err != nil {
 			return "", err
 		}
@@ -162,7 +167,7 @@ func CreatePayment(ctx context.Context, order *entities.Order) (string, error) {
 		shippingAddress,
 	)
 
-	u, err := url.Parse(settings.COMPANY_URL)
+	u, err := url.Parse(companyUrl)
 	if err != nil {
 		return "", err
 	}
@@ -170,7 +175,7 @@ func CreatePayment(ctx context.Context, order *entities.Order) (string, error) {
 	u.Path = path.Join(u.Path, fmt.Sprintf("paypal/return/%v", order.Id))
 	returnUrl := u.String()
 
-	u, err = url.Parse(settings.COMPANY_URL)
+	u, err = url.Parse(companyUrl)
 	if err != nil {
 		return "", err
 	}

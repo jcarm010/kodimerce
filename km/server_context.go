@@ -459,7 +459,13 @@ func (c *ServerContext) CreatePaypalPayment(w web.ResponseWriter, r *web.Request
 	}
 
 	log.Infof(c.Context, "Order: %+v", order)
-	id, err := paypal.CreatePayment(c.Context, order)
+	proto := "http"
+	if r.Request.TLS != nil {
+		proto = "https"
+	}
+
+	serverRoot := fmt.Sprintf("%s://%s", proto, r.Host)
+	id, err := paypal.CreatePayment(c.Context, order, serverRoot)
 	if err != nil {
 		log.Errorf(c.Context, "Error creating paypal payment: %+v", err)
 		response.Error = "Unexpected error creating paypal payment"
