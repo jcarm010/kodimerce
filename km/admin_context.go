@@ -11,6 +11,7 @@ import (
 	"google.golang.org/appengine"
 	"encoding/json"
 	"sort"
+	"html/template"
 )
 
 type AdminContext struct {
@@ -240,7 +241,7 @@ func (c *AdminContext) UpdateProduct(w web.ResponseWriter, r *web.Request) {
 	product.Active = active
 	product.PriceCents = priceCents
 	product.Quantity = quantity
-	product.Description = description
+	product.Description = template.HTML(description)
 	product.IsInfinite = isInfinite
 	product.NoShipping = noShipping
 	product.NeedsDate = needsDate

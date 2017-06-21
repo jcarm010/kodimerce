@@ -139,7 +139,7 @@ func CreatePayment(ctx context.Context, order *entities.Order, companyUrl string
 
 		u.Path = path.Join(u.Path, fmt.Sprintf("product/%v",product.Id))
 		productUrl := u.String()
-		items[index] = NewItem(fmt.Sprintf("%v", product.Id), product.Name, product.Description, int(qty), product.PriceCents, 0, productUrl)
+		items[index] = NewItem(fmt.Sprintf("%v", product.Id), product.Name, string(product.Description), int(qty), product.PriceCents, 0, productUrl)
 	}
 
 	amount := NewAmount(subtotalCents, taxCents, shippingCents, handlingFeeCents, shippingDiscountCents, insuranceCents)

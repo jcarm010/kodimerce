@@ -7,11 +7,15 @@ import (
 	"google.golang.org/appengine/log"
 	"fmt"
 	"encoding/json"
+	"html/template"
 )
 
 const ENTITY_PRODUCT = "product"
 
 type Product struct {
+	//todo: add tax %
+	//todo: add pickup location. should be from a list of options and should have an option for one not in the list.
+	//todo: add details that are not part of the description if html shows up in search engine.
 	Id int64 `datastore:"-" json:"id"`
 	Name string `datastore:"name" json:"name"`
 	IsInfinite bool `datastore:"is_infinite" json:"is_infinite"`
@@ -23,7 +27,7 @@ type Product struct {
 	Active bool `datastore:"active" json:"active"`
 	PriceCents int64 `datastore:"price_cents" json:"price_cents"`
 	Pictures []string `datastore:"pictures,noindex" json:"pictures"`
-	Description string `datastore:"description,noindex" json:"description"`
+	Description template.HTML `datastore:"description,noindex" json:"description"`
 	Created time.Time `datastore:"created" json:"created"`
 	//these fields are here to help building the UI
 	PriceLabel string `datastore:"-" json:"price_label"`
