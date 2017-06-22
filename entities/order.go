@@ -6,6 +6,7 @@ import (
 	"golang.org/x/net/context"
 	"github.com/dustin/gojson"
 	"strings"
+	"github.com/jcarm010/kodimerce/settings"
 )
 
 const (
@@ -40,6 +41,7 @@ type Order struct {
 	ProductsSerial []byte `datastore:"products_serial" json:"-"`
 	NoShipping bool `datastore:"no_shipping" json:"no_shipping"`
 	ProductDetails []*ProductDetails `datastore:"-" json:"product_details"`
+	TaxPercent float64 `datastore:"tax_percent" json:"tax_percent"`
 }
 
 func (o *Order) Load(ps []datastore.Property) error {
@@ -136,6 +138,7 @@ func CreateOrder(ctx context.Context, products []*Product, quantities []int64, p
 	order.Products = products
 	order.Quantities = quantities
 	order.NoShipping = noShipping
+	order.TaxPercent = settings.TAX_PERCENT
 	order.ProductDetails = productDetails
 	bts, err := json.Marshal(products)
 	if err != nil {

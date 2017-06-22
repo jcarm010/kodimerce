@@ -254,8 +254,12 @@ func LoginView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 	t.Execute(w, p)
 }
 func CartView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
-	err := templates.ExecuteTemplate(w, "cart-page", View{
+	err := templates.ExecuteTemplate(w, "cart-page", struct{
+		Title string
+		TaxPercent float64
+	}{
 		Title: settings.COMPANY_NAME + " | Shopping Cart",
+		TaxPercent: settings.TAX_PERCENT,
 	})
 	if err != nil {
 		log.Errorf(c.Context, "Error parsing cart html file: %+v", err)
@@ -288,9 +292,14 @@ func OrderReviewView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) 
 
 	log.Infof(c.Context, "Rendering orderId[%v] order[%+v]", orderId, order)
 
-	err = templates.ExecuteTemplate(w, "order-review-page", OrderView{
+	err = templates.ExecuteTemplate(w, "order-review-page", struct{
+		Title string
+		Order *entities.Order
+		TaxPercent float64
+	}{
 		Title: settings.COMPANY_NAME + " | Order Details",
 		Order: order,
+		TaxPercent: settings.TAX_PERCENT,
 	})
 
 	if err != nil {

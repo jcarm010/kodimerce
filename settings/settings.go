@@ -4,13 +4,16 @@ import (
 	"os"
 	"net/http"
 	"fmt"
+	"strconv"
 )
 
 var (
 	COMPANY_NAME = os.Getenv("COMPANY_NAME")
 	COMPANY_SUPPORT_EMAIL = os.Getenv("COMPANY_SUPPORT_EMAIL")
 	COMPANY_ORDERS_EMAIL = os.Getenv("COMPANY_ORDERS_EMAIL")
+	TAX_PERCENT float64 = 0.0
 	COMPANY_URL = os.Getenv("COMPANY_URL")
+	PAYPAL_ENVIRONMENT = os.Getenv("PAYPAL_ENVIRONMENT")
 	PAYPAL_API_URL = os.Getenv("PAYPAL_API_URL")
 	PAYPAL_EMAIL = os.Getenv("PAYPAL_EMAIL")
 	PAYPAL_ACCOUNT = os.Getenv("PAYPAL_ACCOUNT")
@@ -23,6 +26,10 @@ var (
 	EMAIL_SENDER = os.Getenv("EMAIL_SENDER")
 	SENDGRID_KEY = os.Getenv("SENDGRID_KEY")
 )
+
+func init() {
+	TAX_PERCENT, _ = strconv.ParseFloat(os.Getenv("TAX_PERCENT"), 64)
+}
 
 func ServerUrl(r *http.Request) string {
 	httpHeader := "http"

@@ -33,14 +33,6 @@ func (c *CheckoutStep) String () string {
 	return string(bts)
 }
 
-type CheckoutView struct {
-	Title string
-	CheckoutSteps []*CheckoutStep `json:"checkout_steps"`
-	CurrentStep *CheckoutStep `json:"current_step"`
-	NextStep *CheckoutStep `json:"next_step"`
-	Order *entities.Order `json:"order"`
-}
-
 func RenderCheckoutView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 	var templates = template.Must(template.New("").Funcs(fns).ParseGlob("views/templates/*")) //todo: cache this globally
 
@@ -94,12 +86,20 @@ func RenderCheckoutView(c *km.ServerContext, w web.ResponseWriter, r *web.Reques
 		}
 	}
 
-	err = templates.ExecuteTemplate(w, "checkout-page", CheckoutView{
+	err = templates.ExecuteTemplate(w, "checkout-page", struct{
+		Title string
+		CheckoutSteps []*CheckoutStep `json:"checkout_steps"`
+		CurrentStep *CheckoutStep `json:"current_step"`
+		NextStep *CheckoutStep `json:"next_step"`
+		Order *entities.Order `json:"order"`
+		PaypalEnvironment string `json:"paypal_environment"`
+	}{
 		Title: settings.COMPANY_NAME + " | Checkout",
 		CheckoutSteps:checkoutSteps,
 		CurrentStep:currentStep,
 		NextStep: nextStep,
 		Order: order,
+		PaypalEnvironment: settings.PAYPAL_ENVIRONMENT,
 	})
 
 	if err != nil {

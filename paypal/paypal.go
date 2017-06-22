@@ -142,6 +142,7 @@ func CreatePayment(ctx context.Context, order *entities.Order, companyUrl string
 		items[index] = NewItem(fmt.Sprintf("%v", product.Id), product.Name, string(product.Description), int(qty), product.PriceCents, 0, productUrl)
 	}
 
+	taxCents = int64(float64(subtotalCents) * order.TaxPercent / 100)
 	amount := NewAmount(subtotalCents, taxCents, shippingCents, handlingFeeCents, shippingDiscountCents, insuranceCents)
 
 	var shippingAddress *ShippingAddress = nil
