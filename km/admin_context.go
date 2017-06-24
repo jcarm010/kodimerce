@@ -125,6 +125,7 @@ func (c *AdminContext) UpdateProduct(w web.ResponseWriter, r *web.Request) {
 	needsTimeStr := r.FormValue("needs_time")
 	noShippingStr := r.FormValue("no_shipping")
 	availableTimesStr := r.FormValue("available_times")
+	needsPickupLocationStr := r.FormValue("needs_pickup_location")
 	log.Infof(c.Context, "Modifying product [%s] with values: name[%s] price_cents[%s] quantity[%s] active[%s] pictures[%s] description[%s]", idStr, name, priceCentsStr, quantityStr, activeStr, picturesStr, description)
 	var id int64
 	if idStr == "" {
@@ -211,6 +212,17 @@ func (c *AdminContext) UpdateProduct(w web.ResponseWriter, r *web.Request) {
 	}
 
 	log.Infof(c.Context, "needsDate: %+v", needsDate)
+	needsPickupLocation := false
+	if needsPickupLocationStr != "" {
+		needsPickupLocation, err = strconv.ParseBool(needsPickupLocationStr)
+		if err != nil {
+			log.Errorf(c.Context, "Error parsing needsPickupLocationStr: %+v", err)
+			c.ServeJson(http.StatusBadRequest, "Invalid value for needs_pickup_location")
+			return
+		}
+	}
+
+	log.Infof(c.Context, "needsPickupLocation: %+v", needsPickupLocation)
 	availableTimes := make([]entities.AvailableTime, 0)
 	if availableTimesStr != "" {
 		err = json.Unmarshal([]byte(availableTimesStr), &availableTimes)
@@ -247,6 +259,7 @@ func (c *AdminContext) UpdateProduct(w web.ResponseWriter, r *web.Request) {
 	product.NeedsDate = needsDate
 	product.NeedsTime = needsTime
 	product.AvailableTimes = availableTimes
+	product.NeedsPickupLocation = needsPickupLocation
 	if picturesStr != "" {
 		product.Pictures = strings.Split(picturesStr,",")
 	}

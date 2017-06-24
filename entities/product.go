@@ -13,7 +13,6 @@ import (
 const ENTITY_PRODUCT = "product"
 
 type Product struct {
-	//todo: add tax %
 	//todo: add pickup location. should be from a list of options and should have an option for one not in the list.
 	//todo: add details that are not part of the description if html shows up in search engine.
 	Id int64 `datastore:"-" json:"id"`
@@ -23,6 +22,7 @@ type Product struct {
 	NoShipping bool `datastore:"no_shipping" json:"no_shipping"`
 	NeedsDate bool `datastore:"needs_date" json:"needs_date"`
 	NeedsTime bool `datastore:"needs_time" json:"needs_time"`
+	NeedsPickupLocation bool `datastore:"needs_pickup_location" json:"needs_pickup_location"`
 	AvailableTimes []AvailableTime `datastore:"available_times" json:"available_times"`
 	Active bool `datastore:"active" json:"active"`
 	PriceCents int64 `datastore:"price_cents" json:"price_cents"`
@@ -38,6 +38,32 @@ type Product struct {
 type AvailableTime struct {
 	Hour int `datastore:"hour" json:"hour"`
 	Minute int `datastore:"minute" json:"minute"`
+}
+
+func (t *AvailableTime) String () string {
+	hour := fmt.Sprintf("%v", t.Hour)
+	if t.Hour < 10 {
+		hour = fmt.Sprintf("0%v", t.Hour)
+	}
+
+	minute := fmt.Sprintf("%v", t.Minute)
+	if t.Minute < 10 {
+		minute = fmt.Sprintf("0%v", t.Minute)
+	}
+
+
+	amHour := t.Hour % 12
+	amHourLabel := fmt.Sprintf("%v", amHour)
+	if amHour < 10 {
+		amHourLabel = fmt.Sprintf("0%v", amHour)
+	}
+
+	var amlabel = "AM"
+	if t.Hour > 12 {
+		amlabel = "PM"
+	}
+
+	return hour + ":" + minute + " (" + amHourLabel + ":" + minute + " " + amlabel + ")"
 }
 
 type ByAvailableTime []AvailableTime
@@ -130,6 +156,7 @@ func UpdateProduct(ctx context.Context, product *Product) error {
 		p.NeedsDate = product.NeedsDate
 		p.NeedsTime = product.NeedsTime
 		p.AvailableTimes = product.AvailableTimes
+		p.NeedsPickupLocation = product.NeedsPickupLocation
 		_, err = datastore.Put(ctx, key, p)
 		return err
 	}, nil)

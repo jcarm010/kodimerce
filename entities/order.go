@@ -7,6 +7,8 @@ import (
 	"github.com/dustin/gojson"
 	"strings"
 	"github.com/jcarm010/kodimerce/settings"
+	"fmt"
+	"html/template"
 )
 
 const (
@@ -87,6 +89,46 @@ func (o *Order) StatusCapitalized() string {
 	return strings.ToUpper(o.Status)
 }
 
+func (o *Order) OrderSummaryHtml() template.HTML {
+	productSummaries := ""
+	for index, product := range o.Products {
+		productSummaries += fmt.Sprintf(
+			"%s x %v - %s - %s - %s<br>",
+			product.Name,
+			o.Quantities[index],
+			o.ProductDetails[index].Date,
+			o.ProductDetails[index].Time.String(),
+			o.ProductDetails[index].PickupLocation,
+		)
+	}
+	return template.HTML(fmt.Sprintf(
+		"Order#: %v<br>" +
+			"Order Total: %v<br>" +
+			"Name: %s<br>" +
+			"Email: %s<br>" +
+			"Phone: %s<br>" +
+			"Address: %s<br>" +
+			"Product Summary:<br>%s",
+		o.Id,
+		o.OrderTotal(),
+		o.ShippingName,
+		o.Email,
+		o.Phone,
+		fmt.Sprintf("%s, %s, %s, %s, %s, %s", o.ShippingLine1, o.ShippingLine2, o.City, o.PostalCode, o.State, o.CountryCode),
+		productSummaries,
+	))
+}
+
+func (o *Order) OrderTotal() float64 {
+	var totalCents int64 = 0
+	for index, product := range o.Products{
+		totalCents += product.PriceCents * o.Quantities[index]
+	}
+
+	centsPlusTaxes := float64(totalCents) + float64(totalCents) * o.TaxPercent / 100.0
+	return centsPlusTaxes / 100.0
+}
+
 func (o *Order) String() string {
 	bts, _ := json.Marshal(o)
 	return string(bts)
@@ -104,12 +146,14 @@ type ProductDetails struct {
 	ProductId int64 `datastore:"product_id" json:"product_id"`
 	Date string `datastore:"date" json:"date"`
 	Time AvailableTime `datastore:"time" json:"time"`
+	PickupLocation string `json:"pickup_location"`
 }
 
 type OrderProduct struct {
 	*Product
 	Quantity int64 `json:"quantity"`
 	Date string `json:"date"`
+	PickupLocation string `json:"pickup_location"`
 	Time AvailableTime `json:"time"`
 }
 

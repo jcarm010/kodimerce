@@ -222,6 +222,7 @@ func (c *ServerContext) CreateOrder(w web.ResponseWriter, r *web.Request){
 			ProductId: product.Id,
 			Time: product.Time,
 			Date: product.Date,
+			PickupLocation: product.PickupLocation,
 		})
 	}
 
@@ -240,6 +241,7 @@ func (c *ServerContext) CreateOrder(w web.ResponseWriter, r *web.Request){
 		return
 	}
 
+	log.Infof(c.Context, "Order Total: %v", order.OrderTotal())
 	c.ServeJson(http.StatusOK, order)
 }
 
@@ -552,19 +554,20 @@ func (c *ServerContext) ExecutePaypalPayment(w web.ResponseWriter, r *web.Reques
 	confirmationUrl := fmt.Sprintf("%s/order?id=%v", serverRoot, order.Id)
 
 	var templates = template.Must(template.ParseGlob("emailer/templates/*")) // cache this globally
-	type OrderConfirmationEmail struct {
+	confirmationEmail := struct {
 		CompanyName string
 		ConfirmationUrl string
 		HostRoot string
 		ContactEmail string
-	}
-	var doc bytes.Buffer
-	err = templates.ExecuteTemplate(&doc, "email-order", OrderConfirmationEmail{
+	}{
 		CompanyName: settings.COMPANY_NAME,
 		ConfirmationUrl: confirmationUrl,
 		HostRoot: serverRoot,
 		ContactEmail: settings.COMPANY_SUPPORT_EMAIL,
-	})
+	}
+
+	var doc bytes.Buffer
+	err = templates.ExecuteTemplate(&doc, "email-order", confirmationEmail)
 
 	if err != nil {
 		log.Errorf(c.Context, "Error parsing email template: %+v", err)
@@ -585,6 +588,37 @@ func (c *ServerContext) ExecutePaypalPayment(w web.ResponseWriter, r *web.Reques
 	if err != nil {
 		log.Errorf(c.Context, "Couldn't send email: %v", err)
 	}
+
+	//send a notification email to the seller
+	notificationEmail := struct {
+		CompanyName string
+		ConfirmationUrl string
+		HostRoot string
+		ContactEmail string
+		Order *entities.Order
+	}{
+		CompanyName: settings.COMPANY_NAME,
+		ConfirmationUrl: confirmationUrl,
+		HostRoot: serverRoot,
+		ContactEmail: settings.COMPANY_SUPPORT_EMAIL,
+		Order: order,
+	}
+
+	var ndoc bytes.Buffer
+	err = templates.ExecuteTemplate(&ndoc, "email-order-admin", notificationEmail)
+	if err != nil {
+		log.Errorf(c.Context, "Error parsing admin email template: %+v", err)
+		return
+	}
+
+	err = emailer.SendEmail(
+		c.Context,
+		fmt.Sprintf("%s<%s>", settings.COMPANY_NAME, settings.EMAIL_SENDER),
+		settings.COMPANY_ORDERS_EMAIL,
+		"Order Pending",
+		ndoc.String(),
+		"",
+	)
 }
 
 func (c *ServerContext) GetProducts(w web.ResponseWriter, r *web.Request){
