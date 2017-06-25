@@ -145,6 +145,7 @@ func CreateProduct(ctx context.Context, name string) (*Product, error) {
 		return nil, err
 	}
 
+	product.SetMissingDefaults()
 	product.Id = key.IntID()
 	return product, nil
 }
