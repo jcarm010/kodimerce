@@ -131,15 +131,26 @@ func CreatePayment(ctx context.Context, order *entities.Order, companyUrl string
 			qty = 1
 		}
 
-		subtotalCents += product.PriceCents * qty
+		productDetails := order.ProductDetails[index]
+		var name string
+		var priceCents int64
+		if product.HasPricingOptions {
+			name = fmt.Sprintf("%s - %s", product.Name, productDetails.PricingOption.Label)
+			priceCents += productDetails.PricingOption.PriceCents
+		} else {
+			name = product.Name
+			priceCents = product.GetPriceCents()
+		}
+
+		subtotalCents += priceCents * qty
 		u, err := url.Parse(companyUrl)
 		if err != nil {
 			return "", err
 		}
 
-		u.Path = path.Join(u.Path, fmt.Sprintf("product/%v",product.Id))
+		u.Path = path.Join(u.Path, fmt.Sprintf("product/%v", product.Id))
 		productUrl := u.String()
-		items[index] = NewItem(fmt.Sprintf("%v", product.Id), product.Name, string(product.Description), int(qty), product.PriceCents, 0, productUrl)
+		items[index] = NewItem(fmt.Sprintf("%v", product.Id), name, string(product.Description), int(qty), priceCents, 0, productUrl)
 	}
 
 	taxCents = int64(float64(subtotalCents) * order.TaxPercent / 100)
@@ -162,7 +173,7 @@ func CreatePayment(ctx context.Context, order *entities.Order, companyUrl string
 
 	transaction := NewTransaction(
 		fmt.Sprintf("%v",order.Id),
-		"An order of unique fashion pieces.",
+		fmt.Sprintf("An order from %s.", settings.COMPANY_NAME),
 		amount,
 		items,
 		shippingAddress,

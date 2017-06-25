@@ -13,27 +13,38 @@ import (
 const ENTITY_PRODUCT = "product"
 
 type Product struct {
-	//todo: add pickup location. should be from a list of options and should have an option for one not in the list.
 	//todo: add details that are not part of the description if html shows up in search engine.
 	Id int64 `datastore:"-" json:"id"`
 	Name string `datastore:"name" json:"name"`
-	IsInfinite bool `datastore:"is_infinite" json:"is_infinite"`
-	Quantity int `datastore:"quantity" json:"quantity"`
-	NoShipping bool `datastore:"no_shipping" json:"no_shipping"`
-	NeedsDate bool `datastore:"needs_date" json:"needs_date"`
-	NeedsTime bool `datastore:"needs_time" json:"needs_time"`
+	IsInfinite          bool `datastore:"is_infinite" json:"is_infinite"`
+	Quantity            int `datastore:"quantity" json:"quantity"`
+	NoShipping          bool `datastore:"no_shipping" json:"no_shipping"`
+	NeedsDate           bool `datastore:"needs_date" json:"needs_date"`
+	NeedsTime           bool `datastore:"needs_time" json:"needs_time"`
 	NeedsPickupLocation bool `datastore:"needs_pickup_location" json:"needs_pickup_location"`
-	AvailableTimes []AvailableTime `datastore:"available_times" json:"available_times"`
-	Active bool `datastore:"active" json:"active"`
-	PriceCents int64 `datastore:"price_cents" json:"price_cents"`
-	Pictures []string `datastore:"pictures,noindex" json:"pictures"`
-	Description template.HTML `datastore:"description,noindex" json:"description"`
-	Created time.Time `datastore:"created" json:"created"`
+	AvailableTimes      []AvailableTime `datastore:"available_times" json:"available_times"`
+	HasPricingOptions   bool `datastore:"has_pricing_options" json:"has_pricing_options"`
+	PricingOptions      []PricingOption `datastore:"pricing_options" json:"pricing_options"`
+	Active              bool `datastore:"active" json:"active"`
+	PriceCents          int64 `datastore:"price_cents" json:"price_cents"`
+	Pictures            []string `datastore:"pictures,noindex" json:"pictures"`
+	Description         template.HTML `datastore:"description,noindex" json:"description"`
+	Created             time.Time `datastore:"created" json:"created"`
 	//these fields are here to help building the UI
 	PriceLabel string `datastore:"-" json:"price_label"`
 	Thumbnail string `datastore:"-" json:"thumbnail"`
 	Last bool `datastore:"-" json:"-"`
 }
+
+type PricingOption struct {
+	Label string `datastore:"label" json:"label"`
+	PriceCents int64 `datastore:"price_cents" json:"price_cents"`
+}
+
+type ByCheapestPrice []PricingOption
+func (a ByCheapestPrice) Len() int           { return len(a) }
+func (a ByCheapestPrice) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByCheapestPrice) Less(i, j int) bool { return a[i].PriceCents < a[j].PriceCents }
 
 type AvailableTime struct {
 	Hour int `datastore:"hour" json:"hour"`
@@ -81,10 +92,28 @@ func (p *Product) SetMissingDefaults () {
 		p.Thumbnail = p.Pictures[0]
 	}
 
-	p.PriceLabel = fmt.Sprintf("%.2f", float64(p.PriceCents)/100)
+	p.PriceLabel = p.GetPricingLabel()
 	if p.AvailableTimes == nil {
 		p.AvailableTimes = make([]AvailableTime, 0)
 	}
+
+	if p.PricingOptions == nil {
+		p.PricingOptions = []PricingOption{}
+	}
+}
+
+func (p *Product) GetPricingLabel() string {
+	priceCents := p.GetPriceCents()
+	return fmt.Sprintf("%.2f", float64(priceCents)/100)
+}
+
+func (p *Product) GetPriceCents() int64 {
+	priceCents := p.PriceCents
+	if p.HasPricingOptions && len(p.PricingOptions) > 0 {
+		priceCents = p.PricingOptions[0].PriceCents
+	}
+
+	return priceCents
 }
 
 func (p *Product) OutOfStock() bool {
@@ -157,6 +186,8 @@ func UpdateProduct(ctx context.Context, product *Product) error {
 		p.NeedsTime = product.NeedsTime
 		p.AvailableTimes = product.AvailableTimes
 		p.NeedsPickupLocation = product.NeedsPickupLocation
+		p.HasPricingOptions = product.HasPricingOptions
+		p.PricingOptions = product.PricingOptions
 		_, err = datastore.Put(ctx, key, p)
 		return err
 	}, nil)

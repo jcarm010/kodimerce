@@ -223,6 +223,7 @@ func (c *ServerContext) CreateOrder(w web.ResponseWriter, r *web.Request){
 			Time: product.Time,
 			Date: product.Date,
 			PickupLocation: product.PickupLocation,
+			PricingOption: product.PricingOption,
 		})
 	}
 

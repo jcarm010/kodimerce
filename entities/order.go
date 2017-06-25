@@ -92,14 +92,31 @@ func (o *Order) StatusCapitalized() string {
 func (o *Order) OrderSummaryHtml() template.HTML {
 	productSummaries := ""
 	for index, product := range o.Products {
-		productSummaries += fmt.Sprintf(
-			"%s x %v - %s - %s - %s<br>",
-			product.Name,
-			o.Quantities[index],
-			o.ProductDetails[index].Date,
-			o.ProductDetails[index].Time.String(),
-			o.ProductDetails[index].PickupLocation,
-		)
+
+		productDetails := o.ProductDetails[index]
+		var name string
+		if product.HasPricingOptions {
+			name = fmt.Sprintf("%s - %s", product.Name, productDetails.PricingOption.Label)
+		} else {
+			name = product.Name
+		}
+
+		date := ""
+		if product.NeedsDate {
+			date = "- " + o.ProductDetails[index].Date
+		}
+
+		t := ""
+		if product.NeedsTime {
+			t = "- " + o.ProductDetails[index].Time.String()
+		}
+
+		loc := ""
+		if product.NeedsPickupLocation {
+			loc = "- " + o.ProductDetails[index].PickupLocation
+		}
+
+		productSummaries += fmt.Sprintf("%s x %v %s %s %s<br>", name, o.Quantities[index], date, t, loc)
 	}
 	return template.HTML(fmt.Sprintf(
 		"Order#: %v<br>" +
@@ -122,7 +139,15 @@ func (o *Order) OrderSummaryHtml() template.HTML {
 func (o *Order) OrderTotal() float64 {
 	var totalCents int64 = 0
 	for index, product := range o.Products{
-		totalCents += product.PriceCents * o.Quantities[index]
+		productDetails := o.ProductDetails[index]
+		var priceCents int64
+		if product.HasPricingOptions {
+			priceCents += productDetails.PricingOption.PriceCents
+		} else {
+			priceCents = product.GetPriceCents()
+		}
+
+		totalCents += priceCents * o.Quantities[index]
 	}
 
 	centsPlusTaxes := float64(totalCents) + float64(totalCents) * o.TaxPercent / 100.0
@@ -147,6 +172,7 @@ type ProductDetails struct {
 	Date string `datastore:"date" json:"date"`
 	Time AvailableTime `datastore:"time" json:"time"`
 	PickupLocation string `json:"pickup_location"`
+	PricingOption PricingOption `datastore:"pricing_option" json:"pricing_option"`
 }
 
 type OrderProduct struct {
@@ -155,6 +181,7 @@ type OrderProduct struct {
 	Date string `json:"date"`
 	PickupLocation string `json:"pickup_location"`
 	Time AvailableTime `json:"time"`
+	PricingOption PricingOption `json:"pricing_option"`
 }
 
 
@@ -228,7 +255,9 @@ func UpdateOrder(ctx context.Context, order *Order) (error) {
 
 func ListOrders(ctx context.Context) ([]*Order, error) {
 	orders := make([]*Order, 0)
-	keys, err := datastore.NewQuery(ENTITY_ORDER).GetAll(ctx, &orders)
+	keys, err := datastore.NewQuery(ENTITY_ORDER).
+		Order("-created").
+		GetAll(ctx, &orders)
 	if err != nil {
 		return orders, err
 	}

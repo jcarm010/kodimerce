@@ -126,6 +126,8 @@ func (c *AdminContext) UpdateProduct(w web.ResponseWriter, r *web.Request) {
 	noShippingStr := r.FormValue("no_shipping")
 	availableTimesStr := r.FormValue("available_times")
 	needsPickupLocationStr := r.FormValue("needs_pickup_location")
+	pricingOptionsStr := r.FormValue("pricing_options")
+	hasPricingOptionsStr := r.FormValue("has_pricing_options")
 	log.Infof(c.Context, "Modifying product [%s] with values: name[%s] price_cents[%s] quantity[%s] active[%s] pictures[%s] description[%s]", idStr, name, priceCentsStr, quantityStr, activeStr, picturesStr, description)
 	var id int64
 	if idStr == "" {
@@ -223,6 +225,17 @@ func (c *AdminContext) UpdateProduct(w web.ResponseWriter, r *web.Request) {
 	}
 
 	log.Infof(c.Context, "needsPickupLocation: %+v", needsPickupLocation)
+	hasPricingOptions := false
+	if hasPricingOptionsStr != "" {
+		hasPricingOptions, err = strconv.ParseBool(hasPricingOptionsStr)
+		if err != nil {
+			log.Errorf(c.Context, "Error parsing hasPricingOptionsStr: %+v", err)
+			c.ServeJson(http.StatusBadRequest, "Invalid value for has_pricing_options")
+			return
+		}
+	}
+
+	log.Infof(c.Context, "needsPickupLocation: %+v", needsPickupLocation)
 	availableTimes := make([]entities.AvailableTime, 0)
 	if availableTimesStr != "" {
 		err = json.Unmarshal([]byte(availableTimesStr), &availableTimes)
@@ -234,8 +247,19 @@ func (c *AdminContext) UpdateProduct(w web.ResponseWriter, r *web.Request) {
 	}
 
 	sort.Sort(entities.ByAvailableTime(availableTimes))
-	log.Infof(c.Context, "availableTimesStr: %+v:", availableTimesStr)
 	log.Infof(c.Context, "availableTimes: %+v:", availableTimes)
+	pricingOptions := make([]entities.PricingOption, 0)
+	if pricingOptionsStr != "" {
+		err = json.Unmarshal([]byte(pricingOptionsStr), &pricingOptions)
+		if err != nil {
+			log.Errorf(c.Context, "Error parsing pricingOptionsStr: %+v", err)
+			c.ServeJson(http.StatusBadRequest, "Invalid value for pricing_options")
+			return
+		}
+	}
+
+	sort.Sort(entities.ByCheapestPrice(pricingOptions))
+	log.Infof(c.Context, "pricingOptions: %+v:", pricingOptions)
 	var quantity int = 0
 	if quantityStr != "" {
 		quantity64, err := strconv.ParseInt(quantityStr, 10, 32)
@@ -260,6 +284,8 @@ func (c *AdminContext) UpdateProduct(w web.ResponseWriter, r *web.Request) {
 	product.NeedsTime = needsTime
 	product.AvailableTimes = availableTimes
 	product.NeedsPickupLocation = needsPickupLocation
+	product.HasPricingOptions = hasPricingOptions
+	product.PricingOptions = pricingOptions
 	if picturesStr != "" {
 		product.Pictures = strings.Split(picturesStr,",")
 	}
