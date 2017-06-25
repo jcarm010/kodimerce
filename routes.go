@@ -31,7 +31,8 @@ func init() {
 		Put("/order", (*km.ServerContext).UpdateOrder).
 		Get("/paypal/payment", (*km.ServerContext).CreatePaypalPayment).
 		Post("/paypal/payment", (*km.ServerContext).ExecutePaypalPayment).
-		Get("/gallery/upload", (*km.ServerContext).GetGalleryUpload)
+		Get("/gallery/upload", (*km.ServerContext).GetGalleryUpload).
+		Get("/gallery/upload/:key", (*km.ServerContext).GetGalleryUpload)
 
 
 	router.Subrouter(km.ServerContext{}, "/api").

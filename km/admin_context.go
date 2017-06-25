@@ -532,10 +532,13 @@ func (c *AdminContext) GetGalleryUploads(w web.ResponseWriter, r *web.Request) {
 
 
 func (c *ServerContext) GetGalleryUpload(w web.ResponseWriter, r *web.Request) {
-	key := r.URL.Query().Get("k")
+	key := r.PathParams["key"]
 	if key == "" {
-		c.ServeHTML(http.StatusNotFound, "Upload not found")
-		return
+		key = r.URL.Query().Get("k")
+		if key == "" {
+			c.ServeHTML(http.StatusNotFound, "Upload not found")
+			return
+		}
 	}
 
 	blobstore.Send(w, appengine.BlobKey(key))
