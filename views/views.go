@@ -71,6 +71,37 @@ func ContactView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 	}
 }
 
+func ReferralsView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
+	products, err := entities.ListProducts(c.Context)
+	if err != nil {
+		log.Errorf(c.Context, "Error listing products: %s", err)
+		products = []*entities.Product{}
+	}
+
+	activeProducts := make([]*entities.Product, 0)
+	for _, product := range products {
+		if product.Active {
+			activeProducts = append(activeProducts, product)
+		}
+	}
+
+	p := struct {
+		Title       string
+		Products	[]*entities.Product
+	}{
+		Title: settings.COMPANY_NAME + " | Referrals",
+		Products: activeProducts,
+	}
+
+	log.Infof(c.Context, "Products: %+v", products)
+	err = templates.ExecuteTemplate(w, "referrals-page", p)
+	if err != nil {
+		log.Errorf(c.Context, "Error parsing home html file: %+v", err)
+		c.ServeHTML(http.StatusInternalServerError, "Unexpected Error, please try again later.")
+		return
+	}
+}
+
 func ProductView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 	productIdStr := r.URL.Query().Get("p")
 	if productIdStr == "" {
