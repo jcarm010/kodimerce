@@ -33,8 +33,8 @@ func init() {
 		Get("/paypal/payment", (*km.ServerContext).CreatePaypalPayment).
 		Post("/paypal/payment", (*km.ServerContext).ExecutePaypalPayment).
 		Get("/gallery/upload", (*km.ServerContext).GetGalleryUpload).
+		Get("/gallery/upload/name/:name", (*km.ServerContext).GetGalleryUploadByName).
 		Get("/gallery/upload/:key", (*km.ServerContext).GetGalleryUpload)
-
 
 	router.Subrouter(km.ServerContext{}, "/api").
 		Get("/product", (*km.ServerContext).GetProducts)

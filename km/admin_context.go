@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"sort"
 	"html/template"
+	"fmt"
 )
 
 type AdminContext struct {
@@ -530,6 +531,28 @@ func (c *AdminContext) GetGalleryUploads(w web.ResponseWriter, r *web.Request) {
 	c.ServeJson(http.StatusOK, blobs)
 }
 
+func (c *ServerContext) GetGalleryUploadByName(w web.ResponseWriter, r *web.Request) {
+	name := r.PathParams["name"]
+	if name == "" {
+		log.Errorf(c.Context, "Name not provided.")
+		c.ServeHTML(http.StatusNotFound, "Upload not found")
+		return
+	}
+
+	upload, err := entities.GetUploadByName(c.Context, name)
+	if err != nil {
+		log.Errorf(c.Context, "Error getting upload: %s", err)
+		c.ServeJson(http.StatusNotFound, "Upload not found.")
+		return
+	}
+
+	contentType := upload.ContentType
+	//Content-Type: text/html
+	w.Header().Add("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", name))
+	w.Header().Add("Cache-Control", "max-age=2593000")
+	w.Header().Add("Content-Type", contentType)
+	blobstore.Send(w, upload.BlobKey)
+}
 
 func (c *ServerContext) GetGalleryUpload(w web.ResponseWriter, r *web.Request) {
 	key := r.PathParams["key"]
@@ -541,7 +564,20 @@ func (c *ServerContext) GetGalleryUpload(w web.ResponseWriter, r *web.Request) {
 		}
 	}
 
-	blobstore.Send(w, appengine.BlobKey(key))
+	upload, err := entities.GetUpload(c.Context, appengine.BlobKey(key))
+	if err != nil {
+		log.Errorf(c.Context, "Error getting upload: %s", err)
+		c.ServeJson(http.StatusNotFound, "Upload not found.")
+		return
+	}
+
+	name := upload.Filename
+	contentType := upload.ContentType
+	//Content-Type: text/html
+	w.Header().Add("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", name))
+	w.Header().Add("Cache-Control", "max-age=2593000")
+	w.Header().Add("Content-Type", contentType)
+	blobstore.Send(w, upload.BlobKey)
 }
 
 func (c *AdminContext) GetOrders(w web.ResponseWriter, r *web.Request) {
