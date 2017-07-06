@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"encoding/json"
 	"html/template"
+	"github.com/pkg/errors"
+	"strings"
 )
 
 const ENTITY_PRODUCT = "product"
@@ -16,6 +18,7 @@ type Product struct {
 	//todo: add details that are not part of the description if html shows up in search engine.
 	Id int64 `datastore:"-" json:"id"`
 	Name string `datastore:"name" json:"name"`
+	Path string `datastore:"path" json:"path"`
 	IsInfinite          bool `datastore:"is_infinite" json:"is_infinite"`
 	Quantity            int `datastore:"quantity" json:"quantity"`
 	NoShipping          bool `datastore:"no_shipping" json:"no_shipping"`
@@ -100,6 +103,10 @@ func (p *Product) SetMissingDefaults () {
 	if p.PricingOptions == nil {
 		p.PricingOptions = []PricingOption{}
 	}
+
+	if p.Path == "" {
+		p.Path = fmt.Sprintf("%v", p.Id)
+	}
 }
 
 func (p *Product) GetPricingLabel() string {
@@ -139,15 +146,20 @@ func NewProduct(name string) *Product {
 }
 
 func CreateProduct(ctx context.Context, name string) (*Product, error) {
-	product := NewProduct(name)
-	key, err := datastore.Put(ctx, datastore.NewIncompleteKey(ctx, ENTITY_PRODUCT, nil), product)
+	p := NewProduct(name)
+	p.Path = name
+	p.Path = strings.TrimSpace(p.Path)
+	p.Path = strings.ToLower(p.Path)
+	p.Path = strings.Replace(p.Path, " ", "-", -1)
+	p.Path = strings.Replace(p.Path, "'", "", -1)
+	key, err := datastore.Put(ctx, datastore.NewIncompleteKey(ctx, ENTITY_PRODUCT, nil), p)
 	if err != nil {
 		return nil, err
 	}
 
-	product.SetMissingDefaults()
-	product.Id = key.IntID()
-	return product, nil
+	p.SetMissingDefaults()
+	p.Id = key.IntID()
+	return p, nil
 }
 
 func ListProducts(ctx context.Context) ([]*Product, error) {
@@ -176,6 +188,7 @@ func UpdateProduct(ctx context.Context, product *Product) error {
 		}
 
 		p.Name = product.Name
+		p.Path = product.Path
 		p.PriceCents = product.PriceCents
 		p.Quantity = product.Quantity
 		p.Active = product.Active
@@ -242,6 +255,27 @@ func GetProduct(ctx context.Context, productId int64) (*Product, error) {
 	product.SetMissingDefaults()
 	product.Id = key.IntID()
 	return product, nil
+}
+
+func GetProductByPath(ctx context.Context, path string) (*Product, error) {
+	products := make([]*Product, 0)
+	keys, err := datastore.NewQuery(ENTITY_PRODUCT).
+		Filter("path=", path).
+		Limit(1).
+		GetAll(ctx, &products)
+
+	if err != nil {
+		return nil, err
+	}
+	if len(products) == 0 {
+		return nil, errors.New("Not found.")
+	}
+
+	key := keys[0]
+	p := products[0]
+	p.SetMissingDefaults()
+	p.Id = key.IntID()
+	return p, nil
 }
 
 func GetProducts(ctx context.Context, productIds []int64) ([]*Product, error) {

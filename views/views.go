@@ -108,18 +108,21 @@ func ProductView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		productIdStr = r.PathParams["productId"]
 	}
 
+	var selectedProduct *entities.Product
+	productFound := true
 	productId, err := strconv.ParseInt(productIdStr, 10, 64)
 	if err != nil {
-		productId = int64(0)
+		log.Infof(c.Context, "Id is not a number, checking for product name.")
+		selectedProduct, err = entities.GetProductByPath(c.Context, productIdStr)
+	}else {
+		log.Infof(c.Context, "Querying productId: %s", productId)
+		selectedProduct, err = entities.GetProduct(c.Context, productId)
 	}
 
-	log.Infof(c.Context, "Querying productId: %s", productId)
-	productFound := true
-	product, err := entities.GetProduct(c.Context, productId)
 	if err != nil {
 		log.Errorf(c.Context, "Error getting product: %+v", err)
-		product = entities.NewProduct("Product not found")
-		product.Description = "This product no longer exists."
+		selectedProduct = entities.NewProduct("Product not found")
+		selectedProduct.Description = "This product no longer exists."
 		productFound = false
 	}
 
@@ -136,8 +139,8 @@ func ProductView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		httpHeader = "https"
 	}
 	p := ProductView {
-		Title: product.Name,
-		Product: product,
+		Title: selectedProduct.Name,
+		Product: selectedProduct,
 		ProductFound: productFound,
 		CanonicalUrl: fmt.Sprintf("%s://%s%s", httpHeader, r.Host, r.URL.Path),
 		Domain: settings.ServerUrl(r.Request),

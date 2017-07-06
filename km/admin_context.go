@@ -116,6 +116,7 @@ func (c *AdminContext) UpdateProduct(w web.ResponseWriter, r *web.Request) {
 
 	idStr := r.FormValue("id")
 	name := r.FormValue("name")
+	path := r.FormValue("path")
 	priceCentsStr := r.FormValue("price_cents")
 	quantityStr := r.FormValue("quantity")
 	activeStr := r.FormValue("active")
@@ -272,6 +273,10 @@ func (c *AdminContext) UpdateProduct(w web.ResponseWriter, r *web.Request) {
 		quantity = int(quantity64)
 	}
 
+	if path == "" {
+		path = fmt.Sprintf("%s", id)
+	}
+
 	log.Infof(c.Context, "Quantity: %+v", quantity)
 	product := entities.NewProduct(name)
 	product.Id = id
@@ -287,6 +292,7 @@ func (c *AdminContext) UpdateProduct(w web.ResponseWriter, r *web.Request) {
 	product.NeedsPickupLocation = needsPickupLocation
 	product.HasPricingOptions = hasPricingOptions
 	product.PricingOptions = pricingOptions
+	product.Path = path
 	if picturesStr != "" {
 		product.Pictures = strings.Split(picturesStr,",")
 	}
