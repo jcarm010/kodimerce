@@ -20,6 +20,7 @@ import (
 	"github.com/jcarm010/kodimerce/smartyaddress"
 	"github.com/jcarm010/kodimerce/emailer"
 	"bytes"
+	"github.com/ikeikeikeike/go-sitemap-generator/stm"
 )
 
 type ServerContext struct{
@@ -701,4 +702,33 @@ func (c *ServerContext) PostContactMessage(w web.ResponseWriter, r *web.Request)
 	}
 
 	c.ServeJson(http.StatusOK, "")
+}
+
+func (c *ServerContext) GetSiteMap(w web.ResponseWriter, r *web.Request){
+	sm := stm.NewSitemap()
+	url := settings.ServerUrl(r.Request)
+	sm.SetDefaultHost(url)
+
+	sm.Create()
+	sm.Add(stm.URL{"loc": "/", "changefreq": "monthly", "priority": 1})
+	sm.Add(stm.URL{"loc": "/contact", "changefreq": "monthly", "priority": 0.5})
+	sm.Add(stm.URL{"loc": "/store", "changefreq": "weekly", "priority": 1})
+	featuredCategories, err := entities.ListCategoriesByFeatured(c.Context, true)
+	if err == nil {
+		for _, category := range featuredCategories {
+			sm.Add(stm.URL{"loc": "/store/" + category.Name, "changefreq": "weekly", "priority": 0.8})
+		}
+	}
+
+	products, err := entities.ListProducts(c.Context)
+	if err == nil {
+		for _, product := range products {
+			if product.Active {
+				sm.Add(stm.URL{"loc": "/product/" + product.Path, "changefreq": "weekly", "priority": 0.7})
+			}
+		}
+	}
+
+	sm.Add(stm.URL{"loc": "/store", "changefreq": "weekly", "priority": 1})
+	w.Write(sm.XMLContent())
 }
