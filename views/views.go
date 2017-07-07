@@ -30,7 +30,6 @@ var fns = template.FuncMap{
 }
 
 func HomeView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
-
 	featuredCategories, err := entities.ListCategoriesByFeatured(c.Context, true)
 	if err != nil {
 		log.Errorf(c.Context, "Error getting featured categories: %+v", err)
@@ -38,13 +37,14 @@ func HomeView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 	}
 
 	log.Debugf(c.Context, "FeaturedCategories: %+v", featuredCategories)
-	type HomeView struct {
-		Title      string
-		Categories []*entities.Category
-	}
 
-	p := HomeView{
-		Title: settings.COMPANY_NAME + " | Home",
+	p := struct{
+		Title string
+		CompanyName string
+		Categories []*entities.Category
+	}{
+		Title: settings.COMPANY_NAME,
+		CompanyName: settings.COMPANY_NAME,
 		Categories: featuredCategories,
 	}
 
@@ -60,7 +60,7 @@ func ContactView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 	p := struct {
 		Title      string
 	}{
-		Title: settings.COMPANY_NAME + " | Contact",
+		Title: "Contact | " + settings.COMPANY_NAME,
 	}
 
 	err := templates.ExecuteTemplate(w, "contact-page", p)
@@ -89,7 +89,7 @@ func ReferralsView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		Title       string
 		Products	[]*entities.Product
 	}{
-		Title: settings.COMPANY_NAME + " | Referrals",
+		Title: "Referrals | " + settings.COMPANY_NAME,
 		Products: activeProducts,
 	}
 
@@ -139,7 +139,7 @@ func ProductView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		httpHeader = "https"
 	}
 	p := ProductView {
-		Title: selectedProduct.Name,
+		Title: selectedProduct.Name + " | " + settings.COMPANY_NAME,
 		Product: selectedProduct,
 		ProductFound: productFound,
 		CanonicalUrl: fmt.Sprintf("%s://%s%s", httpHeader, r.Host, r.URL.Path),
@@ -222,9 +222,11 @@ func StoreView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		Domain string
 	}
 
-	title := settings.COMPANY_NAME + " | Store"
+	var title string // settings.COMPANY_NAME + " | Store"
 	if category != "" {
-		title += " | " + category
+		title = category + " | " + settings.COMPANY_NAME
+	}else {
+		title = "Store | " + settings.COMPANY_NAME
 	}
 
 	p := StoreView{
@@ -245,7 +247,7 @@ func StoreView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 
 func AdminView(c *km.AdminContext, w web.ResponseWriter, r *web.Request) {
 	p := View{
-		Title: settings.COMPANY_NAME + " | Admin",
+		Title: "Admin | " + settings.COMPANY_NAME,
 	}
 
 	t, err := template.ParseFiles("views/admin.html") // cache this globally
@@ -260,7 +262,7 @@ func AdminView(c *km.AdminContext, w web.ResponseWriter, r *web.Request) {
 
 func RegisterView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 	p := View{
-		Title: settings.COMPANY_NAME + " | Register",
+		Title: "Register | " + settings.COMPANY_NAME,
 	}
 
 	t, err := template.ParseFiles("views/register.html") // cache this globally
@@ -275,7 +277,7 @@ func RegisterView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 
 func LoginView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 	p := View{
-		Title: settings.COMPANY_NAME + " | Login",
+		Title: "Login | " + settings.COMPANY_NAME,
 	}
 
 	t, err := template.ParseFiles("views/login.html") // cache this globally
@@ -292,7 +294,7 @@ func CartView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		Title string
 		TaxPercent float64
 	}{
-		Title: settings.COMPANY_NAME + " | Shopping Cart",
+		Title: "Shopping Cart | " + settings.COMPANY_NAME,
 		TaxPercent: settings.TAX_PERCENT,
 	})
 	if err != nil {
@@ -331,7 +333,7 @@ func OrderReviewView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) 
 		Order *entities.Order
 		TaxPercent float64
 	}{
-		Title: settings.COMPANY_NAME + " | Order Details",
+		Title: "Order Details | " + settings.COMPANY_NAME,
 		Order: order,
 		TaxPercent: settings.TAX_PERCENT,
 	})
