@@ -9,10 +9,8 @@ import (
 	"strings"
 	"google.golang.org/appengine/blobstore"
 	"google.golang.org/appengine"
-	"encoding/json"
-	"sort"
-	"html/template"
 	"fmt"
+	"sort"
 )
 
 type AdminContext struct {
@@ -107,194 +105,49 @@ func (c *AdminContext) CreateProduct(w web.ResponseWriter, r *web.Request) {
 }
 
 func (c *AdminContext) UpdateProduct(w web.ResponseWriter, r *web.Request) {
-	err := r.ParseForm()
+	product := &entities.Product{}
+	err := c.ParseJsonRequest(product)
 	if err != nil {
-		log.Errorf(c.Context, "Failed to parse update product: %+v", err)
+		log.Errorf(c.Context, "Failed to parse parse product: %+v", err)
 		c.ServeJson(http.StatusInternalServerError, "Failed to parse product.")
 		return
 	}
 
-	idStr := r.FormValue("id")
-	name := r.FormValue("name")
-	path := r.FormValue("path")
-	priceCentsStr := r.FormValue("price_cents")
-	quantityStr := r.FormValue("quantity")
-	activeStr := r.FormValue("active")
-	picturesStr := r.FormValue("pictures")
-	description := r.FormValue("description")
-	isInfiniteStr := r.FormValue("is_infinite")
-	needsDateStr := r.FormValue("needs_date")
-	needsTimeStr := r.FormValue("needs_time")
-	noShippingStr := r.FormValue("no_shipping")
-	availableTimesStr := r.FormValue("available_times")
-	needsPickupLocationStr := r.FormValue("needs_pickup_location")
-	pricingOptionsStr := r.FormValue("pricing_options")
-	hasPricingOptionsStr := r.FormValue("has_pricing_options")
-	log.Infof(c.Context, "Modifying product [%s] with values: name[%s] price_cents[%s] quantity[%s] active[%s] pictures[%s] description[%s]", idStr, name, priceCentsStr, quantityStr, activeStr, picturesStr, description)
-	var id int64
-	if idStr == "" {
+	log.Infof(c.Context, "Updating product: %+v", product)
+	if product.Id == 0 {
 		c.ServeJson(http.StatusBadRequest, "Id cannot be empty")
 		return
-	}else {
-		id, err = strconv.ParseInt(idStr, 10, 64)
-		if err != nil {
-			log.Errorf(c.Context, "Error parsing idStr: %+v", err)
-			c.ServeJson(http.StatusBadRequest, "Invalid value for id")
-			return
-		}
 	}
-
-	log.Infof(c.Context, "Id: %+v", id)
-	if name == "" {
+	if product.Name == "" {
 		c.ServeJson(http.StatusBadRequest, "Name cannot be empty")
 		return
 	}
-
-	var priceCents int64 = 0
-	if priceCentsStr != "" {
-		priceCents, err = strconv.ParseInt(priceCentsStr, 10, 64)
-		if err != nil {
-			log.Errorf(c.Context, "Error parsing priceCentsStr: %+v", err)
-			c.ServeJson(http.StatusBadRequest, "Invalid value for price")
-			return
-		}
+	log.Infof(c.Context, "PriceCents: %+v", product.PriceCents)
+	log.Infof(c.Context, "Active: %+v", product.Active)
+	log.Infof(c.Context, "isInfinite: %+v", product.IsInfinite)
+	log.Infof(c.Context, "noShipping: %+v", product.NoShipping)
+	log.Infof(c.Context, "needsDate: %+v", product.NeedsDate)
+	log.Infof(c.Context, "needsTime: %+v", product.NeedsTime)
+	log.Infof(c.Context, "needsPickupLocation: %+v", product.NeedsPickupLocation)
+	log.Infof(c.Context, "hasPricingOptions: %+v", product.HasPricingOptions)
+	if product.AvailableTimes == nil {
+		product.AvailableTimes = make([]entities.AvailableTime, 0)
 	}
 
-	log.Infof(c.Context, "PriceCents: %+v", priceCents)
-	var active bool = false
-	if activeStr != "" {
-		active, err = strconv.ParseBool(activeStr)
-		if err != nil {
-			log.Errorf(c.Context, "Error parsing activeStr: %+v", err)
-			c.ServeJson(http.StatusBadRequest, "Invalid value for active")
-			return
-		}
+	sort.Sort(entities.ByAvailableTime(product.AvailableTimes))
+	log.Infof(c.Context, "availableTimes: %+v:", product.AvailableTimes)
+	if product.PricingOptions == nil {
+		product.PricingOptions = make([]entities.PricingOption, 0)
 	}
 
-	log.Infof(c.Context, "Active: %+v", active)
-	var isInfinite bool = false
-	if isInfiniteStr != "" {
-		isInfinite, err = strconv.ParseBool(isInfiniteStr)
-		if err != nil {
-			log.Errorf(c.Context, "Error parsing isInfiniteStr: %+v", err)
-			c.ServeJson(http.StatusBadRequest, "Invalid value for is_infinite")
-			return
-		}
+	sort.Sort(entities.ByCheapestPrice(product.PricingOptions))
+	log.Infof(c.Context, "pricingOptions: %+v:", product.PricingOptions)
+	if product.Path == "" {
+		product.Path = fmt.Sprintf("%s", product.Id)
 	}
 
-	log.Infof(c.Context, "isInfinite: %+v", isInfinite)
-	var noShipping bool = false
-	if noShippingStr != "" {
-		noShipping, err = strconv.ParseBool(noShippingStr)
-		if err != nil {
-			log.Errorf(c.Context, "Error parsing noShippingStr: %+v", err)
-			c.ServeJson(http.StatusBadRequest, "Invalid value for no_shipping")
-			return
-		}
-	}
-
-	log.Infof(c.Context, "noShipping: %+v", noShipping)
-	var needsDate bool = false
-	if needsDateStr != "" {
-		needsDate, err = strconv.ParseBool(needsDateStr)
-		if err != nil {
-			log.Errorf(c.Context, "Error parsing needsDateStr: %+v", err)
-			c.ServeJson(http.StatusBadRequest, "Invalid value for needs_date")
-			return
-		}
-	}
-
-	log.Infof(c.Context, "needsDate: %+v", needsDate)
-	var needsTime bool = false
-	if needsTimeStr != "" {
-		needsTime, err = strconv.ParseBool(needsTimeStr)
-		if err != nil {
-			log.Errorf(c.Context, "Error parsing needsTimeStr: %+v", err)
-			c.ServeJson(http.StatusBadRequest, "Invalid value for needs_time")
-			return
-		}
-	}
-
-	log.Infof(c.Context, "needsDate: %+v", needsDate)
-	needsPickupLocation := false
-	if needsPickupLocationStr != "" {
-		needsPickupLocation, err = strconv.ParseBool(needsPickupLocationStr)
-		if err != nil {
-			log.Errorf(c.Context, "Error parsing needsPickupLocationStr: %+v", err)
-			c.ServeJson(http.StatusBadRequest, "Invalid value for needs_pickup_location")
-			return
-		}
-	}
-
-	log.Infof(c.Context, "needsPickupLocation: %+v", needsPickupLocation)
-	hasPricingOptions := false
-	if hasPricingOptionsStr != "" {
-		hasPricingOptions, err = strconv.ParseBool(hasPricingOptionsStr)
-		if err != nil {
-			log.Errorf(c.Context, "Error parsing hasPricingOptionsStr: %+v", err)
-			c.ServeJson(http.StatusBadRequest, "Invalid value for has_pricing_options")
-			return
-		}
-	}
-
-	log.Infof(c.Context, "needsPickupLocation: %+v", needsPickupLocation)
-	availableTimes := make([]entities.AvailableTime, 0)
-	if availableTimesStr != "" {
-		err = json.Unmarshal([]byte(availableTimesStr), &availableTimes)
-		if err != nil {
-			log.Errorf(c.Context, "Error parsing availableTimesStr: %+v", err)
-			c.ServeJson(http.StatusBadRequest, "Invalid value for available_times")
-			return
-		}
-	}
-
-	sort.Sort(entities.ByAvailableTime(availableTimes))
-	log.Infof(c.Context, "availableTimes: %+v:", availableTimes)
-	pricingOptions := make([]entities.PricingOption, 0)
-	if pricingOptionsStr != "" {
-		err = json.Unmarshal([]byte(pricingOptionsStr), &pricingOptions)
-		if err != nil {
-			log.Errorf(c.Context, "Error parsing pricingOptionsStr: %+v", err)
-			c.ServeJson(http.StatusBadRequest, "Invalid value for pricing_options")
-			return
-		}
-	}
-
-	sort.Sort(entities.ByCheapestPrice(pricingOptions))
-	log.Infof(c.Context, "pricingOptions: %+v:", pricingOptions)
-	var quantity int = 0
-	if quantityStr != "" {
-		quantity64, err := strconv.ParseInt(quantityStr, 10, 32)
-		if err != nil {
-			log.Errorf(c.Context, "Error parsing quantityStr: %+v", err)
-			c.ServeJson(http.StatusBadRequest, "Invalid value for quantity")
-			return
-		}
-		quantity = int(quantity64)
-	}
-
-	if path == "" {
-		path = fmt.Sprintf("%s", id)
-	}
-
-	log.Infof(c.Context, "Quantity: %+v", quantity)
-	product := entities.NewProduct(name)
-	product.Id = id
-	product.Active = active
-	product.PriceCents = priceCents
-	product.Quantity = quantity
-	product.Description = template.HTML(description)
-	product.IsInfinite = isInfinite
-	product.NoShipping = noShipping
-	product.NeedsDate = needsDate
-	product.NeedsTime = needsTime
-	product.AvailableTimes = availableTimes
-	product.NeedsPickupLocation = needsPickupLocation
-	product.HasPricingOptions = hasPricingOptions
-	product.PricingOptions = pricingOptions
-	product.Path = path
-	if picturesStr != "" {
-		product.Pictures = strings.Split(picturesStr,",")
+	if product.Pictures == nil {
+		product.Pictures = []string{}
 	}
 
 	err = entities.UpdateProduct(c.Context, product)

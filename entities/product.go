@@ -32,6 +32,7 @@ type Product struct {
 	PriceCents          int64 `datastore:"price_cents" json:"price_cents"`
 	Pictures            []string `datastore:"pictures,noindex" json:"pictures"`
 	Description         template.HTML `datastore:"description,noindex" json:"description"`
+	MetaDescription     template.HTML `datastore:"meta_description,noindex" json:"meta_description"`
 	Created             time.Time `datastore:"created" json:"created"`
 	//these fields are here to help building the UI
 	PriceLabel string `datastore:"-" json:"price_label"`
@@ -106,6 +107,10 @@ func (p *Product) SetMissingDefaults () {
 
 	if p.Path == "" {
 		p.Path = fmt.Sprintf("%v", p.Id)
+	}
+
+	if p.MetaDescription == "" {
+		p.MetaDescription = p.Description
 	}
 }
 
@@ -194,6 +199,7 @@ func UpdateProduct(ctx context.Context, product *Product) error {
 		p.Active = product.Active
 		p.Pictures = product.Pictures
 		p.Description = product.Description
+		p.MetaDescription = product.MetaDescription
 		p.IsInfinite = product.IsInfinite
 		p.NoShipping = product.NoShipping
 		p.NeedsDate = product.NeedsDate
