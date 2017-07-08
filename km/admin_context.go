@@ -346,49 +346,16 @@ func (c *AdminContext) CreateCategory(w web.ResponseWriter, r *web.Request) {
 }
 
 func (c *AdminContext) UpdateCategory(w web.ResponseWriter, r *web.Request) {
-	err := r.ParseForm()
+	category := &entities.Category{}
+	err := c.ParseJsonRequest(category)
 	if err != nil {
-		log.Errorf(c.Context, "Failed to parse update category: %+v", err)
+		log.Errorf(c.Context, "Failed to parse parse category: %+v", err)
 		c.ServeJson(http.StatusInternalServerError, "Failed to parse category.")
 		return
 	}
 
-	idStr := r.FormValue("id")
-	name := r.FormValue("name")
-	description := r.FormValue("description")
-	featuredStr := r.FormValue("featured")
-	thumbnail := r.FormValue("thumbnail")
-	log.Infof(c.Context, "Modifying category [%s] with values: name[%s] description[%s] featuredStr[%s] thumbnail[%s]", idStr, name, description, featuredStr, thumbnail)
-	var id int64
-	if idStr == "" {
-		c.ServeJson(http.StatusBadRequest, "Id cannot be empty")
-		return
-	}else {
-		id, err = strconv.ParseInt(idStr, 10, 64)
-		if err != nil {
-			log.Errorf(c.Context, "Error parsing idStr: %+v", err)
-			c.ServeJson(http.StatusBadRequest, "Invalid value for id")
-			return
-		}
-	}
-
-	log.Infof(c.Context, "Id: %+v", id)
-	if name == "" {
-		c.ServeJson(http.StatusBadRequest, "Name cannot be empty")
-		return
-	}
-
-	featured, err := strconv.ParseBool(featuredStr)
-	if err != nil {
-		log.Errorf(c.Context, "Error parsing featured parameter: %+v", err)
-		featured = false
-	}
-
-	category := entities.NewCategory(name)
-	category.Id = id
-	category.Description = description
-	category.Thumbnail = thumbnail
-	category.Featured = featured
+	defer r.Body.Close()
+	log.Infof(c.Context, "Updating category: %+v", category)
 	err = entities.UpdateCategory(c.Context, category)
 	if err != nil {
 		log.Errorf(c.Context, "Error storing category: %+v", err)

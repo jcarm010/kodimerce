@@ -29,6 +29,11 @@ type ServerContext struct{
 	r *web.Request
 }
 
+func (c *ServerContext) ParseJsonRequest(v interface{}) error {
+	decoder := json.NewDecoder(c.r.Body)
+	return decoder.Decode(v)
+}
+
 func (c *ServerContext) ServeJson(status int, value interface{}){
 	c.w.Header().Add("Content-Type", "application/json")
 	c.w.WriteHeader(status)
@@ -716,7 +721,7 @@ func (c *ServerContext) GetSiteMap(w web.ResponseWriter, r *web.Request){
 	featuredCategories, err := entities.ListCategoriesByFeatured(c.Context, true)
 	if err == nil {
 		for _, category := range featuredCategories {
-			sm.Add(stm.URL{"loc": "/store/" + category.Name, "changefreq": "weekly", "priority": 0.8})
+			sm.Add(stm.URL{"loc": "/store/" + category.Path, "changefreq": "weekly", "priority": 0.8})
 		}
 	}
 
@@ -729,6 +734,6 @@ func (c *ServerContext) GetSiteMap(w web.ResponseWriter, r *web.Request){
 		}
 	}
 
-	sm.Add(stm.URL{"loc": "/store", "changefreq": "weekly", "priority": 1})
+	sm.Add(stm.URL{"loc": "/referrals", "changefreq": "weekly", "priority": 1})
 	w.Write(sm.XMLContent())
 }

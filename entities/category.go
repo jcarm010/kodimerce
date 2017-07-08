@@ -5,6 +5,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
 	"fmt"
+	"strings"
 )
 
 const ENTITY_CATEGORY = "category"
@@ -13,6 +14,7 @@ const ENTITY_CATEGORY_PRODUCT = "category_product"
 type Category struct {
 	Id int64 `datastore:"-" json:"id"`
 	Name string `datastore:"name" json:"name"`
+	Path string `datastore:"path" json:"path"`
 	Description string `datastore:"description,noindex" json:"description"`
 	Created time.Time `datastore:"created" json:"created"`
 	Thumbnail string `datastore:"thumbnail,noindex" json:"thumbnail"`
@@ -22,6 +24,10 @@ type Category struct {
 func (c *Category) SetMissingDefaults() {
 	if c.Thumbnail == "" {
 		c.Thumbnail = "/assets/images/stock.jpeg"
+	}
+
+	if c.Path == "" {
+		c.Path = c.Name
 	}
 }
 
@@ -62,15 +68,20 @@ func ListCategories(ctx context.Context) ([]*Category, error) {
 }
 
 func CreateCategory(ctx context.Context, name string) (*Category, error) {
-	category := NewCategory(name)
+	c := NewCategory(name)
+	c.Path = name
+	c.Path = strings.TrimSpace(c.Path)
+	c.Path = strings.ToLower(c.Path)
+	c.Path = strings.Replace(c.Path, " ", "-", -1)
+	c.Path = strings.Replace(c.Path, "'", "", -1)
 
-	key, err := datastore.Put(ctx, datastore.NewIncompleteKey(ctx, ENTITY_CATEGORY, nil), category)
+	key, err := datastore.Put(ctx, datastore.NewIncompleteKey(ctx, ENTITY_CATEGORY, nil), c)
 	if err != nil {
 		return nil, err
 	}
 
-	category.Id = key.IntID()
-	return category, nil
+	c.Id = key.IntID()
+	return c, nil
 }
 
 func UpdateCategory(ctx context.Context, category *Category) error {
@@ -126,6 +137,26 @@ func ListCategoriesByName(ctx context.Context, name string) ([]*Category, error)
 	query := datastore.NewQuery(ENTITY_CATEGORY)
 	if name != "" {
 		query = query.Filter("name=", name)
+	}
+
+	keys, err := query.GetAll(ctx, &categories)
+	if err != nil {
+		return nil, err
+	}
+
+	for index, category := range categories {
+		category.Id = keys[index].IntID()
+		category.SetMissingDefaults()
+	}
+
+	return categories, nil
+}
+
+func ListCategoriesByPath(ctx context.Context, path string) ([]*Category, error) {
+	categories := make([]*Category, 0)
+	query := datastore.NewQuery(ENTITY_CATEGORY)
+	if path != "" {
+		query = query.Filter("path=", path)
 	}
 
 	keys, err := query.GetAll(ctx, &categories)

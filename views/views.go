@@ -167,11 +167,20 @@ func StoreView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 	}
 
 	log.Infof(c.Context, "Querying categories: %s", category)
-	categories, err := entities.ListCategoriesByName(c.Context, category)
+	categories, err := entities.ListCategoriesByPath(c.Context, category)
 	if err != nil {
-		log.Errorf(c.Context, "Error getting categories: %+v", err)
+		log.Errorf(c.Context, "Error getting categories by path: %+v", err)
 		c.ServeHTML(http.StatusInternalServerError, "Unexpected error, please try again later.")
 		return
+	}
+
+	if len(categories) == 0 && category != "" {
+		categories, err = entities.ListCategoriesByName(c.Context, category)
+		if err != nil {
+			log.Errorf(c.Context, "Error getting categories by name: %+v", err)
+			c.ServeHTML(http.StatusInternalServerError, "Unexpected error, please try again later.")
+			return
+		}
 	}
 
 	log.Infof(c.Context, "Categories found: %+v", categories)
@@ -208,8 +217,8 @@ func StoreView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 	for index, cat := range featuredCategories {
 		options[index] = CategoryOption{
 			Name: cat.Name,
-			Selected: category == cat.Name,
-			Url: fmt.Sprintf("/store/%s", cat.Name),
+			Selected: category == cat.Name || category == cat.Path,
+			Url: fmt.Sprintf("/store/%s", cat.Path),
 		}
 	}
 
