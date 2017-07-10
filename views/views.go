@@ -358,6 +358,11 @@ func GetPost(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
 	postPath := r.PathParams["post"]
 	log.Infof(c.Context, "Serving Post: %s", postPath)
 	post, err := entities.GetPostByPath(c.Context, postPath)
+	if err == entities.ErrPostNotFound {
+		c.ServeHTMLError(http.StatusNotFound, "")
+		return
+	}
+
 	if err != nil {
 		log.Errorf(c.Context, "Error getting post: %+v", err)
 		c.ServeHTMLError(http.StatusInternalServerError, "Unexpected error, please try again later.")

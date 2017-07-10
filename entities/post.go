@@ -10,6 +10,9 @@ import (
 )
 
 const ENTITY_POST = "post"
+var (
+	ErrPostNotFound = errors.New("Not Found.")
+)
 
 type Post struct {
 	Id int64 `datastore:"-" json:"id"`
@@ -133,7 +136,7 @@ func GetPostByPath(ctx context.Context, path string) (*Post, error) {
 		return nil, err
 	}
 	if len(posts) == 0 {
-		return nil, errors.New("Not found.")
+		return nil, ErrPostNotFound
 	}
 
 	key := keys[0]
