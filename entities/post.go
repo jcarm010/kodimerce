@@ -17,13 +17,14 @@ type Post struct {
 	Path string `datastore:"path" json:"path"`
 	Content template.HTML `datastore:"content,noindex" json:"content"`
 	MetaDescription template.HTML `datastore:"meta_description,noindex" json:"meta_description"`
+	Banner string `datastore:"banner,noindex" json:"banner"`
 	Published bool `datastore:"published" json:"published"`
 	PublishedDate time.Time `datastore:"published_date" json:"published_date"`
 	Created time.Time `datastore:"created" json:"created"`
 }
 
 func (p *Post) FormattedPublishedDate () (string) {
-	return p.PublishedDate.Format("Mon Jan _2 15:04:05 2006")
+	return p.PublishedDate.Format("_2 Jan 2006")
 }
 
 func (p *Post) SetMissingDefaults () {
@@ -69,6 +70,7 @@ func UpdatePost(ctx context.Context, post *Post) error {
 		p.Path = post.Path
 		p.Content = post.Content
 		p.MetaDescription = post.MetaDescription
+		p.Banner = post.Banner
 		if !p.Published && post.Published {
 			p.PublishedDate = time.Now()
 		}

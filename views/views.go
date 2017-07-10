@@ -371,10 +371,12 @@ func GetPost(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
 	err = templates.ExecuteTemplate(w, "post-page", struct{
 		Title string
 		CanonicalUrl string
+		CompanyName string
 		Post *entities.Post
 	}{
 		Title: post.Title + " | " + settings.COMPANY_NAME,
 		CanonicalUrl: fmt.Sprintf("%s://%s%s", httpHeader, r.Host, r.URL.Path),
+		CompanyName: settings.COMPANY_NAME,
 		Post: post,
 	})
 
