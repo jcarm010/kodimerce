@@ -734,6 +734,13 @@ func (c *ServerContext) GetSiteMap(w web.ResponseWriter, r *web.Request){
 		}
 	}
 
+	posts, err := entities.ListPostsByPublished(c.Context, true)
+	if err == nil {
+		for _, post := range posts {
+			sm.Add(stm.URL{"loc": "/" + post.Path, "changefreq": "monthly", "priority": 0.6})
+		}
+	}
+
 	sm.Add(stm.URL{"loc": "/referrals", "changefreq": "weekly", "priority": 1})
 	w.Write(sm.XMLContent())
 }

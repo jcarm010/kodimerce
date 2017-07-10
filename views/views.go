@@ -353,3 +353,34 @@ func OrderReviewView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) 
 		return
 	}
 }
+
+func GetPost(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
+	postPath := r.PathParams["post"]
+	log.Infof(c.Context, "Serving Post: %s", postPath)
+	post, err := entities.GetPostByPath(c.Context, postPath)
+	if err != nil {
+		log.Errorf(c.Context, "Error getting post: %+v", err)
+		c.ServeHTMLError(http.StatusInternalServerError, "Unexpected error, please try again later.")
+		return
+	}
+
+	httpHeader := "http"
+	if r.TLS != nil {
+		httpHeader = "https"
+	}
+	err = templates.ExecuteTemplate(w, "post-page", struct{
+		Title string
+		CanonicalUrl string
+		Post *entities.Post
+	}{
+		Title: post.Title + " | " + settings.COMPANY_NAME,
+		CanonicalUrl: fmt.Sprintf("%s://%s%s", httpHeader, r.Host, r.URL.Path),
+		Post: post,
+	})
+
+	if err != nil {
+		log.Errorf(c.Context, "Error parsing html file: %+v", err)
+		c.ServeHTMLError(http.StatusInternalServerError, "Unexpected error, please try again later.")
+		return
+	}
+}

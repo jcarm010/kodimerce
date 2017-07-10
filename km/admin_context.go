@@ -492,3 +492,65 @@ func (c *AdminContext) OverrideOrder(w web.ResponseWriter, r *web.Request){
 
 	c.ServeJson(http.StatusOK, "")
 }
+
+func (c *AdminContext) GetPosts(w web.ResponseWriter, r *web.Request){
+	posts, err := entities.ListPosts(c.Context)
+	if err != nil {
+		log.Errorf(c.Context, "Error loading posts: %s", err)
+		c.ServeJson(http.StatusInternalServerError, "Unexpected error loading posts.")
+		return
+	}
+
+	c.ServeJson(http.StatusOK, posts)
+}
+
+func (c *AdminContext) CreatePost(w web.ResponseWriter, r *web.Request){
+	data := struct {
+		Title string `json:"title"`
+	}{}
+
+	err := c.ParseJsonRequest(&data)
+	if err != nil {
+		log.Errorf(c.Context, "Could not parse request: %+v", err)
+		c.ServeJson(http.StatusBadRequest, "Could not parse request.")
+		return
+	}
+
+	log.Infof(c.Context, "Creating post with title: %s", data.Title)
+	if data.Title == "" {
+		c.ServeJson(http.StatusBadRequest, "A post needs a title.")
+		return
+	}
+
+	post, err := entities.CreatePost(c.Context, data.Title)
+	if err != nil {
+		log.Errorf(c.Context, "Error creating post: %+v", err)
+		c.ServeJson(http.StatusInternalServerError, "Unexpected error creating post.")
+		return
+	}
+
+	c.ServeJson(http.StatusOK, post)
+}
+
+func (c *AdminContext) UpdatePost(w web.ResponseWriter, r *web.Request){
+	data := struct {
+		Post *entities.Post `json:"post"`
+	}{}
+
+	err := c.ParseJsonRequest(&data)
+	if err != nil {
+		log.Errorf(c.Context, "Could not parse request: %+v", err)
+		c.ServeJson(http.StatusBadRequest, "Could not parse post.")
+		return
+	}
+
+	log.Infof(c.Context, "Updating post: %+v", data.Post)
+	err = entities.UpdatePost(c.Context, data.Post)
+	if err != nil {
+		log.Errorf(c.Context, "Error updating post: %+v", err)
+		c.ServeJson(http.StatusInternalServerError, "Unexpected error updating post.")
+		return
+	}
+
+	c.ServeJson(http.StatusOK, "")
+}

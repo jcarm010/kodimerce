@@ -35,13 +35,17 @@ func init() {
 		Get("/gallery/upload", (*km.ServerContext).GetGalleryUpload).
 		Get("/gallery/upload/name/:name", (*km.ServerContext).GetGalleryUploadByName).
 		Get("/gallery/upload/:key", (*km.ServerContext).GetGalleryUpload).
-		Get("/sitemap.xml", (*km.ServerContext).GetSiteMap)
+		Get("/sitemap.xml", (*km.ServerContext).GetSiteMap).
+		Get("/:post", views.GetPost)
 
 	router.Subrouter(km.ServerContext{}, "/api").
 		Get("/product", (*km.ServerContext).GetProducts)
 
 	router.Subrouter(km.AdminContext{}, "/admin").
 		Middleware((*km.AdminContext).Auth).
+		Get("/km/post", (*km.AdminContext).GetPosts).
+		Post("/km/post", (*km.AdminContext).CreatePost).
+		Put("/km/post", (*km.AdminContext).UpdatePost).
 		Get("/km/product", (*km.AdminContext).GetProducts).
 		Post("/km/product", (*km.AdminContext).CreateProduct).
 		Put("/km/product", (*km.AdminContext).UpdateProduct).
