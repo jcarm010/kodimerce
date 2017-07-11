@@ -210,6 +210,7 @@ func StoreView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		Name string
 		Selected bool
 		Url string
+		Description string
 	}
 
 	options := make([]CategoryOption, len(featuredCategories))
@@ -218,6 +219,7 @@ func StoreView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 	for index, cat := range featuredCategories {
 		options[index] = CategoryOption{
 			Name: cat.Name,
+			Description: cat.Description,
 			Selected: category == cat.Name || category == cat.Path,
 			Url: fmt.Sprintf("/store/%s", cat.Path),
 		}
