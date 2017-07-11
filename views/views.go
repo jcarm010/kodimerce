@@ -3,30 +3,33 @@ package views
 import (
 	"github.com/gocraft/web"
 	"github.com/jcarm010/kodimerce/km"
-	"html/template"
 	"google.golang.org/appengine/log"
 	"net/http"
 	"github.com/jcarm010/kodimerce/settings"
 	"github.com/jcarm010/kodimerce/entities"
 	"strconv"
 	"fmt"
+	"html/template"
 )
-
-var templates = template.Must(template.New("").Funcs(fns).ParseGlob("views/templates/*")) //todo: cache this globally
 
 type View struct {
 	Title string
+	MetaDescription string
+	Keywords string
+	CompanyName string
+}
+
+func NewView(title string, metaDescription string) *View {
+	return &View{
+		Title: title,
+		MetaDescription: metaDescription,
+		CompanyName: settings.COMPANY_NAME,
+	}
 }
 
 type OrderView struct {
 	Title string
 	Order *entities.Order `json:"order"`
-}
-
-var fns = template.FuncMap{
-	"plus1": func(x int) int {
-		return x + 1
-	},
 }
 
 func HomeView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
@@ -37,18 +40,16 @@ func HomeView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 	}
 
 	log.Debugf(c.Context, "FeaturedCategories: %+v", featuredCategories)
-
 	p := struct{
-		Title string
-		CompanyName string
+		*View
 		Categories []*entities.Category
+
 	}{
-		Title: settings.COMPANY_NAME,
-		CompanyName: settings.COMPANY_NAME,
+		View: NewView(settings.COMPANY_NAME, settings.META_DESCRIPTION_HOME),
 		Categories: featuredCategories,
 	}
 
-	err = templates.ExecuteTemplate(w, "home-page", p)
+	err = km.Templates.ExecuteTemplate(w, "home-page", p)
 	if err != nil {
 		log.Errorf(c.Context, "Error parsing home html file: %+v", err)
 		c.ServeHTML(http.StatusInternalServerError, "Unexpected Error, please try again later.")
@@ -58,12 +59,12 @@ func HomeView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 
 func ContactView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 	p := struct {
-		Title      string
+		*View
 	}{
-		Title: "Contact | " + settings.COMPANY_NAME,
+		View: NewView("Contact | " + settings.COMPANY_NAME, settings.META_DESCRIPTION_CONTACT),
 	}
 
-	err := templates.ExecuteTemplate(w, "contact-page", p)
+	err := km.Templates.ExecuteTemplate(w, "contact-page", p)
 	if err != nil {
 		log.Errorf(c.Context, "Error parsing home html file: %+v", err)
 		c.ServeHTML(http.StatusInternalServerError, "Unexpected Error, please try again later.")
@@ -86,15 +87,15 @@ func ReferralsView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 	}
 
 	p := struct {
-		Title       string
+		*View
 		Products	[]*entities.Product
 	}{
-		Title: "Referrals | " + settings.COMPANY_NAME,
+		View: NewView("Referrals | " + settings.COMPANY_NAME, settings.META_DESCRIPTION_REFERRALS),
 		Products: activeProducts,
 	}
 
 	log.Infof(c.Context, "Products: %+v", products)
-	err = templates.ExecuteTemplate(w, "referrals-page", p)
+	err = km.Templates.ExecuteTemplate(w, "referrals-page", p)
 	if err != nil {
 		log.Errorf(c.Context, "Error parsing home html file: %+v", err)
 		c.ServeHTML(http.StatusInternalServerError, "Unexpected Error, please try again later.")
@@ -126,20 +127,18 @@ func ProductView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		productFound = false
 	}
 
-	type ProductView struct {
-		Title string
-		Product *entities.Product
-		ProductFound bool
-		CanonicalUrl string
-		Domain string
-	}
-
 	httpHeader := "http"
 	if r.TLS != nil {
 		httpHeader = "https"
 	}
-	p := ProductView {
-		Title: selectedProduct.Name + " | " + settings.COMPANY_NAME,
+	p := struct {
+		*View
+		Product *entities.Product
+		ProductFound bool
+		CanonicalUrl string
+		Domain string
+	}{
+		View: NewView(selectedProduct.Name + " | " + settings.COMPANY_NAME, selectedProduct.MetaDescription),
 		Product: selectedProduct,
 		ProductFound: productFound,
 		CanonicalUrl: fmt.Sprintf("%s://%s%s", httpHeader, r.Host, r.URL.Path),
@@ -152,7 +151,7 @@ func ProductView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	}
 
-	err = templates.ExecuteTemplate(w, "product-page", p)
+	err = km.Templates.ExecuteTemplate(w, "product-page", p)
 	if err != nil {
 		log.Errorf(c.Context, "Error parsing store html file: %+v", err)
 		c.ServeHTML(http.StatusInternalServerError, "Unexpected error, please try again later.")
@@ -214,21 +213,17 @@ func StoreView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 	}
 
 	options := make([]CategoryOption, len(featuredCategories))
+	var metaDescription string = settings.META_DESCRIPTION_STORE
 	for index, cat := range featuredCategories {
 		options[index] = CategoryOption{
 			Name: cat.Name,
 			Selected: category == cat.Name || category == cat.Path,
 			Url: fmt.Sprintf("/store/%s", cat.Path),
 		}
-	}
 
-	type StoreView struct {
-		Title string
-		Products []*entities.Product
-		Category string
-		CategoryOptions []CategoryOption
-		Categories []*entities.Category
-		Domain string
+		if options[index].Selected {
+			metaDescription = cat.MetaDescription
+		}
 	}
 
 	var title string // settings.COMPANY_NAME + " | Store"
@@ -238,15 +233,22 @@ func StoreView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		title = "Store | " + settings.COMPANY_NAME
 	}
 
-	p := StoreView{
-		Title: title,
+	p := struct {
+		*View
+		Products []*entities.Product
+		Category string
+		CategoryOptions []CategoryOption
+		Categories []*entities.Category
+		Domain string
+	}{
+		View: NewView(title, metaDescription),
 		Products: products,
 		Category: category,
 		CategoryOptions: options,
 		Domain: settings.ServerUrl(r.Request),
 	}
 
- 	err = templates.ExecuteTemplate(w, "store-page", p)
+ 	err = km.Templates.ExecuteTemplate(w, "store-page", p)
 	if err != nil {
 		log.Errorf(c.Context, "Error parsing store html file: %+v", err)
 		c.ServeHTML(http.StatusInternalServerError, "Unexpected error, please try again later.")
@@ -255,10 +257,7 @@ func StoreView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 }
 
 func AdminView(c *km.AdminContext, w web.ResponseWriter, r *web.Request) {
-	p := View{
-		Title: "Admin | " + settings.COMPANY_NAME,
-	}
-
+	p := NewView("Admin | " + settings.COMPANY_NAME, "")
 	t, err := template.ParseFiles("views/admin.html") // cache this globally
 	if err != nil {
 		log.Errorf(c.Context, "Error parsing admin html file: %+v", err)
@@ -270,9 +269,7 @@ func AdminView(c *km.AdminContext, w web.ResponseWriter, r *web.Request) {
 }
 
 func RegisterView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
-	p := View{
-		Title: "Register | " + settings.COMPANY_NAME,
-	}
+	p := NewView("Register | " + settings.COMPANY_NAME, "")
 
 	t, err := template.ParseFiles("views/register.html") // cache this globally
 	if err != nil {
@@ -285,9 +282,7 @@ func RegisterView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 }
 
 func LoginView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
-	p := View{
-		Title: "Login | " + settings.COMPANY_NAME,
-	}
+	p := NewView("Login | " + settings.COMPANY_NAME, "")
 
 	t, err := template.ParseFiles("views/login.html") // cache this globally
 	if err != nil {
@@ -299,11 +294,11 @@ func LoginView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 	t.Execute(w, p)
 }
 func CartView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
-	err := templates.ExecuteTemplate(w, "cart-page", struct{
-		Title string
+	err := km.Templates.ExecuteTemplate(w, "cart-page", struct{
+		*View
 		TaxPercent float64
 	}{
-		Title: "Shopping Cart | " + settings.COMPANY_NAME,
+		View: NewView("Shopping Cart | " + settings.COMPANY_NAME, settings.META_DESCRIPTION_CART),
 		TaxPercent: settings.TAX_PERCENT,
 	})
 	if err != nil {
@@ -337,12 +332,13 @@ func OrderReviewView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) 
 
 	log.Infof(c.Context, "Rendering orderId[%v] order[%+v]", orderId, order)
 
-	err = templates.ExecuteTemplate(w, "order-review-page", struct{
+	err = km.Templates.ExecuteTemplate(w, "order-review-page", struct{
+		*View
 		Title string
 		Order *entities.Order
 		TaxPercent float64
 	}{
-		Title: "Order Details | " + settings.COMPANY_NAME,
+		View: NewView("Order Details | " + settings.COMPANY_NAME, ""),
 		Order: order,
 		TaxPercent: settings.TAX_PERCENT,
 	})
@@ -359,7 +355,7 @@ func GetPost(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
 	log.Infof(c.Context, "Serving Post: %s", postPath)
 	post, err := entities.GetPostByPath(c.Context, postPath)
 	if err == entities.ErrPostNotFound {
-		c.ServeHTMLError(http.StatusNotFound, "")
+		c.ServeHTMLError(http.StatusNotFound, "The page you were looking for does not exist.")
 		return
 	}
 
@@ -373,15 +369,13 @@ func GetPost(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
 	if r.TLS != nil {
 		httpHeader = "https"
 	}
-	err = templates.ExecuteTemplate(w, "post-page", struct{
-		Title string
+	err = km.Templates.ExecuteTemplate(w, "post-page", struct{
+		*View
 		CanonicalUrl string
-		CompanyName string
 		Post *entities.Post
 	}{
-		Title: post.Title + " | " + settings.COMPANY_NAME,
+		View: NewView(post.Title + " | " + settings.COMPANY_NAME, post.MetaDescription),
 		CanonicalUrl: fmt.Sprintf("%s://%s%s", httpHeader, r.Host, r.URL.Path),
-		CompanyName: settings.COMPANY_NAME,
 		Post: post,
 	})
 

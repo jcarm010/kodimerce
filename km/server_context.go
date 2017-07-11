@@ -23,6 +23,13 @@ import (
 	"github.com/ikeikeikeike/go-sitemap-generator/stm"
 )
 
+var Templates = template.Must(template.New("").Funcs(fns).ParseGlob("views/templates/*")) //todo: cache this globally
+var fns = template.FuncMap{
+	"plus1": func(x int) int {
+		return x + 1
+	},
+}
+
 type ServerContext struct{
 	Context context.Context
 	w web.ResponseWriter
@@ -51,7 +58,6 @@ func (c *ServerContext) ServeHTML(status int, value interface{}){
 }
 
 func (c *ServerContext) ServeHTMLError(status int, value interface{}){
-	var templates = template.Must(template.ParseGlob("views/templates/*")) // cache this globally
 	c.w.Header().Add("Content-Type", "text/html; charset=utf-8")
 	c.w.WriteHeader(status)
 	type ErrorView struct {
@@ -59,8 +65,8 @@ func (c *ServerContext) ServeHTMLError(status int, value interface{}){
 		Message string
 	}
 
-	err := templates.ExecuteTemplate(c.w, "error-page", ErrorView {
-		Title: settings.COMPANY_NAME + " | Error",
+	err := Templates.ExecuteTemplate(c.w, "error-page", ErrorView {
+		Title: fmt.Sprintf("%v | %s", status, settings.COMPANY_NAME),
 		Message: fmt.Sprintf("%s", value),
 	})
 

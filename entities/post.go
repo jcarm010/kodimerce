@@ -19,7 +19,7 @@ type Post struct {
 	Title string `datastore:"title" json:"title"`
 	Path string `datastore:"path" json:"path"`
 	Content template.HTML `datastore:"content,noindex" json:"content"`
-	MetaDescription template.HTML `datastore:"meta_description,noindex" json:"meta_description"`
+	MetaDescription string `datastore:"meta_description,noindex" json:"meta_description"`
 	Banner string `datastore:"banner,noindex" json:"banner"`
 	Published bool `datastore:"published" json:"published"`
 	PublishedDate time.Time `datastore:"published_date" json:"published_date"`
@@ -32,7 +32,7 @@ func (p *Post) FormattedPublishedDate () (string) {
 
 func (p *Post) SetMissingDefaults () {
 	if p.MetaDescription == "" {
-		p.MetaDescription = p.Content
+		p.MetaDescription = string(p.Content)
 	}
 }
 

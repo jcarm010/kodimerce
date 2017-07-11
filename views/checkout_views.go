@@ -3,7 +3,6 @@ package views
 import (
 	"github.com/gocraft/web"
 	"github.com/jcarm010/kodimerce/km"
-	"html/template"
 	"google.golang.org/appengine/log"
 	"net/http"
 	"github.com/jcarm010/kodimerce/settings"
@@ -34,8 +33,6 @@ func (c *CheckoutStep) String () string {
 }
 
 func RenderCheckoutView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
-	var templates = template.Must(template.New("").Funcs(fns).ParseGlob("views/templates/*")) //todo: cache this globally
-
 	orderIdStr := r.URL.Query().Get("order")
 	if orderIdStr == "" {
 		log.Errorf(c.Context, "Missing order id")
@@ -86,15 +83,15 @@ func RenderCheckoutView(c *km.ServerContext, w web.ResponseWriter, r *web.Reques
 		}
 	}
 
-	err = templates.ExecuteTemplate(w, "checkout-page", struct{
-		Title string
+	err = km.Templates.ExecuteTemplate(w, "checkout-page", struct{
+		*View
 		CheckoutSteps []*CheckoutStep `json:"checkout_steps"`
 		CurrentStep *CheckoutStep `json:"current_step"`
 		NextStep *CheckoutStep `json:"next_step"`
 		Order *entities.Order `json:"order"`
 		PaypalEnvironment string `json:"paypal_environment"`
 	}{
-		Title: "Checkout | " + settings.COMPANY_NAME,
+		View: NewView("Checkout | " + settings.COMPANY_NAME, ""),
 		CheckoutSteps:checkoutSteps,
 		CurrentStep:currentStep,
 		NextStep: nextStep,

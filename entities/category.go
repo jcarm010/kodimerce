@@ -16,6 +16,7 @@ type Category struct {
 	Name string `datastore:"name" json:"name"`
 	Path string `datastore:"path" json:"path"`
 	Description string `datastore:"description,noindex" json:"description"`
+	MetaDescription string `datastore:"meta_description,noindex" json:"meta_description"`
 	Created time.Time `datastore:"created" json:"created"`
 	Thumbnail string `datastore:"thumbnail,noindex" json:"thumbnail"`
 	Featured bool `datastore:"featured" json:"featured"`
@@ -28,6 +29,10 @@ func (c *Category) SetMissingDefaults() {
 
 	if c.Path == "" {
 		c.Path = c.Name
+	}
+
+	if c.MetaDescription == "" {
+		c.MetaDescription = c.Description
 	}
 }
 
