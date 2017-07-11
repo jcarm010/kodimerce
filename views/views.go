@@ -214,6 +214,7 @@ func StoreView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 
 	options := make([]CategoryOption, len(featuredCategories))
 	var metaDescription string = settings.META_DESCRIPTION_STORE
+	var categoryName string = "Store"
 	for index, cat := range featuredCategories {
 		options[index] = CategoryOption{
 			Name: cat.Name,
@@ -223,16 +224,11 @@ func StoreView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 
 		if options[index].Selected {
 			metaDescription = cat.MetaDescription
+			categoryName = cat.Name
 		}
 	}
 
-	var title string // settings.COMPANY_NAME + " | Store"
-	if category != "" {
-		title = category + " | " + settings.COMPANY_NAME
-	}else {
-		title = "Store | " + settings.COMPANY_NAME
-	}
-
+	var title string = categoryName + " | " + settings.COMPANY_NAME
 	p := struct {
 		*View
 		Products []*entities.Product
