@@ -21,6 +21,7 @@ import (
 	"github.com/jcarm010/kodimerce/emailer"
 	"bytes"
 	"github.com/ikeikeikeike/go-sitemap-generator/stm"
+	"github.com/jcarm010/kodimerce/view"
 )
 
 var Templates = template.Must(template.New("").Funcs(fns).ParseGlob("views/templates/*")) //todo: cache this globally
@@ -61,12 +62,13 @@ func (c *ServerContext) ServeHTMLError(status int, value interface{}){
 	c.w.Header().Add("Content-Type", "text/html; charset=utf-8")
 	c.w.WriteHeader(status)
 	type ErrorView struct {
+		*view.View
 		Title string
 		Message string
 	}
 
 	err := Templates.ExecuteTemplate(c.w, "error-page", ErrorView {
-		Title: fmt.Sprintf("%v | %s", status, settings.COMPANY_NAME),
+		View: view.NewView(fmt.Sprintf("%v | %s", status, settings.COMPANY_NAME), ""),
 		Message: fmt.Sprintf("%s", value),
 	})
 
@@ -727,7 +729,7 @@ func (c *ServerContext) GetSiteMap(w web.ResponseWriter, r *web.Request){
 	featuredCategories, err := entities.ListCategoriesByFeatured(c.Context, true)
 	if err == nil {
 		for _, category := range featuredCategories {
-			sm.Add(stm.URL{"loc": "/store/" + category.Path, "changefreq": "weekly", "priority": 0.8})
+			sm.Add(stm.URL{"loc": "/store/" + category.Path, "changefreq": "weekly", "priority": 1})
 		}
 	}
 
@@ -735,18 +737,19 @@ func (c *ServerContext) GetSiteMap(w web.ResponseWriter, r *web.Request){
 	if err == nil {
 		for _, product := range products {
 			if product.Active {
-				sm.Add(stm.URL{"loc": "/product/" + product.Path, "changefreq": "weekly", "priority": 0.7})
+				sm.Add(stm.URL{"loc": "/product/" + product.Path, "changefreq": "weekly", "priority": 1})
 			}
 		}
 	}
 
+	sm.Add(stm.URL{"loc": "/blog", "changefreq": "daily", "priority": 1})
 	posts, err := entities.ListPostsByPublished(c.Context, true)
 	if err == nil {
 		for _, post := range posts {
-			sm.Add(stm.URL{"loc": "/" + post.Path, "changefreq": "monthly", "priority": 0.6})
+			sm.Add(stm.URL{"loc": "/" + post.Path, "changefreq": "monthly", "priority": 1})
 		}
 	}
 
-	sm.Add(stm.URL{"loc": "/referrals", "changefreq": "weekly", "priority": 1})
+	sm.Add(stm.URL{"loc": "/referrals", "changefreq": "weekly", "priority": 0.4})
 	w.Write(sm.XMLContent())
 }

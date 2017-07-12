@@ -108,10 +108,6 @@ func (p *Product) SetMissingDefaults () {
 	if p.Path == "" {
 		p.Path = fmt.Sprintf("%v", p.Id)
 	}
-
-	if p.MetaDescription == "" {
-		p.MetaDescription = string(p.Description)
-	}
 }
 
 func (p *Product) GetPricingLabel() string {

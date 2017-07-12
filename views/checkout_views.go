@@ -9,6 +9,7 @@ import (
 	"github.com/dustin/gojson"
 	"strconv"
 	"github.com/jcarm010/kodimerce/entities"
+	"github.com/jcarm010/kodimerce/view"
 )
 
 type CheckoutStep struct {
@@ -84,14 +85,14 @@ func RenderCheckoutView(c *km.ServerContext, w web.ResponseWriter, r *web.Reques
 	}
 
 	err = km.Templates.ExecuteTemplate(w, "checkout-page", struct{
-		*View
+		*view.View
 		CheckoutSteps []*CheckoutStep `json:"checkout_steps"`
 		CurrentStep *CheckoutStep `json:"current_step"`
 		NextStep *CheckoutStep `json:"next_step"`
 		Order *entities.Order `json:"order"`
 		PaypalEnvironment string `json:"paypal_environment"`
 	}{
-		View: NewView("Checkout | " + settings.COMPANY_NAME, ""),
+		View: view.NewView("Checkout | " + settings.COMPANY_NAME, ""),
 		CheckoutSteps:checkoutSteps,
 		CurrentStep:currentStep,
 		NextStep: nextStep,

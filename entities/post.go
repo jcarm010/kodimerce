@@ -26,14 +26,17 @@ type Post struct {
 	Created time.Time `datastore:"created" json:"created"`
 }
 
+type ByNewestFirst []*Post
+func (a ByNewestFirst) Len() int           { return len(a) }
+func (a ByNewestFirst) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByNewestFirst) Less(i, j int) bool { return a[j].PublishedDate.Unix() < a[i].PublishedDate.Unix() }
+
 func (p *Post) FormattedPublishedDate () (string) {
 	return p.PublishedDate.Format("_2 Jan 2006")
 }
 
 func (p *Post) SetMissingDefaults () {
-	if p.MetaDescription == "" {
-		p.MetaDescription = string(p.Content)
-	}
+
 }
 
 func NewPost(title string) *Post {

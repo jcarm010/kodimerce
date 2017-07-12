@@ -30,10 +30,6 @@ func (c *Category) SetMissingDefaults() {
 	if c.Path == "" {
 		c.Path = c.Name
 	}
-
-	if c.MetaDescription == "" {
-		c.MetaDescription = c.Description
-	}
 }
 
 func (c *Category) String() string {
