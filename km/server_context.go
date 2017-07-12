@@ -751,5 +751,7 @@ func (c *ServerContext) GetSiteMap(w web.ResponseWriter, r *web.Request){
 	}
 
 	sm.Add(stm.URL{"loc": "/referrals", "changefreq": "weekly", "priority": 0.4})
+
+	w.Header().Add("Content-Type:","text/xml; charset=utf-8")
 	w.Write(sm.XMLContent())
 }

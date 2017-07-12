@@ -434,5 +434,6 @@ func GetBlogRss(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
 		return
 	}
 
+	w.Header().Add("Content-Type:","text/xml; charset=utf-8")
 	w.Write([]byte(rss))
 }
