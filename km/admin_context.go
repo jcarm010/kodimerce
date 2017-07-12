@@ -11,6 +11,7 @@ import (
 	"google.golang.org/appengine"
 	"fmt"
 	"sort"
+	"time"
 )
 
 type AdminContext struct {
@@ -399,10 +400,12 @@ func (c *ServerContext) GetGalleryUpload(w web.ResponseWriter, r *web.Request) {
 
 	name := upload.Filename
 	contentType := upload.ContentType
+	cacheUntil := time.Now().AddDate(0, 2, 0).Format(http.TimeFormat)
 	//Content-Type: text/html
 	w.Header().Add("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", name))
 	w.Header().Add("Cache-Control", "max-age=2593000")
 	w.Header().Add("Content-Type", contentType)
+	w.Header().Set("Expires", cacheUntil)
 	blobstore.Send(w, upload.BlobKey)
 }
 
