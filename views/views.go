@@ -12,6 +12,8 @@ import (
 	"html/template"
 	"github.com/jcarm010/kodimerce/view"
 	"sort"
+	"github.com/jcarm010/feeds"
+	"time"
 )
 
 type OrderView struct {
@@ -335,7 +337,7 @@ func OrderReviewView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) 
 	}
 }
 
-func PostsView(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
+func BlogView(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
 	posts, err := entities.ListPostsByPublished(c.Context, true)
 	if err != nil {
 		log.Errorf(c.Context, "Error getting posts: %s", err)
@@ -393,4 +395,42 @@ func GetPost(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
 		c.ServeHTMLError(http.StatusInternalServerError, "Unexpected error, please try again later.")
 		return
 	}
+}
+
+func GetBlogRss(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
+	posts, err := entities.ListPostsByPublished(c.Context, true)
+	if err != nil {
+		log.Errorf(c.Context, "Error getting posts: %s", err)
+		c.ServeHTML(http.StatusInternalServerError, "Unexpected error loading posts.")
+		return
+	}
+
+	serverUrl := settings.ServerUrl(r.Request)
+	sort.Sort(entities.ByNewestFirst(posts))
+	now := time.Now()
+	feed := &feeds.Feed{
+		Title:       settings.COMPANY_NAME + " Blog",
+		Link:        &feeds.Link{Href: serverUrl + "/blog"},
+		Description: settings.META_DESCRIPTION_BLOG,
+		Author:      &feeds.Author{Name: settings.COMPANY_NAME, Email: settings.COMPANY_SUPPORT_EMAIL},
+		Created:     now,
+	}
+	feed.Items = make([]*feeds.Item, len(posts))
+	for index, post := range posts {
+		feed.Items[index] = &feeds.Item{
+			Title:       post.Title,
+			Link:        &feeds.Link{Href: serverUrl + "/" + post.Path},
+			Description: post.MetaDescription,
+			Created:     post.PublishedDate,
+		}
+	}
+
+	rss, err := feed.ToRss()
+	if err != nil {
+		log.Errorf(c.Context, "Error loading rss feed: %s", err)
+		c.ServeHTML(http.StatusInternalServerError, "Unexpected error loading rss feed.")
+		return
+	}
+
+	w.Write([]byte(rss))
 }

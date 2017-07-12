@@ -36,7 +36,8 @@ func init() {
 		Get("/gallery/upload/name/:name", (*km.ServerContext).GetGalleryUploadByName).
 		Get("/gallery/upload/:key", (*km.ServerContext).GetGalleryUpload).
 		Get("/sitemap.xml", (*km.ServerContext).GetSiteMap).
-		Get("/blog", views.PostsView).
+		Get("/blog", views.BlogView).
+		Get("/blog/rss", views.GetBlogRss).
 		Get("/:post", views.GetPost)
 
 	router.Subrouter(km.ServerContext{}, "/api").
