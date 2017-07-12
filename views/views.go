@@ -417,9 +417,11 @@ func GetBlogRss(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
 	}
 	feed.Items = make([]*feeds.Item, len(posts))
 	for index, post := range posts {
+		postUrl := serverUrl + "/" + post.Path
 		feed.Items[index] = &feeds.Item{
+			Id: 		 postUrl,
 			Title:       post.Title,
-			Link:        &feeds.Link{Href: serverUrl + "/" + post.Path},
+			Link:        &feeds.Link{Href: postUrl},
 			Description: post.MetaDescription,
 			Created:     post.PublishedDate,
 		}
