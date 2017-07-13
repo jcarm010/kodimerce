@@ -92,7 +92,7 @@ func RenderCheckoutView(c *km.ServerContext, w web.ResponseWriter, r *web.Reques
 		Order *entities.Order `json:"order"`
 		PaypalEnvironment string `json:"paypal_environment"`
 	}{
-		View: view.NewView("Checkout | " + settings.COMPANY_NAME, ""),
+		View: c.NewView("Checkout | " + settings.COMPANY_NAME, ""),
 		CheckoutSteps:checkoutSteps,
 		CurrentStep:currentStep,
 		NextStep: nextStep,

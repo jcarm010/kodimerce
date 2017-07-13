@@ -34,7 +34,7 @@ func HomeView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		Categories []*entities.Category
 
 	}{
-		View: view.NewView(settings.COMPANY_NAME, settings.META_DESCRIPTION_HOME),
+		View: c.NewView(settings.COMPANY_NAME, settings.META_DESCRIPTION_HOME),
 		Categories: featuredCategories,
 	}
 
@@ -50,7 +50,7 @@ func ContactView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 	p := struct {
 		*view.View
 	}{
-		View: view.NewView("Contact | " + settings.COMPANY_NAME, settings.META_DESCRIPTION_CONTACT),
+		View: c.NewView("Contact | " + settings.COMPANY_NAME, settings.META_DESCRIPTION_CONTACT),
 	}
 
 	err := km.Templates.ExecuteTemplate(w, "contact-page", p)
@@ -79,7 +79,7 @@ func ReferralsView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		*view.View
 		Products	[]*entities.Product
 	}{
-		View: view.NewView("Referrals | " + settings.COMPANY_NAME, settings.META_DESCRIPTION_REFERRALS),
+		View: c.NewView("Referrals | " + settings.COMPANY_NAME, settings.META_DESCRIPTION_REFERRALS),
 		Products: activeProducts,
 	}
 
@@ -127,7 +127,7 @@ func ProductView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		CanonicalUrl string
 		Domain string
 	}{
-		View: view.NewView(selectedProduct.Name + " | " + settings.COMPANY_NAME, selectedProduct.MetaDescription),
+		View: c.NewView(selectedProduct.Name + " | " + settings.COMPANY_NAME, selectedProduct.MetaDescription),
 		Product: selectedProduct,
 		ProductFound: productFound,
 		CanonicalUrl: fmt.Sprintf("%s://%s%s", httpHeader, r.Host, r.URL.Path),
@@ -228,7 +228,7 @@ func StoreView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		Categories []*entities.Category
 		Domain string
 	}{
-		View: view.NewView(title, metaDescription),
+		View: c.NewView(title, metaDescription),
 		Products: products,
 		Category: category,
 		CategoryOptions: options,
@@ -244,7 +244,7 @@ func StoreView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 }
 
 func AdminView(c *km.AdminContext, w web.ResponseWriter, r *web.Request) {
-	p := view.NewView("Admin | " + settings.COMPANY_NAME, "")
+	p := c.NewView("Admin | " + settings.COMPANY_NAME, "")
 	t, err := template.ParseFiles("views/admin.html") // cache this globally
 	if err != nil {
 		log.Errorf(c.Context, "Error parsing admin html file: %+v", err)
@@ -256,7 +256,7 @@ func AdminView(c *km.AdminContext, w web.ResponseWriter, r *web.Request) {
 }
 
 func RegisterView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
-	p := view.NewView("Register | " + settings.COMPANY_NAME, "")
+	p := c.NewView("Register | " + settings.COMPANY_NAME, "")
 
 	t, err := template.ParseFiles("views/register.html") // cache this globally
 	if err != nil {
@@ -269,7 +269,7 @@ func RegisterView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 }
 
 func LoginView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
-	p := view.NewView("Login | " + settings.COMPANY_NAME, "")
+	p := c.NewView("Login | " + settings.COMPANY_NAME, "")
 
 	t, err := template.ParseFiles("views/login.html") // cache this globally
 	if err != nil {
@@ -285,7 +285,7 @@ func CartView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		*view.View
 		TaxPercent float64
 	}{
-		View: view.NewView("Shopping Cart | " + settings.COMPANY_NAME, settings.META_DESCRIPTION_CART),
+		View: c.NewView("Shopping Cart | " + settings.COMPANY_NAME, settings.META_DESCRIPTION_CART),
 		TaxPercent: settings.TAX_PERCENT,
 	})
 	if err != nil {
@@ -325,7 +325,7 @@ func OrderReviewView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) 
 		Order *entities.Order
 		TaxPercent float64
 	}{
-		View: view.NewView("Order Details | " + settings.COMPANY_NAME, ""),
+		View: c.NewView("Order Details | " + settings.COMPANY_NAME, ""),
 		Order: order,
 		TaxPercent: settings.TAX_PERCENT,
 	})
@@ -350,7 +350,7 @@ func BlogView(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
 		*view.View
 		Posts []*entities.Post
 	}{
-		View: view.NewView("Blog | " + settings.COMPANY_NAME, settings.META_DESCRIPTION_BLOG),
+		View: c.NewView("Blog | " + settings.COMPANY_NAME, settings.META_DESCRIPTION_BLOG),
 		Posts: posts,
 	})
 
@@ -385,7 +385,7 @@ func GetPost(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
 		CanonicalUrl string
 		Post *entities.Post
 	}{
-		View: view.NewView(post.Title + " | " + settings.COMPANY_NAME, post.MetaDescription),
+		View: c.NewView(post.Title + " | " + settings.COMPANY_NAME, post.MetaDescription),
 		CanonicalUrl: fmt.Sprintf("%s://%s%s", httpHeader, r.Host, r.URL.Path),
 		Post: post,
 	})

@@ -42,6 +42,10 @@ func (c *ServerContext) ParseJsonRequest(v interface{}) error {
 	return decoder.Decode(v)
 }
 
+func (c *ServerContext) NewView(title string, metaDescription string) *view.View {
+	return view.NewView(c.r.Request, title, metaDescription)
+}
+
 func (c *ServerContext) ServeJson(status int, value interface{}){
 	c.w.Header().Add("Content-Type", "application/json")
 	c.w.WriteHeader(status)
@@ -68,7 +72,7 @@ func (c *ServerContext) ServeHTMLError(status int, value interface{}){
 	}
 
 	err := Templates.ExecuteTemplate(c.w, "error-page", ErrorView {
-		View: view.NewView(fmt.Sprintf("%v | %s", status, settings.COMPANY_NAME), ""),
+		View: c.NewView(fmt.Sprintf("%v | %s", status, settings.COMPANY_NAME), ""),
 		Message: fmt.Sprintf("%s", value),
 	})
 
