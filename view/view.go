@@ -7,6 +7,7 @@ type View struct {
 	MetaDescription string
 	Keywords string
 	CompanyName string
+	CompanyUrl string
 }
 
 func NewView(title string, metaDescription string) *View {
@@ -14,5 +15,6 @@ func NewView(title string, metaDescription string) *View {
 		Title: title,
 		MetaDescription: metaDescription,
 		CompanyName: settings.COMPANY_NAME,
+		CompanyUrl: settings.COMPANY_URL,
 	}
 }
