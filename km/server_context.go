@@ -747,7 +747,7 @@ func (c *ServerContext) GetSiteMap(w web.ResponseWriter, r *web.Request){
 	}
 
 	sm.Add(stm.URL{"loc": "/blog", "changefreq": "daily", "priority": 1})
-	posts, err := entities.ListPostsByPublished(c.Context, true)
+	posts, err := entities.ListPosts(c.Context, true, -1)
 	if err == nil {
 		for _, post := range posts {
 			sm.Add(stm.URL{"loc": "/" + post.Path, "changefreq": "monthly", "priority": 1})

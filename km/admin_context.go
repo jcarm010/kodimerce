@@ -497,7 +497,7 @@ func (c *AdminContext) OverrideOrder(w web.ResponseWriter, r *web.Request){
 }
 
 func (c *AdminContext) GetPosts(w web.ResponseWriter, r *web.Request){
-	posts, err := entities.ListPosts(c.Context)
+	posts, err := entities.ListPosts(c.Context, false, -1)
 	if err != nil {
 		log.Errorf(c.Context, "Error loading posts: %s", err)
 		c.ServeJson(http.StatusInternalServerError, "Unexpected error loading posts.")

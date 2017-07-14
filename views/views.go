@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"html/template"
 	"github.com/jcarm010/kodimerce/view"
-	"sort"
 	"github.com/jcarm010/feeds"
 	"time"
 )
@@ -338,14 +337,14 @@ func OrderReviewView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) 
 }
 
 func BlogView(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
-	posts, err := entities.ListPostsByPublished(c.Context, true)
+	posts, err := entities.ListPosts(c.Context, true, -1)
 	if err != nil {
 		log.Errorf(c.Context, "Error getting posts: %s", err)
 		c.ServeHTML(http.StatusInternalServerError, "Unexpected error loading posts.")
 		return
 	}
 
-	sort.Sort(entities.ByNewestFirst(posts))
+	//sort.Sort(entities.ByNewestFirst(posts))
 	err = km.Templates.ExecuteTemplate(w, "blog-page", struct {
 		*view.View
 		Posts []*entities.Post
@@ -376,6 +375,12 @@ func GetPost(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
 		return
 	}
 
+	posts, err := entities.ListPosts(c.Context, true, 10)
+	if err != nil {
+		log.Errorf(c.Context, "Error getting previous posts: %+v", err)
+		posts = make([]*entities.Post, 0)
+	}
+
 	httpHeader := "http"
 	if r.TLS != nil {
 		httpHeader = "https"
@@ -383,11 +388,15 @@ func GetPost(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
 	err = km.Templates.ExecuteTemplate(w, "post-page", struct{
 		*view.View
 		CanonicalUrl string
-		Post *entities.Post
+		Post         *entities.Post
+		LatestPosts  []*entities.Post
+		AboutBlog    string
 	}{
-		View: c.NewView(post.Title + " | " + settings.COMPANY_NAME, post.MetaDescription),
+		View:         c.NewView(post.Title + " | " + settings.COMPANY_NAME, post.MetaDescription),
 		CanonicalUrl: fmt.Sprintf("%s://%s%s", httpHeader, r.Host, r.URL.Path),
-		Post: post,
+		Post:         post,
+		LatestPosts:  posts,
+		AboutBlog:    settings.DESCRIPTION_BLOG_ABOUT,
 	})
 
 	if err != nil {
@@ -398,7 +407,7 @@ func GetPost(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
 }
 
 func GetBlogRss(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
-	posts, err := entities.ListPostsByPublished(c.Context, true)
+	posts, err := entities.ListPosts(c.Context, true, -1)
 	if err != nil {
 		log.Errorf(c.Context, "Error getting posts: %s", err)
 		c.ServeHTML(http.StatusInternalServerError, "Unexpected error loading posts.")
@@ -406,7 +415,7 @@ func GetBlogRss(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
 	}
 
 	serverUrl := settings.ServerUrl(r.Request)
-	sort.Sort(entities.ByNewestFirst(posts))
+	//sort.Sort(entities.ByNewestFirst(posts))
 	now := time.Now()
 	feed := &feeds.Feed{
 		Title:       settings.COMPANY_NAME + " Blog",

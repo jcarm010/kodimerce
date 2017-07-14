@@ -19,6 +19,7 @@ type Post struct {
 	Title string `datastore:"title" json:"title"`
 	Path string `datastore:"path" json:"path"`
 	Content template.HTML `datastore:"content,noindex" json:"content"`
+	ShortDescription string `datastore:"short_description,noindex" json:"short_description"`
 	MetaDescription string `datastore:"meta_description,noindex" json:"meta_description"`
 	Banner string `datastore:"banner,noindex" json:"banner"`
 	Published bool `datastore:"published" json:"published"`
@@ -77,6 +78,7 @@ func UpdatePost(ctx context.Context, post *Post) error {
 		p.Content = post.Content
 		p.MetaDescription = post.MetaDescription
 		p.Banner = post.Banner
+		p.ShortDescription = post.ShortDescription
 		if !p.Published && post.Published {
 			p.PublishedDate = time.Now()
 		}
@@ -93,27 +95,24 @@ func UpdatePost(ctx context.Context, post *Post) error {
 	return nil
 }
 
-func ListPosts(ctx context.Context) ([]*Post, error) {
+func ListPosts(ctx context.Context, published bool, limit int) ([]*Post, error) {
 	posts := make([]*Post, 0)
+	if limit == 0 {
+		return posts, nil
+	}
+
 	q := datastore.NewQuery(ENTITY_POST)
-	keys, err := q.GetAll(ctx, &posts)
-	if err != nil {
-		return nil, err
+	if published {
+		q = q.Filter("published=", published).
+			Order("-published_date")
+	}else {
+		q = q.Order("-created")
 	}
 
-	for index, key := range keys {
-		var post = posts[index]
-		post.Id = key.IntID()
-		post.SetMissingDefaults()
+	if limit >= 0 {
+		q = q.Limit(limit)
 	}
 
-	return posts, err
-}
-
-func ListPostsByPublished(ctx context.Context, published bool) ([]*Post, error) {
-	posts := make([]*Post, 0)
-	q := datastore.NewQuery(ENTITY_POST).
-		Filter("published=", published)
 	keys, err := q.GetAll(ctx, &posts)
 	if err != nil {
 		return nil, err
