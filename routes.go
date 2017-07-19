@@ -26,6 +26,7 @@ func init() {
 		Get("/cart", views.CartView).
 		Get("/checkout", views.RenderCheckoutView).
 		Get("/checkout/:step", views.RenderCheckoutView).
+		Get("/thank-you", views.ThankYouView).
 		Get("/order", views.OrderReviewView).
 		Post("/order/address/verify", (*km.ServerContext).CheckOrderAddress).
 		Post("/order", (*km.ServerContext).CreateOrder).

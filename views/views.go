@@ -446,3 +446,41 @@ func GetBlogRss(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
 	w.Header().Add("Content-Type:","text/xml; charset=utf-8")
 	w.Write([]byte(rss))
 }
+
+func ThankYouView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
+	orderIdStr := r.URL.Query().Get("order")
+	var order *entities.Order
+	if orderIdStr != "" {
+		orderId, err := strconv.ParseInt(orderIdStr, 10, 64)
+		if err != nil {
+			log.Errorf(c.Context, "Could not parse id: %+v", err)
+			c.ServeHTMLError(http.StatusBadRequest, "Could not find your order, please try again later.")
+			return
+		}
+
+		order, err = entities.GetOrder(c.Context, orderId)
+		if err != nil {
+			log.Errorf(c.Context, "Error finding order: %+v", err)
+			c.ServeHTMLError(http.StatusBadRequest, "Could not find your order, please try again later.")
+			return
+		}
+
+		log.Infof(c.Context, "Rendering orderId[%v] order[%+v]", orderId, order)
+	}
+
+	err := km.Templates.ExecuteTemplate(w, "thank-you-page", struct{
+		*view.View
+		Order *entities.Order `json:"order"`
+		HasOrder bool `json:"has_order"`
+	}{
+		View: c.NewView("Thank You | " + settings.COMPANY_NAME, "Thank you."),
+		Order: order,
+		HasOrder: order != nil,
+	})
+
+	if err != nil {
+		log.Errorf(c.Context, "Error parsing html file: %+v", err)
+		c.ServeHTMLError(http.StatusInternalServerError, "Unexpected error, please try again later.")
+		return
+	}
+}
