@@ -6,28 +6,41 @@ import (
 	"gopkg.in/sendgrid/sendgrid-go.v2"
 	"google.golang.org/appengine/urlfetch"
 	"strings"
+	"google.golang.org/appengine/mail"
 )
 
 func SendEmail(ctx context.Context, from string, to string, subject string, body string, bcc string) error {
 	toEmails := strings.Split(to, ",")
-	sg := sendgrid.NewSendGridClientWithApiKey(settings.SENDGRID_KEY)
-	sg.Client = urlfetch.Client(ctx)
-	message := sendgrid.NewMail()
-	for _, email := range toEmails {
-		message.AddTo(strings.TrimSpace(email))
-	}
-	message.SetSubject(subject)
-	message.SetHTML(body)
-	message.SetFrom(from)
 	bccEmails := strings.Split(bcc, ",")
-	for _, bcc := range bccEmails {
-		bcc = strings.TrimSpace(bcc)
-		if bcc == "" {
+	if settings.SENDGRID_KEY != "" {
+		sg := sendgrid.NewSendGridClientWithApiKey(settings.SENDGRID_KEY)
+		sg.Client = urlfetch.Client(ctx)
+		message := sendgrid.NewMail()
+		for _, email := range toEmails {
+			message.AddTo(strings.TrimSpace(email))
+		}
+		message.SetSubject(subject)
+		message.SetHTML(body)
+		message.SetFrom(from)
+		for _, bcc := range bccEmails {
+			bcc = strings.TrimSpace(bcc)
+			if bcc == "" {
 				continue
+			}
+
+			message.AddBcc(bcc)
 		}
 
-		message.AddBcc(bcc)
-	}
+		return sg.Send(message)
+	} else {
+		msg := &mail.Message{
+			Sender:  from,
+			To:      toEmails,
+			Subject: subject,
+			Bcc:     bccEmails,
+			HTMLBody: body,
+		}
 
-	return sg.Send(message)
+		return  mail.Send(ctx, msg)
+	}
 }

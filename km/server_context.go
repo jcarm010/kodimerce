@@ -694,6 +694,7 @@ func (c *ServerContext) PostContactMessage(w web.ResponseWriter, r *web.Request)
 		return
 	}
 
+	phone := q.Get("phone")
 	message := q.Get("message")
 	if message == "" {
 		log.Errorf(c.Context, "Missing message")
@@ -701,7 +702,7 @@ func (c *ServerContext) PostContactMessage(w web.ResponseWriter, r *web.Request)
 		return
 	}
 
-	log.Infof(c.Context, "Sending message name[%s] email[%s] message[%s]", name, email, message)
+	log.Infof(c.Context, "Sending message name[%s] email[%s] phone[%s] message[%s]", name, email, phone, message)
 	body := fmt.Sprintf("Customer %s (%s) has sent you a message: %s", name, email, message)
 	err = emailer.SendEmail(
 		c.Context,
