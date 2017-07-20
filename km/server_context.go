@@ -703,7 +703,11 @@ func (c *ServerContext) PostContactMessage(w web.ResponseWriter, r *web.Request)
 	}
 
 	log.Infof(c.Context, "Sending message name[%s] email[%s] phone[%s] message[%s]", name, email, phone, message)
-	body := fmt.Sprintf("Customer %s (%s) has sent you a message: %s", name, email, message)
+	phonePart := ""
+	if phone != "" {
+		phonePart = " - " + phone
+	}
+	body := fmt.Sprintf("Customer %s (%s%s) has sent you a message: %s", name, email, phonePart, message)
 	err = emailer.SendEmail(
 		c.Context,
 		fmt.Sprintf("%s<%s>", settings.COMPANY_NAME, settings.EMAIL_SENDER),
