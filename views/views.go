@@ -28,12 +28,17 @@ func HomeView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 	}
 
 	log.Debugf(c.Context, "FeaturedCategories: %+v", featuredCategories)
+	title := settings.COMPANY_NAME
+	if settings.META_TITLE_HOME != "" {
+		title = settings.META_TITLE_HOME
+	}
+
 	p := struct{
 		*view.View
 		Categories []*entities.Category
 
 	}{
-		View: c.NewView(settings.COMPANY_NAME, settings.META_DESCRIPTION_HOME),
+		View: c.NewView(title, settings.META_DESCRIPTION_HOME),
 		Categories: featuredCategories,
 	}
 
