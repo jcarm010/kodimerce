@@ -83,6 +83,25 @@ func (c *ServerContext) ServeHTMLError(status int, value interface{}){
 	}
 }
 
+func (c *ServerContext) RedirectWWW(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc){
+	if !strings.HasPrefix(r.Host, "www") {
+		httpHeader := "http"
+		if r.TLS != nil {
+			httpHeader = "https"
+		}
+
+		newUrl := fmt.Sprintf("%s://www.%s%s", httpHeader, r.Host, r.URL.Path)
+		if r.URL.RawQuery != "" {
+			newUrl += "?" + r.URL.RawQuery
+		}
+
+		http.Redirect(w, r.Request, newUrl, http.StatusMovedPermanently)
+		return
+	}
+
+	next(w, r)
+}
+
 func (c *ServerContext) InitServerContext(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc){
 	c.Context = appengine.NewContext(r.Request)
 	c.w = w

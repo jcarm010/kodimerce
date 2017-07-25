@@ -42,10 +42,12 @@ var (
 	META_DESCRIPTION_BLOG = os.Getenv("META_DESCRIPTION_BLOG")
 
 	DESCRIPTION_BLOG_ABOUT = os.Getenv("DESCRIPTION_BLOG_ABOUT")
+	WWW_REDIRECT bool
 )
 
 func init() {
 	TAX_PERCENT, _ = strconv.ParseFloat(os.Getenv("TAX_PERCENT"), 64)
+	WWW_REDIRECT, _ = strconv.ParseBool(os.Getenv("WWW_REDIRECT"))
 }
 
 func ServerUrl(r *http.Request) string {

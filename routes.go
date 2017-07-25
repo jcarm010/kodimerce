@@ -5,13 +5,19 @@ import (
 	"net/http"
 	"github.com/jcarm010/kodimerce/km"
 	"github.com/jcarm010/kodimerce/views"
+	"github.com/jcarm010/kodimerce/settings"
 )
 
 func init() {
 	router := web.New(km.ServerContext{}).
 		Middleware(web.LoggerMiddleware).
-		Middleware((*km.ServerContext).InitServerContext).
-		Get("/", views.HomeView).
+		Middleware((*km.ServerContext).InitServerContext)
+
+	if settings.WWW_REDIRECT {
+		router = router.Middleware((*km.ServerContext).RedirectWWW)
+	}
+
+	router = router.Get("/", views.HomeView).
 		Get("/contact", views.ContactView).
 		Get("/referrals", views.ReferralsView).
 		Post("/contact", (*km.ServerContext).PostContactMessage).
