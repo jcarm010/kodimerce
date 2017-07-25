@@ -734,7 +734,6 @@ func (c *ServerContext) GetSiteMap(w web.ResponseWriter, r *web.Request){
 	sm.Create()
 	sm.Add(stm.URL{"loc": "/", "changefreq": "monthly", "priority": 1})
 	sm.Add(stm.URL{"loc": "/contact", "changefreq": "monthly", "priority": 0.5})
-	sm.Add(stm.URL{"loc": "/store", "changefreq": "weekly", "priority": 1})
 	featuredCategories, err := entities.ListCategoriesByFeatured(c.Context, true)
 	if err == nil {
 		for _, category := range featuredCategories {
@@ -744,6 +743,10 @@ func (c *ServerContext) GetSiteMap(w web.ResponseWriter, r *web.Request){
 
 	products, err := entities.ListProducts(c.Context)
 	if err == nil {
+		if len(products) > 0 {
+			sm.Add(stm.URL{"loc": "/store", "changefreq": "weekly", "priority": 1})
+		}
+
 		for _, product := range products {
 			if product.Active {
 				sm.Add(stm.URL{"loc": "/product/" + product.Path, "changefreq": "weekly", "priority": 1})
@@ -759,7 +762,7 @@ func (c *ServerContext) GetSiteMap(w web.ResponseWriter, r *web.Request){
 		}
 	}
 
-	sm.Add(stm.URL{"loc": "/referrals", "changefreq": "weekly", "priority": 0.4})
+	//sm.Add(stm.URL{"loc": "/referrals", "changefreq": "weekly", "priority": 0.4})
 
 	w.Header().Add("Content-Type:","text/xml; charset=utf-8")
 	w.Write(sm.XMLContent())
