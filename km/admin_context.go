@@ -557,3 +557,59 @@ func (c *AdminContext) UpdatePost(w web.ResponseWriter, r *web.Request){
 
 	c.ServeJson(http.StatusOK, "")
 }
+
+func (c *AdminContext) GetGalleries(w web.ResponseWriter, r *web.Request){
+	galleries, err := entities.ListGalleries(c.Context, false, -1)
+	if err != nil {
+		log.Errorf(c.Context, "Error listing galleries: %+v", err)
+		c.ServeJson(http.StatusInternalServerError, "Unexpected error getting galleries.")
+		return
+	}
+
+	c.ServeJson(http.StatusOK, galleries)
+}
+
+
+func (c *AdminContext) CreateGallery(w web.ResponseWriter, r *web.Request){
+	data := struct {
+		Title string `json:"title"`
+	}{}
+
+	err := c.ParseJsonRequest(&data)
+	if err != nil {
+		log.Errorf(c.Context, "Could not parse request: %+v", err)
+		c.ServeJson(http.StatusBadRequest, "Could not parse request.")
+		return
+	}
+
+	gallery, err := entities.CreateGallery(c.Context, data.Title)
+	if err != nil {
+		log.Errorf(c.Context, "Error creating gallery: %+v", err)
+		c.ServeJson(http.StatusInternalServerError, "Unexpected error creating gallery.")
+		return
+	}
+
+	c.ServeJson(http.StatusOK, gallery)
+}
+
+func (c *AdminContext) UpdateGallery(w web.ResponseWriter, r *web.Request){
+	data := struct {
+		Gallery *entities.Gallery `json:"gallery"`
+	}{}
+
+	err := c.ParseJsonRequest(&data)
+	if err != nil {
+		log.Errorf(c.Context, "Could not parse request: %+v", err)
+		c.ServeJson(http.StatusBadRequest, "Could not parse request.")
+		return
+	}
+
+	err = entities.UpdateGallery(c.Context, data.Gallery)
+	if err != nil {
+		log.Errorf(c.Context, "Error updating gallery: %+v", err)
+		c.ServeJson(http.StatusInternalServerError, "Unexpected error updating gallery.")
+		return
+	}
+
+	c.ServeJson(http.StatusOK, "")
+}

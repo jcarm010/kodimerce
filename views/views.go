@@ -489,3 +489,55 @@ func ThankYouView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		return
 	}
 }
+
+func GalleriesView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
+	galleries, err := entities.ListGalleries(c.Context, true, -1)
+	if err != nil {
+		log.Errorf(c.Context, "Error getting galleries: %+v", err)
+		c.ServeHTMLError(http.StatusInternalServerError, "Unexpected error, please try again later.")
+		return
+	}
+
+	err = km.Templates.ExecuteTemplate(w, "galleries-page", struct{
+		*view.View
+		Galleries []*entities.Gallery `json:"galleries"`
+	}{
+		View: c.NewView("Galleries | " + settings.COMPANY_NAME, settings.META_DESCRIPTION_GALLERIES),
+		Galleries: galleries,
+	})
+
+	if err != nil {
+		log.Errorf(c.Context, "Error parsing html file: %+v", err)
+		c.ServeHTMLError(http.StatusInternalServerError, "Unexpected error, please try again later.")
+		return
+	}
+}
+
+func GalleryView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
+	galleryPath := r.PathParams["galleryPath"]
+	gallery, err := entities.GetGalleryByPath(c.Context, galleryPath)
+	if err == entities.ErrGalleryNotFound {
+		c.ServeHTMLError(http.StatusNotFound, "The gallery you were looking for does not exist.")
+		return
+	}
+
+	if err != nil {
+		log.Errorf(c.Context, "Error getting gallery: %+v", err)
+		c.ServeHTMLError(http.StatusInternalServerError, "Unexpected error, please try again later.")
+		return
+	}
+
+	err = km.Templates.ExecuteTemplate(w, "gallery-page", struct{
+		*view.View
+		Gallery *entities.Gallery `json:"gallery"`
+	}{
+		View: c.NewView(gallery.Title + " | " + settings.COMPANY_NAME, gallery.MetaDescription),
+		Gallery: gallery,
+	})
+
+	if err != nil {
+		log.Errorf(c.Context, "Error parsing html file: %+v", err)
+		c.ServeHTMLError(http.StatusInternalServerError, "Unexpected error, please try again later.")
+		return
+	}
+}

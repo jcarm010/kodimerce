@@ -25,6 +25,8 @@ func init() {
 		Get("/product/:productId", views.ProductView).
 		Get("/store", views.StoreView).
 		Get("/store/:category", views.StoreView).
+		Get("/gallery", views.GalleriesView).
+		Get("/gallery/:galleryPath", views.GalleryView).
 		Get("/register", views.RegisterView).
 		Post("/register", (*km.ServerContext).RegisterUser).
 		Get("/login", views.LoginView).
@@ -64,6 +66,9 @@ func init() {
 		Get("/km/category_products", (*km.AdminContext).GetCategoryProduct).
 		Post("/km/category_products", (*km.AdminContext).SetCategoryProducts).
 		Delete("/km/category_products", (*km.AdminContext).UnsetCategoryProducts).
+		Get("/km/gallery", (*km.AdminContext).GetGalleries).
+		Post("/km/gallery", (*km.AdminContext).CreateGallery).
+		Put("/km/gallery", (*km.AdminContext).UpdateGallery).
 		Get("/gallery/upload", (*km.AdminContext).GetGalleryUploads).
 		Post("/gallery/upload", (*km.AdminContext).PostGalleryUpload).
 		Delete("/gallery/upload", (*km.AdminContext).DeleteGalleryUpload).
