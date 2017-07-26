@@ -773,11 +773,25 @@ func (c *ServerContext) GetSiteMap(w web.ResponseWriter, r *web.Request){
 		}
 	}
 
-	sm.Add(stm.URL{"loc": "/blog", "changefreq": "daily", "priority": 1})
 	posts, err := entities.ListPosts(c.Context, true, -1)
 	if err == nil {
+		if len(posts) >0 {
+			sm.Add(stm.URL{"loc": "/blog", "changefreq": "daily", "priority": 1})
+		}
+
 		for _, post := range posts {
 			sm.Add(stm.URL{"loc": "/" + post.Path, "changefreq": "monthly", "priority": 1})
+		}
+	}
+
+	galleries, err := entities.ListGalleries(c.Context, true, -1)
+	if err == nil {
+		if len(galleries) > 0 {
+			sm.Add(stm.URL{"loc": "/gallery", "changefreq": "weekly", "priority": 1})
+		}
+
+		for _, gallery := range galleries {
+			sm.Add(stm.URL{"loc": "/gallery/" + gallery.Path, "changefreq": "weekly", "priority": 1})
 		}
 	}
 
