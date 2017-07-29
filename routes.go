@@ -11,7 +11,8 @@ import (
 func init() {
 	router := web.New(km.ServerContext{}).
 		Middleware(web.LoggerMiddleware).
-		Middleware((*km.ServerContext).InitServerContext)
+		Middleware((*km.ServerContext).InitServerContext).
+		Middleware((*km.ServerContext).SetCORS)
 
 	if settings.WWW_REDIRECT {
 		router = router.Middleware((*km.ServerContext).RedirectWWW)

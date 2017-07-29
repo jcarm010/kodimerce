@@ -109,6 +109,30 @@ func (c *ServerContext) InitServerContext(w web.ResponseWriter, r *web.Request, 
 	next(w, r)
 }
 
+func (c *ServerContext) SetCORS(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc){
+	origin := r.Header.Get("origin")
+	serverUrl := settings.ServerUrl(r.Request)
+	c.w.Header().Add("AMP-Same-Origin", "true")
+	c.w.Header().Add("Access-Control-Allow-Credentials", "true")
+	c.w.Header().Add("Access-Control-Expose-Headers", "AMP-Access-Control-Allow-Source-Origin")
+	c.w.Header().Add("AMP-Access-Control-Allow-Source-Origin", serverUrl)
+	allowedOrigins := map[string]bool{
+		fmt.Sprintf("https://%s.cdn.ampproject.org", strings.Replace(r.Host, ".", "-", -1)): true,
+		fmt.Sprintf("https://%s.amp.cloudflare.com", strings.Replace(r.Host, ".", "-", -1)): true,
+		fmt.Sprintf(serverUrl): true,
+		"https://cdn.ampproject.org": true,
+		"http://localhost:8080": true,
+	}
+
+	log.Infof(c.Context, "Allowed Origins: %+v", allowedOrigins)
+	log.Infof(c.Context, "Setting CORS for [%s]: %v", origin, allowedOrigins[origin])
+	if allowedOrigins[origin] {
+		c.w.Header().Add("Access-Control-Allow-Origin", origin)
+	}
+
+	next(w, r)
+}
+
 func (c *ServerContext) RegisterUser(w web.ResponseWriter, r *web.Request){
 	err := r.ParseForm()
 	if err != nil {
@@ -691,30 +715,72 @@ func (c *ServerContext) GetProducts(w web.ResponseWriter, r *web.Request){
 }
 
 func (c *ServerContext) PostContactMessage(w web.ResponseWriter, r *web.Request){
-	err := r.ParseForm()
-	if err != nil {
-		log.Errorf(c.Context, "Error parsing request: %s", err)
-		c.ServeJson(http.StatusBadRequest, "Unexpected error parsing request")
-		return
+	contentType := r.Header.Get("content-type")
+	var name string
+	var email string
+	var phone string
+	var message string
+	if strings.HasPrefix(contentType, "multipart/form-data"){
+		err := r.ParseMultipartForm(32 << 20 )// 32 MB
+		if err != nil {
+			log.Errorf(c.Context, "Error parsing multipart-form request: %s", err)
+			c.ServeJson(http.StatusBadRequest, "Unexpected error parsing request")
+			return
+		}
+
+		q := r.MultipartForm
+		if q.Value["name"] == nil {
+			log.Errorf(c.Context, "Missing name")
+			c.ServeJson(http.StatusBadRequest, "Please provide a name.")
+			return
+		}
+		name = q.Value["name"][0]
+
+		if q.Value["email"] == nil {
+			log.Errorf(c.Context, "Missing email")
+			c.ServeJson(http.StatusBadRequest, "Please provide an email so that we can get back to you.")
+			return
+		}
+		email = q.Value["email"][0]
+
+		if q.Value["phone"] != nil {
+			phone = q.Value["phone"][0]
+		}
+
+
+		if q.Value["message"] == nil {
+			log.Errorf(c.Context, "Missing message")
+			c.ServeJson(http.StatusBadRequest, "Please provide a message so that we can address your questions or concerns.")
+			return
+		}
+		message = q.Value["message"][0]
+	}else {
+		err := r.ParseForm()
+		if err != nil {
+			log.Errorf(c.Context, "Error parsing form request: %s", err)
+			c.ServeJson(http.StatusBadRequest, "Unexpected error parsing request")
+			return
+		}
+
+		q := r.Form
+		name = q.Get("name")
+		email = q.Get("email")
+		phone = q.Get("phone")
+		message = q.Get("message")
 	}
 
-	q := r.Form
-	name := q.Get("name")
 	if name == "" {
 		log.Errorf(c.Context, "Missing name")
 		c.ServeJson(http.StatusBadRequest, "Please provide a name.")
 		return
 	}
 
-	email := q.Get("email")
 	if email == "" {
 		log.Errorf(c.Context, "Missing email")
 		c.ServeJson(http.StatusBadRequest, "Please provide an email so that we can get back to you.")
 		return
 	}
 
-	phone := q.Get("phone")
-	message := q.Get("message")
 	if message == "" {
 		log.Errorf(c.Context, "Missing message")
 		c.ServeJson(http.StatusBadRequest, "Please provide a message so that we can address your questions or concerns.")
@@ -727,7 +793,7 @@ func (c *ServerContext) PostContactMessage(w web.ResponseWriter, r *web.Request)
 		phonePart = " - " + phone
 	}
 	body := fmt.Sprintf("Customer %s (%s%s) has sent you a message: %s", name, email, phonePart, message)
-	err = emailer.SendEmail(
+	err := emailer.SendEmail(
 		c.Context,
 		fmt.Sprintf("%s<%s>", settings.COMPANY_NAME, settings.EMAIL_SENDER),
 		settings.COMPANY_SUPPORT_EMAIL,
