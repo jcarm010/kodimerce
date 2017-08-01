@@ -861,6 +861,13 @@ func (c *ServerContext) GetSiteMap(w web.ResponseWriter, r *web.Request){
 		}
 	}
 
+	pages, err := entities.ListPages(c.Context, true, -1)
+	if err == nil {
+		for _, page := range pages {
+			sm.Add(stm.URL{"loc": "/" + page.Path, "changefreq": "weekly", "priority": 1})
+		}
+	}
+
 	//sm.Add(stm.URL{"loc": "/referrals", "changefreq": "weekly", "priority": 0.4})
 
 	w.Header().Add("Content-Type:","text/xml; charset=utf-8")
