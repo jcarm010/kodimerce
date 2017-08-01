@@ -48,7 +48,7 @@ func init() {
 		Get("/sitemap.xml", (*km.ServerContext).GetSiteMap).
 		Get("/blog", views.BlogView).
 		Get("/blog/rss", views.GetBlogRss).
-		Get("/:post", views.GetPost)
+		Get("/:post", views.GetDynamicPage)
 
 	router.Subrouter(km.ServerContext{}, "/api").
 		Get("/product", (*km.ServerContext).GetProducts)
@@ -64,6 +64,9 @@ func init() {
 		Get("/km/category", (*km.AdminContext).GetCategory).
 		Post("/km/category", (*km.AdminContext).CreateCategory).
 		Put("/km/category", (*km.AdminContext).UpdateCategory).
+		Post("/km/page", (*km.AdminContext).CreatePage).
+		Get("/km/page", (*km.AdminContext).GetPages).
+		Put("/km/page", (*km.AdminContext).UpdatePage).
 		Get("/km/category_products", (*km.AdminContext).GetCategoryProduct).
 		Post("/km/category_products", (*km.AdminContext).SetCategoryProducts).
 		Delete("/km/category_products", (*km.AdminContext).UnsetCategoryProducts).

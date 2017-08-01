@@ -13,6 +13,8 @@ import (
 	"github.com/jcarm010/kodimerce/view"
 	"github.com/jcarm010/feeds"
 	"time"
+	"google.golang.org/appengine/urlfetch"
+	"io"
 )
 
 type OrderView struct {
@@ -365,21 +367,37 @@ func BlogView(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
 	}
 }
 
-func GetPost(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
+func GetDynamicPage(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
 	postPath := r.PathParams["post"]
 	log.Infof(c.Context, "Serving Post: %s", postPath)
 	post, err := entities.GetPostByPath(c.Context, postPath)
-	if err == entities.ErrPostNotFound {
-		c.ServeHTMLError(http.StatusNotFound, "The page you were looking for does not exist.")
-		return
-	}
-
-	if err != nil {
+	if err != nil && err != entities.ErrPostNotFound {
 		log.Errorf(c.Context, "Error getting post: %+v", err)
 		c.ServeHTMLError(http.StatusInternalServerError, "Unexpected error, please try again later.")
 		return
 	}
 
+	if err != entities.ErrPostNotFound {
+		servePost(c, w, r, post)
+		return
+	}
+
+	page, err := entities.GetPageByPath(c.Context, postPath)
+	if err != nil && err != entities.ErrPageNotFound {
+		log.Errorf(c.Context, "Error getting page: %+v", err)
+		c.ServeHTMLError(http.StatusInternalServerError, "Unexpected error, please try again later.")
+		return
+	}
+
+	if err != entities.ErrPageNotFound {
+		servePage(c, w, r, page)
+		return
+	}
+
+	c.ServeHTMLError(http.StatusNotFound, "The page you were looking for does not exist.")
+}
+
+func servePost(c *km.ServerContext, w web.ResponseWriter, r *web.Request, post *entities.Post) {
 	posts, err := entities.ListPosts(c.Context, true, 10)
 	if err != nil {
 		log.Errorf(c.Context, "Error getting previous posts: %+v", err)
@@ -407,7 +425,28 @@ func GetPost(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
 	if err != nil {
 		log.Errorf(c.Context, "Error parsing html file: %+v", err)
 		c.ServeHTMLError(http.StatusInternalServerError, "Unexpected error, please try again later.")
-		return
+	}
+}
+
+func servePage(c *km.ServerContext, w web.ResponseWriter, r *web.Request, page *entities.Page)  {
+	if page.Provider == entities.PROVIDER_SHALLOW_MIRROR {
+		resp, err := urlfetch.Client(c.Context).Get(page.ShallowMirrorUrl)
+		if err != nil {
+			log.Errorf(c.Context, "Error fetching mirrored page: %+v", err)
+			c.ServeHTMLError(http.StatusInternalServerError, "Unexpected error, please try again later.")
+			return
+		}
+
+		defer resp.Body.Close()
+		_, err = io.Copy(w, resp.Body)
+		if err != nil {
+			log.Errorf(c.Context, "Error copying mirrored page response: %+v", err)
+			c.ServeHTMLError(http.StatusInternalServerError, "Unexpected error, please try again later.")
+			return
+		}
+	} else {
+		log.Errorf(c.Context, "Page provider is not supported: %+v", page)
+		c.ServeHTMLError(http.StatusInternalServerError, "Unexpected error, please try again later.")
 	}
 }
 

@@ -613,3 +613,58 @@ func (c *AdminContext) UpdateGallery(w web.ResponseWriter, r *web.Request){
 
 	c.ServeJson(http.StatusOK, "")
 }
+
+func (c *AdminContext) CreatePage(w web.ResponseWriter, r *web.Request){
+	data := struct {
+		Title string `json:"title"`
+	}{}
+
+	err := c.ParseJsonRequest(&data)
+	if err != nil {
+		log.Errorf(c.Context, "Could not parse request: %+v", err)
+		c.ServeJson(http.StatusBadRequest, "Could not parse request.")
+		return
+	}
+
+	page, err := entities.CreatePage(c.Context, data.Title)
+	if err != nil {
+		log.Errorf(c.Context, "Error creating page: %+v", err)
+		c.ServeJson(http.StatusInternalServerError, "Unexpected error creating page.")
+		return
+	}
+
+	c.ServeJson(http.StatusOK, page)
+}
+
+func (c *AdminContext) GetPages(w web.ResponseWriter, r *web.Request){
+	pages, err := entities.ListPages(c.Context, false, -1)
+	if err != nil {
+		log.Errorf(c.Context, "Error listing pages: %+v", err)
+		c.ServeJson(http.StatusInternalServerError, "Unexpected error getting pages.")
+		return
+	}
+
+	c.ServeJson(http.StatusOK, pages)
+}
+
+func (c *AdminContext) UpdatePage(w web.ResponseWriter, r *web.Request){
+	data := struct {
+		Page *entities.Page `json:"page"`
+	}{}
+
+	err := c.ParseJsonRequest(&data)
+	if err != nil {
+		log.Errorf(c.Context, "Could not parse request: %+v", err)
+		c.ServeJson(http.StatusBadRequest, "Could not parse request.")
+		return
+	}
+
+	err = entities.UpdatePage(c.Context, data.Page)
+	if err != nil {
+		log.Errorf(c.Context, "Error updating page: %+v", err)
+		c.ServeJson(http.StatusInternalServerError, "Unexpected error updating page.")
+		return
+	}
+
+	c.ServeJson(http.StatusOK, "")
+}
