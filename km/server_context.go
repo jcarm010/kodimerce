@@ -22,6 +22,7 @@ import (
 	"bytes"
 	"github.com/ikeikeikeike/go-sitemap-generator/stm"
 	"github.com/jcarm010/kodimerce/view"
+	"io/ioutil"
 )
 
 var Templates = template.Must(template.New("").Funcs(fns).ParseGlob("views/templates/*")) //todo: cache this globally
@@ -31,10 +32,38 @@ var fns = template.FuncMap{
 	},
 }
 
+var(
+	CUSTOM_PAGES map[string]CustomPage
+)
+
+type CustomPage struct {
+	TemplateName string `json:"template_name"`
+	Title string `json:"title"`
+	MetaDescription string `json:"meta_description"`
+	ChangeFrequency string `json:"change_frequency"`
+	Priority string `json:"priority"`
+}
+
 type ServerContext struct{
 	Context context.Context
 	w web.ResponseWriter
 	r *web.Request
+}
+
+func init() {
+	customPages := struct{
+		Pages map[string]CustomPage `json:"pages"`
+	}{
+		Pages: map[string]CustomPage{},
+	}
+
+	raw, err := ioutil.ReadFile("./custom-pages.json")
+	if err == nil {
+		err = json.Unmarshal(raw, &customPages)
+		if err == nil {
+			CUSTOM_PAGES = customPages.Pages
+		}
+	}
 }
 
 func (c *ServerContext) ParseJsonRequest(v interface{}) error {
@@ -866,6 +895,10 @@ func (c *ServerContext) GetSiteMap(w web.ResponseWriter, r *web.Request){
 		for _, page := range pages {
 			sm.Add(stm.URL{"loc": "/" + page.Path, "changefreq": "weekly", "priority": 1})
 		}
+	}
+
+	for path, page := range CUSTOM_PAGES {
+		sm.Add(stm.URL{"loc": "/" + path, "changefreq": page.ChangeFrequency, "priority": page.Priority})
 	}
 
 	//sm.Add(stm.URL{"loc": "/referrals", "changefreq": "weekly", "priority": 0.4})

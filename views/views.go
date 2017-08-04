@@ -15,39 +15,13 @@ import (
 	"time"
 	"google.golang.org/appengine/urlfetch"
 	"io"
-	"io/ioutil"
-	"encoding/json"
 )
 
-var(
-	CUSTOM_PAGES map[string]CustomPage
-)
 
-type CustomPage struct {
-	TemplateName string `json:"template_name"`
-	Title string `json:"title"`
-	MetaDescription string `json:"meta_description"`
-}
 
 type OrderView struct {
 	Title string
 	Order *entities.Order `json:"order"`
-}
-
-func init() {
-	customPages := struct{
-		Pages map[string]CustomPage `json:"pages"`
-	}{
-		Pages: map[string]CustomPage{},
-	}
-
-	raw, err := ioutil.ReadFile("./custom-pages.json")
-	if err == nil {
-		err = json.Unmarshal(raw, &customPages)
-		if err == nil {
-			CUSTOM_PAGES = customPages.Pages
-		}
-	}
 }
 
 func HomeView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
@@ -398,7 +372,7 @@ func BlogView(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
 func GetDynamicPage(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
 	postPath := r.PathParams["post"]
 	log.Infof(c.Context, "Serving Post: %s", postPath)
-	if customPage, exist := CUSTOM_PAGES[postPath] ; exist {
+	if customPage, exist := km.CUSTOM_PAGES[postPath] ; exist {
 		log.Infof(c.Context, "Custom Page found: %+v", customPage)
 		v := c.NewView(customPage.Title, customPage.MetaDescription)
 		err := km.Templates.ExecuteTemplate(w, customPage.TemplateName, v)
