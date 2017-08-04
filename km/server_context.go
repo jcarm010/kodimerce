@@ -40,8 +40,9 @@ type CustomPage struct {
 	TemplateName string `json:"template_name"`
 	Title string `json:"title"`
 	MetaDescription string `json:"meta_description"`
+	InSiteMap bool `json:"in_site_map"`
 	ChangeFrequency string `json:"change_frequency"`
-	Priority string `json:"priority"`
+	Priority int `json:"priority"`
 }
 
 type ServerContext struct{
@@ -898,7 +899,9 @@ func (c *ServerContext) GetSiteMap(w web.ResponseWriter, r *web.Request){
 	}
 
 	for path, page := range CUSTOM_PAGES {
-		sm.Add(stm.URL{"loc": "/" + path, "changefreq": page.ChangeFrequency, "priority": page.Priority})
+		if page.InSiteMap {
+			sm.Add(stm.URL{"loc": "/" + path, "changefreq": page.ChangeFrequency, "priority": page.Priority})
+		}
 	}
 
 	//sm.Add(stm.URL{"loc": "/referrals", "changefreq": "weekly", "priority": 0.4})
