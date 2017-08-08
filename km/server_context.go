@@ -25,7 +25,7 @@ import (
 	"io/ioutil"
 )
 
-var Templates = template.Must(template.New("").Funcs(fns).ParseGlob("views/templates/*")) //todo: cache this globally
+var Templates = template.Must(template.New("").Funcs(fns).ParseGlob("views/templates/*"))
 var fns = template.FuncMap{
 	"plus1": func(x int) int {
 		return x + 1
@@ -109,6 +109,21 @@ func (c *ServerContext) ServeHTMLError(status int, value interface{}){
 	if err != nil {
 		log.Errorf(c.Context, "Error parsing html file: %+v", err)
 		fmt.Fprint(c.w, "Unexpected error, please try again later.")
+		return
+	}
+}
+
+func (c *ServerContext) ServeHTMLTemplate(name string, data interface{}){
+	if Templates.Lookup(name) == nil {
+		log.Errorf(c.Context, "Could not find html template: %s", name)
+		c.ServeHTMLError(http.StatusNotFound, "Page not found.")
+		return
+	}
+
+	err := Templates.ExecuteTemplate(c.w, name, data)
+	if err != nil {
+		log.Errorf(c.Context, "Error parsing html template: %+v", err)
+		c.ServeHTMLError(http.StatusInternalServerError, "Unexpected error, please try again later.")
 		return
 	}
 }

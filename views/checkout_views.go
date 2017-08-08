@@ -84,7 +84,7 @@ func RenderCheckoutView(c *km.ServerContext, w web.ResponseWriter, r *web.Reques
 		}
 	}
 
-	err = km.Templates.ExecuteTemplate(w, "checkout-page", struct{
+	c.ServeHTMLTemplate("checkout-page", struct{
 		*view.View
 		CheckoutSteps []*CheckoutStep `json:"checkout_steps"`
 		CurrentStep *CheckoutStep `json:"current_step"`
@@ -99,10 +99,4 @@ func RenderCheckoutView(c *km.ServerContext, w web.ResponseWriter, r *web.Reques
 		Order: order,
 		PaypalEnvironment: settings.PAYPAL_ENVIRONMENT,
 	})
-
-	if err != nil {
-		log.Errorf(c.Context, "Error parsing html file: %+v", err)
-		c.ServeHTMLError(http.StatusInternalServerError, "Unexpected error, please try again later.")
-		return
-	}
 }

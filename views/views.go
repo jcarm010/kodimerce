@@ -46,12 +46,7 @@ func HomeView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		Categories: featuredCategories,
 	}
 
-	err = km.Templates.ExecuteTemplate(w, "home-page", p)
-	if err != nil {
-		log.Errorf(c.Context, "Error parsing home html file: %+v", err)
-		c.ServeHTML(http.StatusInternalServerError, "Unexpected Error, please try again later.")
-		return
-	}
+	c.ServeHTMLTemplate("home-page", p)
 }
 
 func ContactView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
@@ -61,12 +56,7 @@ func ContactView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		View: c.NewView("Contact | " + settings.COMPANY_NAME, settings.META_DESCRIPTION_CONTACT),
 	}
 
-	err := km.Templates.ExecuteTemplate(w, "contact-page", p)
-	if err != nil {
-		log.Errorf(c.Context, "Error parsing home html file: %+v", err)
-		c.ServeHTML(http.StatusInternalServerError, "Unexpected Error, please try again later.")
-		return
-	}
+	c.ServeHTMLTemplate("contact-page", p)
 }
 
 func ReferralsView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
@@ -92,12 +82,7 @@ func ReferralsView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 	}
 
 	log.Infof(c.Context, "Products: %+v", products)
-	err = km.Templates.ExecuteTemplate(w, "referrals-page", p)
-	if err != nil {
-		log.Errorf(c.Context, "Error parsing home html file: %+v", err)
-		c.ServeHTML(http.StatusInternalServerError, "Unexpected Error, please try again later.")
-		return
-	}
+	c.ServeHTMLTemplate("referrals-page", p)
 }
 
 func ProductView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
@@ -148,12 +133,7 @@ func ProductView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	}
 
-	err = km.Templates.ExecuteTemplate(w, "product-page", p)
-	if err != nil {
-		log.Errorf(c.Context, "Error parsing store html file: %+v", err)
-		c.ServeHTML(http.StatusInternalServerError, "Unexpected error, please try again later.")
-		return
-	}
+	c.ServeHTMLTemplate("product-page", p)
 }
 
 func StoreView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
@@ -243,12 +223,7 @@ func StoreView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		Domain: settings.ServerUrl(r.Request),
 	}
 
- 	err = km.Templates.ExecuteTemplate(w, "store-page", p)
-	if err != nil {
-		log.Errorf(c.Context, "Error parsing store html file: %+v", err)
-		c.ServeHTML(http.StatusInternalServerError, "Unexpected error, please try again later.")
-		return
-	}
+	c.ServeHTMLTemplate("store-page", p)
 }
 
 func AdminView(c *km.AdminContext, w web.ResponseWriter, r *web.Request) {
@@ -289,18 +264,13 @@ func LoginView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 	t.Execute(w, p)
 }
 func CartView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
-	err := km.Templates.ExecuteTemplate(w, "cart-page", struct{
+	c.ServeHTMLTemplate("cart-page", struct{
 		*view.View
 		TaxPercent float64
 	}{
 		View: c.NewView("Shopping Cart | " + settings.COMPANY_NAME, settings.META_DESCRIPTION_CART),
 		TaxPercent: settings.TAX_PERCENT,
 	})
-	if err != nil {
-		log.Errorf(c.Context, "Error parsing cart html file: %+v", err)
-		c.ServeHTML(http.StatusInternalServerError, "Unexpected error, please try again later.")
-		return
-	}
 }
 
 func OrderReviewView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
@@ -327,7 +297,7 @@ func OrderReviewView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) 
 
 	log.Infof(c.Context, "Rendering orderId[%v] order[%+v]", orderId, order)
 
-	err = km.Templates.ExecuteTemplate(w, "order-review-page", struct{
+	c.ServeHTMLTemplate("order-review-page", struct{
 		*view.View
 		Title string
 		Order *entities.Order
@@ -337,12 +307,6 @@ func OrderReviewView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) 
 		Order: order,
 		TaxPercent: settings.TAX_PERCENT,
 	})
-
-	if err != nil {
-		log.Errorf(c.Context, "Error parsing html file: %+v", err)
-		c.ServeHTMLError(http.StatusInternalServerError, "Unexpected error, please try again later.")
-		return
-	}
 }
 
 func BlogView(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
@@ -354,19 +318,13 @@ func BlogView(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
 	}
 
 	//sort.Sort(entities.ByNewestFirst(posts))
-	err = km.Templates.ExecuteTemplate(w, "blog-page", struct {
+	c.ServeHTMLTemplate( "blog-page", struct {
 		*view.View
 		Posts []*entities.Post
 	}{
 		View: c.NewView("Blog | " + settings.COMPANY_NAME, settings.META_DESCRIPTION_BLOG),
 		Posts: posts,
 	})
-
-	if err != nil {
-		log.Errorf(c.Context, "Error parsing html file: %+v", err)
-		c.ServeHTMLError(http.StatusInternalServerError, "Unexpected error, please try again later.")
-		return
-	}
 }
 
 func GetDynamicPage(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
@@ -375,12 +333,7 @@ func GetDynamicPage(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
 	if customPage, exist := km.CUSTOM_PAGES[postPath] ; exist {
 		log.Infof(c.Context, "Custom Page found: %+v", customPage)
 		v := c.NewView(customPage.Title, customPage.MetaDescription)
-		err := km.Templates.ExecuteTemplate(w, customPage.TemplateName, v)
-		if err != nil {
-			log.Errorf(c.Context, "Error parsing html file: %+v", err)
-			c.ServeHTMLError(http.StatusInternalServerError, "Unexpected error, please try again later.")
-		}
-
+		c.ServeHTMLTemplate(customPage.TemplateName, v)
 		return
 	}
 
@@ -422,7 +375,7 @@ func servePost(c *km.ServerContext, w web.ResponseWriter, r *web.Request, post *
 	if r.TLS != nil {
 		httpHeader = "https"
 	}
-	err = km.Templates.ExecuteTemplate(w, "post-page", struct{
+	c.ServeHTMLTemplate("post-page", struct{
 		*view.View
 		CanonicalUrl string
 		Post         *entities.Post
@@ -435,11 +388,6 @@ func servePost(c *km.ServerContext, w web.ResponseWriter, r *web.Request, post *
 		LatestPosts:  posts,
 		AboutBlog:    settings.DESCRIPTION_BLOG_ABOUT,
 	})
-
-	if err != nil {
-		log.Errorf(c.Context, "Error parsing html file: %+v", err)
-		c.ServeHTMLError(http.StatusInternalServerError, "Unexpected error, please try again later.")
-	}
 }
 
 func servePage(c *km.ServerContext, w web.ResponseWriter, r *web.Request, page *entities.Page)  {
@@ -526,7 +474,7 @@ func ThankYouView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		log.Infof(c.Context, "Rendering orderId[%v] order[%+v]", orderId, order)
 	}
 
-	err := km.Templates.ExecuteTemplate(w, "thank-you-page", struct{
+	c.ServeHTMLTemplate("thank-you-page", struct{
 		*view.View
 		Order *entities.Order `json:"order"`
 		HasOrder bool `json:"has_order"`
@@ -535,12 +483,6 @@ func ThankYouView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		Order: order,
 		HasOrder: order != nil,
 	})
-
-	if err != nil {
-		log.Errorf(c.Context, "Error parsing html file: %+v", err)
-		c.ServeHTMLError(http.StatusInternalServerError, "Unexpected error, please try again later.")
-		return
-	}
 }
 
 func GalleriesView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
@@ -551,19 +493,13 @@ func GalleriesView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		return
 	}
 
-	err = km.Templates.ExecuteTemplate(w, "galleries-page", struct{
+	c.ServeHTMLTemplate("galleries-page", struct{
 		*view.View
 		Galleries []*entities.Gallery `json:"galleries"`
 	}{
 		View: c.NewView("Galleries | " + settings.COMPANY_NAME, settings.META_DESCRIPTION_GALLERIES),
 		Galleries: galleries,
 	})
-
-	if err != nil {
-		log.Errorf(c.Context, "Error parsing html file: %+v", err)
-		c.ServeHTMLError(http.StatusInternalServerError, "Unexpected error, please try again later.")
-		return
-	}
 }
 
 func GalleryView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
@@ -580,17 +516,11 @@ func GalleryView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		return
 	}
 
-	err = km.Templates.ExecuteTemplate(w, "gallery-page", struct{
+	c.ServeHTMLTemplate("gallery-page", struct{
 		*view.View
 		Gallery *entities.Gallery `json:"gallery"`
 	}{
 		View: c.NewView(gallery.Title + " | " + settings.COMPANY_NAME, gallery.MetaDescription),
 		Gallery: gallery,
 	})
-
-	if err != nil {
-		log.Errorf(c.Context, "Error parsing html file: %+v", err)
-		c.ServeHTMLError(http.StatusInternalServerError, "Unexpected error, please try again later.")
-		return
-	}
 }
