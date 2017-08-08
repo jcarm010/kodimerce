@@ -25,7 +25,7 @@ import (
 	"io/ioutil"
 )
 
-var Templates = template.Must(template.New("").Funcs(fns).ParseGlob("views/templates/*"))
+var TEMPLATES *template.Template
 var fns = template.FuncMap{
 	"plus1": func(x int) int {
 		return x + 1
@@ -52,6 +52,11 @@ type ServerContext struct{
 }
 
 func init() {
+	TEMPLATES = template.New("").Funcs(fns)
+	TEMPLATES.ParseGlob("views/templates/*")
+	TEMPLATES.ParseGlob("views/core-templates/*")
+	TEMPLATES.ParseGlob("views/components/*")
+	TEMPLATES.ParseGlob("views/core-components/*")
 	customPages := struct{
 		Pages map[string]CustomPage `json:"pages"`
 	}{
@@ -101,7 +106,7 @@ func (c *ServerContext) ServeHTMLError(status int, value interface{}){
 		Message string
 	}
 
-	err := Templates.ExecuteTemplate(c.w, "error-page", ErrorView {
+	err := TEMPLATES.ExecuteTemplate(c.w, "error-page", ErrorView {
 		View: c.NewView(fmt.Sprintf("%v | %s", status, settings.COMPANY_NAME), ""),
 		Message: fmt.Sprintf("%s", value),
 	})
@@ -114,13 +119,13 @@ func (c *ServerContext) ServeHTMLError(status int, value interface{}){
 }
 
 func (c *ServerContext) ServeHTMLTemplate(name string, data interface{}){
-	if Templates.Lookup(name) == nil {
+	if TEMPLATES.Lookup(name) == nil {
 		log.Errorf(c.Context, "Could not find html template: %s", name)
 		c.ServeHTMLError(http.StatusNotFound, "Page not found.")
 		return
 	}
 
-	err := Templates.ExecuteTemplate(c.w, name, data)
+	err := TEMPLATES.ExecuteTemplate(c.w, name, data)
 	if err != nil {
 		log.Errorf(c.Context, "Error parsing html template: %+v", err)
 		c.ServeHTMLError(http.StatusInternalServerError, "Unexpected error, please try again later.")
