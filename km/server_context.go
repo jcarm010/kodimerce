@@ -53,10 +53,11 @@ type ServerContext struct{
 
 func init() {
 	TEMPLATES = template.New("").Funcs(fns)
-	TEMPLATES.ParseGlob("views/templates/*")
 	TEMPLATES.ParseGlob("views/core-templates/*")
-	TEMPLATES.ParseGlob("views/components/*")
 	TEMPLATES.ParseGlob("views/core-components/*")
+	TEMPLATES.ParseGlob("views/templates/*")
+	TEMPLATES.ParseGlob("views/components/*")
+
 	customPages := struct{
 		Pages map[string]CustomPage `json:"pages"`
 	}{
