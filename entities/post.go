@@ -79,6 +79,7 @@ func UpdatePost(ctx context.Context, post *Post) error {
 		p.MetaDescription = post.MetaDescription
 		p.Banner = post.Banner
 		p.ShortDescription = post.ShortDescription
+		p.PublishedDate = post.PublishedDate
 		if !p.Published && post.Published {
 			p.PublishedDate = time.Now()
 		}
