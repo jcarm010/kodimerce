@@ -4,9 +4,13 @@ import (
 	"github.com/jcarm010/kodimerce/settings"
 	"net/http"
 	"fmt"
+	"strings"
+	"log"
 )
 
 type View struct {
+	Request *http.Request
+	Author string
 	Title string
 	MetaDescription string
 	Keywords string
@@ -22,6 +26,18 @@ type View struct {
 	TwitterUrl string
 	LinkedInUrl string
 	YouTubeUrl string
+	TwitterHandle string
+}
+
+func (v *View) FullUrl(u string) string {
+	log.Printf("Url U: %s", u)
+	var newUrl string = u
+	if strings.HasPrefix(u, "/") {
+		newUrl = settings.ServerUrl(v.Request) + u
+	}else if !strings.HasPrefix(u, "http") {
+		newUrl = settings.ServerUrl(v.Request) + "/" + u
+	}
+	return newUrl
 }
 
 func NewView(request *http.Request, title string, metaDescription string) *View {
@@ -36,6 +52,8 @@ func NewView(request *http.Request, title string, metaDescription string) *View 
 	}
 
 	return &View{
+		Request: request,
+		Author: settings.AUTHOR,
 		Title: title,
 		MetaDescription: metaDescription,
 		CompanyName: settings.COMPANY_NAME,
@@ -50,5 +68,6 @@ func NewView(request *http.Request, title string, metaDescription string) *View 
 		TwitterUrl: settings.TWITTER_URL,
 		LinkedInUrl: settings.LINKEDIN_URL,
 		YouTubeUrl: settings.YOUTUBE_URL,
+		TwitterHandle: settings.TWITTER_HANDLE,
 	}
 }
