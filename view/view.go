@@ -23,6 +23,7 @@ type View struct {
 	ContactPhone string
 	CompanyUrl string
 	CompanyGoogleMapsUrl string
+	CompanyGoogleMapsEmbedUrl string
 	CanonicalUrl string
 	PageUrl string
 	FacebookUrl string
@@ -71,6 +72,7 @@ func NewView(request *http.Request, title string, metaDescription string) *View 
 		ContactPhone: settings.COMPANY_CONTACT_PHONE,
 		CompanyUrl: settings.ServerUrl(request),
 		CompanyGoogleMapsUrl: settings.COMPANY_GOOGLE_MAPS_URL,
+		CompanyGoogleMapsEmbedUrl: settings.COMPANY_GOOGLE_MAPS_EMBED_URL,
 		CanonicalUrl: newUrl,
 		PageUrl: settings.ServerUrl(request) + request.URL.String(),
 		FacebookUrl: settings.FACEBOOK_URL,
