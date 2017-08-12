@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 	"log"
+	"time"
+	"html/template"
 )
 
 type View struct {
@@ -16,9 +18,11 @@ type View struct {
 	Keywords string
 	CompanyName string
 	CompanyNameAlternate string
+	CompanyMailingAddress string
 	ContactEmail string
 	ContactPhone string
 	CompanyUrl string
+	CompanyGoogleMapsUrl string
 	CanonicalUrl string
 	PageUrl string
 	FacebookUrl string
@@ -27,6 +31,10 @@ type View struct {
 	LinkedInUrl string
 	YouTubeUrl string
 	TwitterHandle string
+}
+
+func (v *View) DateTimeFormat (d time.Time ) (template.HTML) {
+	return template.HTML(d.Format("2006-01-02T15:04:05.999999-07:00"))
 }
 
 func (v *View) FullUrl(u string) string {
@@ -58,9 +66,11 @@ func NewView(request *http.Request, title string, metaDescription string) *View 
 		MetaDescription: metaDescription,
 		CompanyName: settings.COMPANY_NAME,
 		CompanyNameAlternate: settings.COMPANY_NAME_ALTERNATE,
+		CompanyMailingAddress: settings.COMPANY_MAILING_ADDRESS,
 		ContactEmail: settings.COMPANY_CONTACT_EMAIL,
 		ContactPhone: settings.COMPANY_CONTACT_PHONE,
 		CompanyUrl: settings.ServerUrl(request),
+		CompanyGoogleMapsUrl: settings.COMPANY_GOOGLE_MAPS_URL,
 		CanonicalUrl: newUrl,
 		PageUrl: settings.ServerUrl(request) + request.URL.String(),
 		FacebookUrl: settings.FACEBOOK_URL,
