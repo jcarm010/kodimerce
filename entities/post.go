@@ -24,6 +24,7 @@ type Post struct {
 	Banner string `datastore:"banner,noindex" json:"banner"`
 	Published bool `datastore:"published" json:"published"`
 	PublishedDate time.Time `datastore:"published_date" json:"published_date"`
+	UpdatedDate time.Time `datastore:"updated_date" json:"updated_date"`
 	Created time.Time `datastore:"created" json:"created"`
 }
 
@@ -33,11 +34,18 @@ func (a ByNewestFirst) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByNewestFirst) Less(i, j int) bool { return a[j].PublishedDate.Unix() < a[i].PublishedDate.Unix() }
 
 func (p *Post) FormattedPublishedDate () (string) {
-	return p.PublishedDate.Format("_2 Jan 2006")
+	return p.FormattedDateDMY(p.PublishedDate)
+}
+
+func (p *Post) FormattedDateDMY (dte time.Time) (string) {
+	return dte.Format("_2 Jan 2006")
 }
 
 func (p *Post) SetMissingDefaults () {
-
+	t := time.Time{}
+	if p.UpdatedDate == t {
+		p.UpdatedDate = p.PublishedDate
+	}
 }
 
 func NewPost(title string) *Post {
@@ -83,7 +91,7 @@ func UpdatePost(ctx context.Context, post *Post) error {
 		if !p.Published && post.Published {
 			p.PublishedDate = time.Now()
 		}
-
+		p.UpdatedDate = time.Now()
 		p.Published = post.Published
 		_, err = datastore.Put(ctx, key, p)
 		return err

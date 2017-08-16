@@ -34,8 +34,16 @@ type View struct {
 	TwitterHandle string
 }
 
-func (v *View) DateTimeFormat (d time.Time ) (template.HTML) {
-	return template.HTML(d.Format("2006-01-02T15:04:05.999999-07:00"))
+func (v *View) DateTimeFormat (d time.Time ) (string) {
+	return d.Format("2006-01-02T15:04:05-07:00")
+}
+
+func (v *View) DateTimeFormatJSStr (d time.Time ) (template.JSStr) {
+	return template.JSStr(v.DateTimeFormat(d))
+}
+
+func (v *View) DateTimeFormatHTMLAttr (d time.Time ) (template.HTMLAttr) {
+	return template.HTMLAttr(v.DateTimeFormat(d))
 }
 
 func (v *View) FullUrl(u string) string {
