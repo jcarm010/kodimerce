@@ -329,8 +329,8 @@ func BlogView(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
 
 func GetDynamicPage(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
 	postPath := r.PathParams["post"]
-	log.Infof(c.Context, "Serving Post: %s", postPath)
-	if customPage, exist := km.CUSTOM_PAGES[postPath] ; exist {
+	log.Infof(c.Context, "Serving Dynamic Page: %s", postPath)
+	if customPage, exist := view.CUSTOM_PAGES[postPath] ; exist {
 		log.Infof(c.Context, "Custom Page found: %+v", customPage)
 		v := c.NewView(customPage.Title, customPage.MetaDescription)
 		c.ServeHTMLTemplate(customPage.TemplateName, v)
@@ -349,6 +349,41 @@ func GetDynamicPage(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
 		return
 	}
 
+	//page := entities.NewDynamicPage("Test Custom Page", "Some description for a custom page.")
+	//page.DynamicPage.HasNavigation = true
+	//page.DynamicPage.HasBanner = true
+	//page.DynamicPage.Banner = &view.DynamicPageImageComponent{
+	//	Path: "/assets/images/slider/online-business.jpg",
+	//	AltText: "This is an alt text for sample banner",
+	//}
+	//page.DynamicPage.Rows = append(page.DynamicPage.Rows, &view.DynamicPageRow{
+	//	ComponentName: "row-simple-component",
+	//	RowSimpleComponent: &view.DynamicPageRowSimpleComponent{
+	//		Header: "The Header for Custom Page",
+	//		IsMainHeader: true,
+	//		Description: template.HTML("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer vel pharetra lectus. Quisque quis nisl est. Cras vel mi arcu. Vestibulum efficitur, metus in lacinia porta, justo mi elementum erat, eget dictum lorem nisi non felis. Aliquam erat volutpat. Nunc est dui, rutrum sed lacus eu, interdum efficitur metus. Etiam in velit mollis, eleifend nisi at, tincidunt ligula. Cras congue scelerisque metus. Aliquam urna tortor, ornare vel dictum sit amet, posuere sed justo. Nulla facilisi. Nullam ut felis sollicitudin, condimentum neque vel, sagittis nulla. Sed facilisis tristique consequat. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque efficitur lobortis tortor ultrices feugiat. Phasellus semper dolor vitae risus tristique tristique. Donec pulvinar molestie ipsum vitae tempor. In vitae aliquam justo, sit amet imperdiet purus. Nulla quis porttitor nisl. Maecenas metus urna, gravida eu leo vitae, scelerisque ultricies mi. Cras id orci neque. Nam ac tellus mi. Quisque consequat a diam id mattis. Proin malesuada elementum ligula, a facilisis lacus varius in. Phasellus mauris eros, venenatis id fermentum condimentum, fringilla id urna. In turpis purus, cursus nec blandit vel, semper et nisl. Maecenas id pretium tortor. Quisque orci nisi, pulvinar eu hendrerit eu, mattis non dui. Aliquam in dolor at lacus rutrum blandit. Vestibulum at varius diam. Pellentesque vestibulum tincidunt elit, facilisis efficitur metus lobortis quis. Vivamus ultricies, odio nec faucibus dictum, lorem turpis luctus nisl, ut pharetra mauris nibh sed eros. Nulla facilisi. Vivamus congue nisl augue, at hendrerit ex laoreet sed. Cras vestibulum justo sem, vel imperdiet tellus euismod mollis. Maecenas dignissim efficitur malesuada. Proin eu turpis cursus, pulvinar ligula eu, auctor ligula. Nulla efficitur sem in nulla luctus tempor. Morbi dapibus purus ut ipsum posuere interdum. Vivamus convallis mauris accumsan odio fringilla, eget egestas mi elementum. Nullam et diam tortor. Nunc arcu nibh, tempor eget risus vitae, ornare consequat tellus."),
+	//		HasImage: true,
+	//		Image: &view.DynamicPageImageComponent{
+	//			Path: "https://www.sunlifephoto.com/assets/images/wedding-banner.jpeg",
+	//			AltText: "A test simple component image",
+	//		},
+	//	},
+	//})
+	//page.DynamicPage.Rows = append(page.DynamicPage.Rows, &view.DynamicPageRow{
+	//	ComponentName: "row-simple-component",
+	//	SeparatorTop: true,
+	//	RowSimpleComponent: &view.DynamicPageRowSimpleComponent{
+	//		Header: "A Sub-Header for Custom Page",
+	//		IsMainHeader: false,
+	//		Description: template.HTML("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer vel pharetra lectus. Quisque quis nisl est. Cras vel mi arcu. Vestibulum efficitur, metus in lacinia porta, justo mi elementum erat, eget dictum lorem nisi non felis. Aliquam erat volutpat. Nunc est dui, rutrum sed lacus eu, interdum efficitur metus. Etiam in velit mollis, eleifend nisi at, tincidunt ligula. Cras congue scelerisque metus. Aliquam urna tortor, ornare vel dictum sit amet, posuere sed justo. Nulla facilisi. Nullam ut felis sollicitudin, condimentum neque vel, sagittis nulla. Sed facilisis tristique consequat. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque efficitur lobortis tortor ultrices feugiat. Phasellus semper dolor vitae risus tristique tristique. Donec pulvinar molestie ipsum vitae tempor. In vitae aliquam justo, sit amet imperdiet purus. Nulla quis porttitor nisl. Maecenas metus urna, gravida eu leo vitae, scelerisque ultricies mi. Cras id orci neque. Nam ac tellus mi. Quisque consequat a diam id mattis. Proin malesuada elementum ligula, a facilisis lacus varius in. Phasellus mauris eros, venenatis id fermentum condimentum, fringilla id urna. In turpis purus, cursus nec blandit vel, semper et nisl. Maecenas id pretium tortor. Quisque orci nisi, pulvinar eu hendrerit eu, mattis non dui. Aliquam in dolor at lacus rutrum blandit. Vestibulum at varius diam. Pellentesque vestibulum tincidunt elit, facilisis efficitur metus lobortis quis. Vivamus ultricies, odio nec faucibus dictum, lorem turpis luctus nisl, ut pharetra mauris nibh sed eros. Nulla facilisi. Vivamus congue nisl augue, at hendrerit ex laoreet sed. Cras vestibulum justo sem, vel imperdiet tellus euismod mollis. Maecenas dignissim efficitur malesuada. Proin eu turpis cursus, pulvinar ligula eu, auctor ligula. Nulla efficitur sem in nulla luctus tempor. Morbi dapibus purus ut ipsum posuere interdum. Vivamus convallis mauris accumsan odio fringilla, eget egestas mi elementum. Nullam et diam tortor. Nunc arcu nibh, tempor eget risus vitae, ornare consequat tellus."),
+	//		HasImage: true,
+	//		Image: &view.DynamicPageImageComponent{
+	//			Path: "https://www.sunlifephoto.com/assets/images/maternity-banner.jpg",
+	//			AltText: "A test simple component image",
+	//		},
+	//	},
+	//})
+	//err = nil
 	page, err := entities.GetPageByPath(c.Context, postPath)
 	if err != nil && err != entities.ErrPageNotFound {
 		log.Errorf(c.Context, "Error getting page: %+v", err)
@@ -406,6 +441,14 @@ func servePage(c *km.ServerContext, w web.ResponseWriter, r *web.Request, page *
 			c.ServeHTMLError(http.StatusInternalServerError, "Unexpected error, please try again later.")
 			return
 		}
+	} else if page.Provider == entities.PROVIDER_CUSTOM_PAGE{
+		c.ServeHTMLTemplate("custom-page", struct{
+			*view.View
+			CustomPage *view.DynamicPage
+		}{
+			View: c.NewView(page.DynamicPage.Title + " | " + settings.COMPANY_NAME, page.DynamicPage.MetaDescription),
+			CustomPage: page.DynamicPage,
+		})
 	} else {
 		log.Errorf(c.Context, "Page provider is not supported: %+v", page)
 		c.ServeHTMLError(http.StatusInternalServerError, "Unexpected error, please try again later.")

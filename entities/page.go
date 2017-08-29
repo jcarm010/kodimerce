@@ -7,11 +7,15 @@ import (
 	"strings"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
+	"github.com/jcarm010/kodimerce/view"
+	"encoding/json"
+	"fmt"
 )
 
 const (
 	ENTITY_PAGE = "page"
 	PROVIDER_SHALLOW_MIRROR = "shallow_mirror"
+	PROVIDER_CUSTOM_PAGE = "dynamic_page"
 )
 var (
 	ErrPageNotFound = errors.New("Not Found.")
@@ -28,6 +32,13 @@ type Page struct {
 	PublishedDate time.Time `datastore:"published_date" json:"published_date"`
 	Created time.Time `datastore:"created" json:"created"`
 	ShallowMirrorUrl string `datastore:"shallow_mirror_url,noindex" json:"shallow_mirror_url"`
+	DynamicPage *view.DynamicPage `datastore:"-" json:"dynamic_page"`
+	RawDynamicPage []byte `datastore:"raw_dynamic_page,noindex" json:"-"`
+}
+
+func (p *Page) String() string {
+	bts, _ := json.Marshal(p)
+	return fmt.Sprintf("%s", bts)
 }
 
 func (p *Page) FormattedPublishedDate () (string) {
@@ -35,7 +46,18 @@ func (p *Page) FormattedPublishedDate () (string) {
 }
 
 func (p *Page) SetMissingDefaults () {
+	if p.RawDynamicPage != nil && len(p.RawDynamicPage) != 0 {
+		dynamicPage := &view.DynamicPage{}
+		fmt.Printf("Marshalling dynamic page: %s\n", p.RawDynamicPage)
+		err := json.Unmarshal(p.RawDynamicPage, dynamicPage)
+		if err == nil {
+			p.DynamicPage = dynamicPage
+		}
+	}
 
+	if p.DynamicPage == nil {
+		p.DynamicPage = view.NewDynamicPage(p.Title, "")
+	}
 }
 
 func NewShallowMirrorPage(title string) *Page {
@@ -43,6 +65,16 @@ func NewShallowMirrorPage(title string) *Page {
 		Title: title,
 		Created: time.Now(),
 		Provider: PROVIDER_SHALLOW_MIRROR,
+		DynamicPage: view.NewDynamicPage(title, ""),
+	}
+}
+
+func NewDynamicPage(title string, metaDescription string) *Page {
+	return &Page{
+		Title: title,
+		Created: time.Now(),
+		Provider: PROVIDER_CUSTOM_PAGE,
+		DynamicPage: view.NewDynamicPage(title, metaDescription),
 	}
 }
 
@@ -101,6 +133,7 @@ func UpdatePage(ctx context.Context, page *Page) error {
 			return err
 		}
 
+		p.Provider = page.Provider
 		p.Title = page.Title
 		p.Path = page.Path
 		p.Content = page.Content
@@ -110,6 +143,12 @@ func UpdatePage(ctx context.Context, page *Page) error {
 			p.PublishedDate = time.Now()
 		}
 
+		bts, err := json.Marshal(page.DynamicPage)
+		if err != nil {
+			return err
+		}
+
+		p.RawDynamicPage = bts
 		p.Published = page.Published
 		_, err = datastore.Put(ctx, key, p)
 		return err

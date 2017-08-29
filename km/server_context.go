@@ -22,55 +22,12 @@ import (
 	"bytes"
 	"github.com/ikeikeikeike/go-sitemap-generator/stm"
 	"github.com/jcarm010/kodimerce/view"
-	"io/ioutil"
 )
-
-var TEMPLATES *template.Template
-var fns = template.FuncMap{
-	"plus1": func(x int) int {
-		return x + 1
-	},
-}
-
-var(
-	CUSTOM_PAGES map[string]CustomPage
-)
-
-type CustomPage struct {
-	TemplateName string `json:"template_name"`
-	Title string `json:"title"`
-	MetaDescription string `json:"meta_description"`
-	InSiteMap bool `json:"in_site_map"`
-	ChangeFrequency string `json:"change_frequency"`
-	Priority int `json:"priority"`
-}
 
 type ServerContext struct{
 	Context context.Context
 	w web.ResponseWriter
 	r *web.Request
-}
-
-func init() {
-	TEMPLATES = template.New("").Funcs(fns)
-	TEMPLATES.ParseGlob("views/core-templates/*")
-	TEMPLATES.ParseGlob("views/core-components/*")
-	TEMPLATES.ParseGlob("views/templates/*")
-	TEMPLATES.ParseGlob("views/components/*")
-
-	customPages := struct{
-		Pages map[string]CustomPage `json:"pages"`
-	}{
-		Pages: map[string]CustomPage{},
-	}
-
-	raw, err := ioutil.ReadFile("./custom-pages.json")
-	if err == nil {
-		err = json.Unmarshal(raw, &customPages)
-		if err == nil {
-			CUSTOM_PAGES = customPages.Pages
-		}
-	}
 }
 
 func (c *ServerContext) ParseJsonRequest(v interface{}) error {
@@ -107,7 +64,7 @@ func (c *ServerContext) ServeHTMLError(status int, value interface{}){
 		Message string
 	}
 
-	err := TEMPLATES.ExecuteTemplate(c.w, "error-page", ErrorView {
+	err := view.TEMPLATES.ExecuteTemplate(c.w, "error-page", ErrorView {
 		View: c.NewView(fmt.Sprintf("%v | %s", status, settings.COMPANY_NAME), ""),
 		Message: fmt.Sprintf("%s", value),
 	})
@@ -120,13 +77,13 @@ func (c *ServerContext) ServeHTMLError(status int, value interface{}){
 }
 
 func (c *ServerContext) ServeHTMLTemplate(name string, data interface{}){
-	if TEMPLATES.Lookup(name) == nil {
+	if view.TEMPLATES.Lookup(name) == nil {
 		log.Errorf(c.Context, "Could not find html template: %s", name)
 		c.ServeHTMLError(http.StatusNotFound, "Page not found.")
 		return
 	}
 
-	err := TEMPLATES.ExecuteTemplate(c.w, name, data)
+	err := view.TEMPLATES.ExecuteTemplate(c.w, name, data)
 	if err != nil {
 		log.Errorf(c.Context, "Error parsing html template: %+v", err)
 		c.ServeHTMLError(http.StatusInternalServerError, "Unexpected error, please try again later.")
@@ -175,8 +132,8 @@ func (c *ServerContext) SetCORS(w web.ResponseWriter, r *web.Request, next web.N
 		"http://localhost:8080": true,
 	}
 
-	log.Infof(c.Context, "Allowed Origins: %+v", allowedOrigins)
-	log.Infof(c.Context, "Setting CORS for [%s]: %v", origin, allowedOrigins[origin])
+	//log.Infof(c.Context, "Allowed Origins: %+v", allowedOrigins)
+	//log.Infof(c.Context, "Setting CORS for [%s]: %v", origin, allowedOrigins[origin])
 	if allowedOrigins[origin] {
 		c.w.Header().Add("Access-Control-Allow-Origin", origin)
 	}
@@ -919,7 +876,7 @@ func (c *ServerContext) GetSiteMap(w web.ResponseWriter, r *web.Request){
 		}
 	}
 
-	for path, page := range CUSTOM_PAGES {
+	for path, page := range view.CUSTOM_PAGES {
 		if page.InSiteMap {
 			sm.Add(stm.URL{"loc": "/" + path, "changefreq": page.ChangeFrequency, "priority": page.Priority})
 		}

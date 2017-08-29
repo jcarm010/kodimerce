@@ -659,6 +659,7 @@ func (c *AdminContext) UpdatePage(w web.ResponseWriter, r *web.Request){
 		return
 	}
 
+	log.Infof(c.Context, "Updating page: %+v", data.Page)
 	err = entities.UpdatePage(c.Context, data.Page)
 	if err != nil {
 		log.Errorf(c.Context, "Error updating page: %+v", err)
