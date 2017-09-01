@@ -15,6 +15,10 @@ import (
 	"time"
 	"google.golang.org/appengine/urlfetch"
 	"io"
+	"golang.org/x/net/html"
+	"strings"
+	"golang.org/x/net/context"
+	"bytes"
 )
 
 
@@ -327,6 +331,24 @@ func BlogView(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
 	})
 }
 
+func GetAmpDynamicPage(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
+	pagePath := r.PathParams["path"]
+	log.Infof(c.Context, "Serving AMP Dynamic Page: %s", pagePath)
+	post, err := entities.GetPostByPath(c.Context, pagePath)
+	if err != nil && err != entities.ErrPostNotFound {
+		log.Errorf(c.Context, "Error getting post: %+v", err)
+		c.ServeHTMLError(http.StatusInternalServerError, "Unexpected error, please try again later.")
+		return
+	}
+
+	if err != entities.ErrPostNotFound {
+		servePost(c, w, r, post, true)
+		return
+	}
+
+	c.ServeHTMLError(http.StatusNotFound, "The page you were looking for does not exist.")
+}
+
 func GetDynamicPage(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
 	postPath := r.PathParams["post"]
 	log.Infof(c.Context, "Serving Dynamic Page: %s", postPath)
@@ -345,7 +367,7 @@ func GetDynamicPage(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
 	}
 
 	if err != entities.ErrPostNotFound {
-		servePost(c, w, r, post)
+		servePost(c, w, r, post, false)
 		return
 	}
 
@@ -399,7 +421,7 @@ func GetDynamicPage(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
 	c.ServeHTMLError(http.StatusNotFound, "The page you were looking for does not exist.")
 }
 
-func servePost(c *km.ServerContext, w web.ResponseWriter, r *web.Request, post *entities.Post) {
+func servePost(c *km.ServerContext, w web.ResponseWriter, r *web.Request, post *entities.Post, isAmp bool) {
 	posts, err := entities.ListPosts(c.Context, true, 10)
 	if err != nil {
 		log.Errorf(c.Context, "Error getting previous posts: %+v", err)
@@ -410,7 +432,23 @@ func servePost(c *km.ServerContext, w web.ResponseWriter, r *web.Request, post *
 	if r.TLS != nil {
 		httpHeader = "https"
 	}
-	c.ServeHTMLTemplate("post-page", struct{
+
+	var targetTemplate string
+	if isAmp {
+		targetTemplate = "amp-post-page"
+		ampContent, err := htmlToAmp(c.Context, post.Content)
+		if err != nil {
+			log.Errorf(c.Context, "Error parsing blog content to amp content: %+v", err)
+			c.ServeHTMLError(http.StatusInternalServerError, "Could not fetch amp page.")
+			return
+		}
+
+		post.Content = ampContent
+	}else {
+		targetTemplate = "post-page"
+	}
+
+	c.ServeHTMLTemplate(targetTemplate, struct{
 		*view.View
 		CanonicalUrl string
 		Post         *entities.Post
@@ -418,7 +456,7 @@ func servePost(c *km.ServerContext, w web.ResponseWriter, r *web.Request, post *
 		AboutBlog    string
 	}{
 		View:         c.NewView(post.Title + " | " + settings.COMPANY_NAME, post.MetaDescription),
-		CanonicalUrl: fmt.Sprintf("%s://%s%s", httpHeader, r.Host, r.URL.Path),
+		CanonicalUrl: fmt.Sprintf("%s://%s/%s", httpHeader, r.Host, post.Path),
 		Post:         post,
 		LatestPosts:  posts,
 		AboutBlog:    settings.DESCRIPTION_BLOG_ABOUT,
@@ -452,6 +490,61 @@ func servePage(c *km.ServerContext, w web.ResponseWriter, r *web.Request, page *
 	} else {
 		log.Errorf(c.Context, "Page provider is not supported: %+v", page)
 		c.ServeHTMLError(http.StatusInternalServerError, "Unexpected error, please try again later.")
+	}
+}
+
+func htmlToAmp(ctx context.Context, htmlContent template.HTML) (template.HTML, error) {
+	nodes, err := html.ParseFragment(strings.NewReader(string(htmlContent)), nil)
+	if err != nil {
+		return template.HTML(""), err
+	}
+
+	ampCurrentContent := ""
+	for _, node := range nodes {
+		traverse(ctx, node)
+		c := renderNode(node)
+		c = strings.Replace(c, "<html>", "", -1)
+		c = strings.Replace(c, "</html>", "", -1)
+		c = strings.Replace(c, "<body>", "", -1)
+		c = strings.Replace(c, "</body>", "", -1)
+		c = strings.Replace(c, "<head>", "", -1)
+		c = strings.Replace(c, "</head>", "", -1)
+		ampCurrentContent += c
+	}
+
+	log.Infof(ctx, "Resulting htmlContent: %s", ampCurrentContent)
+	return template.HTML(ampCurrentContent), nil
+}
+
+func renderNode(n *html.Node) string {
+	var buf bytes.Buffer
+	w := io.Writer(&buf)
+	html.Render(w, n)
+	return buf.String()
+}
+
+func traverse(ctx context.Context, n *html.Node) {
+	if n.Data == "img" {
+		log.Infof(ctx, "ImageFound: %+v", n)
+		n.Data = "amp-img"
+		n.Attr = append(n.Attr, html.Attribute{
+			Key: "layout",
+			Val: "responsive",
+		})
+	}
+
+	goodAttributes := make([]html.Attribute, 0)
+	for _, attr := range n.Attr {
+		if attr.Key == "style"{
+			log.Infof(ctx, "Style Found: %+v", n)
+		}else {
+			goodAttributes = append(goodAttributes, attr)
+		}
+	}
+
+	n.Attr = goodAttributes
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		traverse(ctx, c)
 	}
 }
 

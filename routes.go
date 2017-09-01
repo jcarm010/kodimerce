@@ -48,6 +48,7 @@ func init() {
 		Get("/sitemap.xml", (*km.ServerContext).GetSiteMap).
 		Get("/blog", views.BlogView).
 		Get("/blog/rss", views.GetBlogRss).
+		Get("/amp/:path", views.GetAmpDynamicPage).
 		Get("/:post", views.GetDynamicPage)
 
 	router.Subrouter(km.ServerContext{}, "/api").

@@ -82,11 +82,13 @@ type View struct {
 	CanonicalUrl string
 	PageUrl string
 	FacebookUrl string
+	FacebookAppId string
 	InstagramUrl string
 	TwitterUrl string
 	LinkedInUrl string
 	YouTubeUrl string
 	TwitterHandle string
+	GoogleAnalyticsAccountId string
 }
 
 func (v *View) DateTimeFormat (d time.Time ) (string) {
@@ -155,10 +157,12 @@ func NewView(request *http.Request, title string, metaDescription string) *View 
 		CanonicalUrl: newUrl,
 		PageUrl: settings.ServerUrl(request) + request.URL.String(),
 		FacebookUrl: settings.FACEBOOK_URL,
+		FacebookAppId: settings.FACEBOOK_APP_ID,
 		InstagramUrl: settings.INSTAGRAM_URL,
 		TwitterUrl: settings.TWITTER_URL,
 		LinkedInUrl: settings.LINKEDIN_URL,
 		YouTubeUrl: settings.YOUTUBE_URL,
 		TwitterHandle: settings.TWITTER_HANDLE,
+		GoogleAnalyticsAccountId: settings.GOOGLE_ANALYTICS_ACCOUNT_ID,
 	}
 }
