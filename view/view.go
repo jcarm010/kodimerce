@@ -16,6 +16,7 @@ import (
 var (
 	TEMPLATES *template.Template
 	CUSTOM_PAGES map[string]CustomPage
+	CUSTOM_REDIRECTS map[string]CustomRedirect
 )
 
 var fns = template.FuncMap{
@@ -43,6 +44,11 @@ type CustomPage struct {
 	Priority int `json:"priority"`
 }
 
+type CustomRedirect struct {
+	ToPath string `json:"to_path"`
+	StatusCode int `json:"status_code"`
+}
+
 func init() {
 	TEMPLATES = template.New("").Funcs(fns)
 	TEMPLATES.ParseGlob("views/core-templates/*")
@@ -52,8 +58,10 @@ func init() {
 
 	customPages := struct{
 		Pages map[string]CustomPage `json:"pages"`
+		Redirects map[string]CustomRedirect `json:"redirects"`
 	}{
 		Pages: map[string]CustomPage{},
+		Redirects: map[string]CustomRedirect{},
 	}
 
 	raw, err := ioutil.ReadFile("./custom-pages.json")
@@ -61,6 +69,7 @@ func init() {
 		err = json.Unmarshal(raw, &customPages)
 		if err == nil {
 			CUSTOM_PAGES = customPages.Pages
+			CUSTOM_REDIRECTS = customPages.Redirects
 		}
 	}
 }

@@ -117,6 +117,18 @@ func (c *ServerContext) InitServerContext(w web.ResponseWriter, r *web.Request, 
 	next(w, r)
 }
 
+func (c *ServerContext) SetRedirects(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc){
+	pagePath := r.URL.Path
+	pagePath = strings.Replace(pagePath, "/", "", 1)
+	if customRedirect, exist := view.CUSTOM_REDIRECTS[pagePath] ; exist {
+		log.Infof(c.Context, "Custom Redirect found: %+v", customRedirect)
+		http.Redirect(w, r.Request, customRedirect.ToPath, customRedirect.StatusCode)
+		return
+	}
+
+	next(w, r)
+}
+
 func (c *ServerContext) SetCORS(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc){
 	origin := r.Header.Get("origin")
 	serverUrl := settings.ServerUrl(r.Request)
