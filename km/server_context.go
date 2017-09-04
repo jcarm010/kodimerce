@@ -120,6 +120,17 @@ func (c *ServerContext) InitServerContext(w web.ResponseWriter, r *web.Request, 
 func (c *ServerContext) SetRedirects(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc){
 	pagePath := r.URL.Path
 	pagePath = strings.Replace(pagePath, "/", "", 1)
+	if strings.HasSuffix(pagePath, "/") {
+		pagePath = pagePath[0:len(pagePath)-1]
+	}
+
+	log.Infof(c.Context, "Checking for redirect: %s", pagePath)
+	if customRedirect, exist := view.CUSTOM_REDIRECTS[pagePath] ; exist {
+		log.Infof(c.Context, "Custom Redirect found: %+v", customRedirect)
+		http.Redirect(w, r.Request, customRedirect.ToPath, customRedirect.StatusCode)
+		return
+	}
+
 	if customRedirect, exist := view.CUSTOM_REDIRECTS[pagePath] ; exist {
 		log.Infof(c.Context, "Custom Redirect found: %+v", customRedirect)
 		http.Redirect(w, r.Request, customRedirect.ToPath, customRedirect.StatusCode)
