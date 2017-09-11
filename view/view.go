@@ -145,7 +145,12 @@ func NewView(request *http.Request, title string, metaDescription string) *View 
 		httpHeader = "https"
 	}
 
-	newUrl := fmt.Sprintf("%s://%s%s", httpHeader, request.Host, request.URL.Path)
+	p := request.URL.Path
+	if strings.HasSuffix(p, "/") {
+		p = p[0 : len(p)-1]
+	}
+
+	newUrl := fmt.Sprintf("%s://%s%s", httpHeader, request.Host, p)
 	if request.URL.RawQuery != "" {
 		newUrl += "?" + request.URL.RawQuery
 	}
