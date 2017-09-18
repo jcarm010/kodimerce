@@ -98,6 +98,7 @@ type View struct {
 	YouTubeUrl string
 	TwitterHandle string
 	GoogleAnalyticsAccountId string
+	GoogleTagManagerId string
 }
 
 func (v *View) DateTimeFormat (d time.Time ) (string) {
@@ -178,5 +179,6 @@ func NewView(request *http.Request, title string, metaDescription string) *View 
 		YouTubeUrl: settings.YOUTUBE_URL,
 		TwitterHandle: settings.TWITTER_HANDLE,
 		GoogleAnalyticsAccountId: settings.GOOGLE_ANALYTICS_ACCOUNT_ID,
+		GoogleTagManagerId: settings.GOOGLE_TAG_MANAGER_ID,
 	}
 }
