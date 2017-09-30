@@ -22,12 +22,40 @@ import (
 	"bytes"
 	"github.com/ikeikeikeike/go-sitemap-generator/stm"
 	"github.com/jcarm010/kodimerce/view"
+	"io/ioutil"
 )
+
+var (
+	PRODUCT_SETTINGS *ProductSettings = &ProductSettings{
+		PickupLocation: &ProductSettingsPickupLocation{
+			Options:[]string{},
+		},
+	}
+)
+
+type ProductSettings struct {
+	PickupLocation *ProductSettingsPickupLocation `json:"pickup_location"`
+}
+
+type ProductSettingsPickupLocation struct {
+	Options []string `json:"options"`
+}
 
 type ServerContext struct{
 	Context context.Context
 	w web.ResponseWriter
 	r *web.Request
+}
+
+func init()  {
+	currProductSettings := &ProductSettings{}
+	raw, err := ioutil.ReadFile("./product-settings.json")
+	if err == nil {
+		err = json.Unmarshal(raw, currProductSettings)
+		if err == nil {
+			PRODUCT_SETTINGS = currProductSettings
+		}
+	}
 }
 
 func (c *ServerContext) ParseJsonRequest(v interface{}) error {

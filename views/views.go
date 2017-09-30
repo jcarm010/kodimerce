@@ -123,16 +123,18 @@ func ProductView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		ProductFound bool
 		CanonicalUrl string
 		Domain string
+		ProductSettings *km.ProductSettings
 	}{
 		View: c.NewView(selectedProduct.Name + " | " + settings.COMPANY_NAME, selectedProduct.MetaDescription),
 		Product: selectedProduct,
 		ProductFound: productFound,
-		CanonicalUrl: fmt.Sprintf("%s://%s%s", httpHeader, r.Host, r.URL.Path),
+		CanonicalUrl: fmt.Sprintf("%s://%s/product/%s", httpHeader, r.Host, selectedProduct.Path),
 		Domain: settings.ServerUrl(r.Request),
+		ProductSettings: km.PRODUCT_SETTINGS,
 	}
 
-	log.Debugf(c.Context, "Canonical Url: %s", p.CanonicalUrl)
-
+	log.Debugf(c.Context, "CanonicalUrl: %s", p.CanonicalUrl)
+	log.Debugf(c.Context, "ProductSettings: %s", p.ProductSettings)
 	if !productFound {
 		w.WriteHeader(http.StatusNotFound)
 	}
