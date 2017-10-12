@@ -439,6 +439,10 @@ func servePage(c *km.ServerContext, w web.ResponseWriter, r *web.Request, page *
 			return
 		}
 
+		if resp.StatusCode != http.StatusOK {
+			w.WriteHeader(resp.StatusCode)
+		}
+
 		defer resp.Body.Close()
 		_, err = io.Copy(w, resp.Body)
 		if err != nil {
