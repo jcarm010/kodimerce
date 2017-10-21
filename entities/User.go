@@ -20,6 +20,7 @@ type User struct {
 	Email string `json:"email" datastore:"-"`
 	PasswordHash string `json:"password_hash" datastore:"password_hash,noindex"`
 	UserType string `json:"user_type" datastore:"user_type"`
+	LastVisitedPath string `json:"last_visited_path" datastore:"last_visited_path"`
 }
 
 func NewUser(email string) *User {
@@ -48,7 +49,7 @@ func CreateUser(ctx context.Context, user *User) error {
 		err := datastore.Get(ctx, key, u)
 		if err != nil && err != datastore.ErrNoSuchEntity {
 			return err
-		}else if(err == nil){
+		}else if err == nil {
 			return ErrUserAlreadyExists
 		}
 
@@ -65,6 +66,12 @@ func CreateUser(ctx context.Context, user *User) error {
 	}
 
 	return nil
+}
+
+func UpdateUser(ctx context.Context, user *User) error {
+	key := datastore.NewKey(ctx, ENTITY_USER, user.Email, 0, nil)
+	_, err := datastore.Put(ctx, key, user)
+	return err
 }
 
 func GetUser(ctx context.Context, email string) (*User, error) {

@@ -233,6 +233,11 @@ func StoreView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 }
 
 func AdminView(c *km.AdminContext, w web.ResponseWriter, r *web.Request) {
+	log.Infof(c.Context, "Serving admin path: %s", r.URL.Path)
+	if (r.URL.Path == "/admin" || r.URL.Path == "/admin/") && c.User.LastVisitedPath != "" && c.User.LastVisitedPath != r.URL.Path {
+		http.Redirect(w, r.Request, c.User.LastVisitedPath, http.StatusFound)
+		return
+	}
 	p := c.NewView("Admin | " + settings.COMPANY_NAME, "")
 	t, err := template.ParseFiles("views/admin.html") // cache this globally
 	if err != nil {

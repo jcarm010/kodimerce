@@ -57,6 +57,7 @@ func init() {
 
 	router.Subrouter(km.AdminContext{}, "/admin").
 		Middleware((*km.AdminContext).Auth).
+		Post("/km/last/visited/path", (*km.AdminContext).SaveLastVisitedPath).
 		Get("/km/post", (*km.AdminContext).GetPosts).
 		Post("/km/post", (*km.AdminContext).CreatePost).
 		Put("/km/post", (*km.AdminContext).UpdatePost).

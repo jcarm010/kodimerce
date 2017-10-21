@@ -669,3 +669,27 @@ func (c *AdminContext) UpdatePage(w web.ResponseWriter, r *web.Request){
 
 	c.ServeJson(http.StatusOK, "")
 }
+
+func (c *AdminContext) SaveLastVisitedPath(w web.ResponseWriter, r *web.Request){
+	data := struct {
+		LastPath string `json:"last_path"`
+	}{}
+
+	err := c.ParseJsonRequest(&data)
+	if err != nil {
+		log.Errorf(c.Context, "Could not parse request: %+v", err)
+		c.ServeJson(http.StatusBadRequest, "Could not parse request.")
+		return
+	}
+
+	log.Infof(c.Context, "Saving last visited path: %s", data.LastPath)
+	c.User.LastVisitedPath = data.LastPath
+	err = entities.UpdateUser(c.Context, c.User)
+	if err != nil {
+		log.Errorf(c.Context, "Error updating user last path: %+v", err)
+		c.ServeJson(http.StatusBadRequest, "Could update the user's last visited path.")
+		return
+	}
+
+	c.ServeJson(http.StatusOK, "")
+}
