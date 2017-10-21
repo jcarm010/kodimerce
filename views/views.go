@@ -19,9 +19,13 @@ import (
 	"strings"
 	"golang.org/x/net/context"
 	"bytes"
+	"net/url"
 )
 
-
+type AmpImport struct {
+	Name string
+	URL  string
+}
 
 type OrderView struct {
 	Title string
@@ -405,10 +409,11 @@ func servePost(c *km.ServerContext, w web.ResponseWriter, r *web.Request, post *
 		httpHeader = "https"
 	}
 
+	ampImports := []AmpImport{}
 	var targetTemplate string
 	if isAmp {
 		targetTemplate = "amp-post-page"
-		ampContent, err := htmlToAmp(c.Context, post.Content)
+		ampContent, additionalImports, err := htmlToAmp(c.Context, post.Content)
 		if err != nil {
 			log.Errorf(c.Context, "Error parsing blog content to amp content: %+v", err)
 			c.ServeHTMLError(http.StatusInternalServerError, "Could not fetch amp page.")
@@ -416,6 +421,7 @@ func servePost(c *km.ServerContext, w web.ResponseWriter, r *web.Request, post *
 		}
 
 		post.Content = ampContent
+		ampImports = additionalImports
 	}else {
 		targetTemplate = "post-page"
 	}
@@ -426,12 +432,14 @@ func servePost(c *km.ServerContext, w web.ResponseWriter, r *web.Request, post *
 		Post         *entities.Post
 		LatestPosts  []*entities.Post
 		AboutBlog    string
+		AmpImports   []AmpImport
 	}{
 		View:         c.NewView(post.Title + " | " + settings.COMPANY_NAME, post.MetaDescription),
 		CanonicalUrl: fmt.Sprintf("%s://%s/%s", httpHeader, r.Host, post.Path),
 		Post:         post,
 		LatestPosts:  posts,
 		AboutBlog:    settings.DESCRIPTION_BLOG_ABOUT,
+		AmpImports:   ampImports,
 	})
 }
 
@@ -469,15 +477,19 @@ func servePage(c *km.ServerContext, w web.ResponseWriter, r *web.Request, page *
 	}
 }
 
-func htmlToAmp(ctx context.Context, htmlContent template.HTML) (template.HTML, error) {
+func htmlToAmp(ctx context.Context, htmlContent template.HTML) (content template.HTML, ampImports []AmpImport, err error) {
 	nodes, err := html.ParseFragment(strings.NewReader(string(htmlContent)), nil)
 	if err != nil {
-		return template.HTML(""), err
+		return template.HTML(""), nil, err
 	}
 
+	neededImportsMap := make(map[string]AmpImport)
 	ampCurrentContent := ""
 	for _, node := range nodes {
-		traverse(ctx, node)
+		additionalImportsMap := traverse(ctx, node)
+		for additionalImport, ampImport := range additionalImportsMap {
+			neededImportsMap[additionalImport] = ampImport
+		}
 		c := renderNode(node)
 		c = strings.Replace(c, "<html>", "", -1)
 		c = strings.Replace(c, "</html>", "", -1)
@@ -488,8 +500,15 @@ func htmlToAmp(ctx context.Context, htmlContent template.HTML) (template.HTML, e
 		ampCurrentContent += c
 	}
 
+	neededImports := make([]AmpImport, len(neededImportsMap))
+	index := 0
+	for _, ampImport := range neededImportsMap {
+		neededImports[index] = ampImport
+		index++
+	}
 	log.Infof(ctx, "Resulting htmlContent: %s", ampCurrentContent)
-	return template.HTML(ampCurrentContent), nil
+	log.Infof(ctx, "Resulting amp imports: %+v", neededImports)
+	return template.HTML(ampCurrentContent), neededImports, nil
 }
 
 func renderNode(n *html.Node) string {
@@ -499,10 +518,36 @@ func renderNode(n *html.Node) string {
 	return buf.String()
 }
 
-func traverse(ctx context.Context, n *html.Node) {
+func traverse(ctx context.Context, n *html.Node) (neededAmpImports map[string]AmpImport) {
+	neededAmpImports = make(map[string]AmpImport)
 	if n.Data == "img" {
 		log.Infof(ctx, "ImageFound: %+v", n)
-		n.Data = "amp-img"
+		isGif := false
+		for _, attr := range n.Attr {
+			if attr.Key == "src" {
+				src := attr.Val
+				u, err := url.Parse(src)
+				if err != nil {
+					log.Warningf(ctx, "Could not parse image url: %s", src)
+				}else {
+					log.Infof(ctx, "ImageParsedPath: %s", u.Path)
+					isGif = strings.HasSuffix(strings.ToLower(u.Path), ".gif")
+				}
+
+				break
+			}
+		}
+
+		if isGif {
+			n.Data = "amp-anim"
+			neededAmpImports["amp-anim"] = AmpImport{
+				Name: "amp-anim",
+				URL:  "https://cdn.ampproject.org/v0/amp-anim-0.1.js",
+			}
+		} else {
+			n.Data = "amp-img"
+		}
+
 		n.Attr = append(n.Attr, html.Attribute{
 			Key: "layout",
 			Val: "responsive",
@@ -520,8 +565,13 @@ func traverse(ctx context.Context, n *html.Node) {
 
 	n.Attr = goodAttributes
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		traverse(ctx, c)
+		additionalImports := traverse(ctx, c)
+		for additionalImport, ampImport := range additionalImports {
+			neededAmpImports[additionalImport] = ampImport
+		}
 	}
+
+	return neededAmpImports
 }
 
 func GetBlogRss(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
