@@ -314,7 +314,6 @@ func OrderReviewView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) 
 
 	c.ServeHTMLTemplate("order-review-page", struct{
 		*view.View
-		Title string
 		Order *entities.Order
 		TaxPercent float64
 	}{
