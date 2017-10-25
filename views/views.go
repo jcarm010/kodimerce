@@ -470,7 +470,9 @@ func servePage(c *km.ServerContext, w web.ResponseWriter, r *web.Request, page *
 			View: c.NewView(page.DynamicPage.Title + " | " + settings.COMPANY_NAME, page.DynamicPage.MetaDescription),
 			CustomPage: page.DynamicPage,
 		})
-	} else {
+	} else if page.Provider == entities.PROVIDER_REDIRECT_PAGE{
+		http.Redirect(w, r.Request, page.RedirectUrl, page.RedirectStatusCode)
+	}else {
 		log.Errorf(c.Context, "Page provider is not supported: %+v", page)
 		c.ServeHTMLError(http.StatusInternalServerError, "Unexpected error, please try again later.")
 	}

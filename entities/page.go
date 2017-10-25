@@ -16,6 +16,7 @@ const (
 	ENTITY_PAGE = "page"
 	PROVIDER_SHALLOW_MIRROR = "shallow_mirror"
 	PROVIDER_CUSTOM_PAGE = "dynamic_page"
+	PROVIDER_REDIRECT_PAGE = "redirect_page"
 )
 var (
 	ErrPageNotFound = errors.New("Not Found.")
@@ -34,6 +35,8 @@ type Page struct {
 	ShallowMirrorUrl string `datastore:"shallow_mirror_url,noindex" json:"shallow_mirror_url"`
 	DynamicPage *view.DynamicPage `datastore:"-" json:"dynamic_page"`
 	RawDynamicPage []byte `datastore:"raw_dynamic_page,noindex" json:"-"`
+	RedirectUrl string `datastore:"redirect_url,noindex" json:"redirect_url"`
+	RedirectStatusCode int `datastore:"redirect_status_code,noindex" json:"redirect_status_code"`
 }
 
 func (p *Page) String() string {
@@ -139,6 +142,8 @@ func UpdatePage(ctx context.Context, page *Page) error {
 		p.Content = page.Content
 		p.MetaDescription = page.MetaDescription
 		p.ShallowMirrorUrl = page.ShallowMirrorUrl
+		p.RedirectStatusCode = page.RedirectStatusCode
+		p.RedirectUrl = page.RedirectUrl
 		if !p.Published && page.Published {
 			p.PublishedDate = time.Now()
 		}
