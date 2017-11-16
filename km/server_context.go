@@ -445,6 +445,50 @@ func (c *ServerContext) UpdateOrder(w web.ResponseWriter, r *web.Request){
 		return
 	}
 
+	proto := "http"
+	if r.Request.TLS != nil {
+		proto = "https"
+	}
+	serverRoot := fmt.Sprintf("%s://%s", proto, r.Host)
+	orderUrl := fmt.Sprintf("%s/admin/orders/%v", serverRoot, order.Id)
+	var templates = template.Must(template.ParseGlob("emailer/templates/*")) // cache this globally
+	orderUpdateEmail := struct {
+		CompanyName  string
+		OrderUrl     string
+		HostRoot     string
+		ContactEmail string
+		Order 		 *entities.Order
+	}{
+		CompanyName:  settings.COMPANY_NAME,
+		OrderUrl:     orderUrl,
+		HostRoot:     serverRoot,
+		ContactEmail: settings.COMPANY_SUPPORT_EMAIL,
+		Order:		  order,
+	}
+
+	var doc bytes.Buffer
+	err = templates.ExecuteTemplate(&doc, "email-order-updated-admin", orderUpdateEmail)
+
+	if err != nil {
+		log.Errorf(c.Context, "Error parsing email template: %+v", err)
+		c.ServeJson(http.StatusInternalServerError, "Unexpected Error, please try again later.")
+		return
+	}
+
+	//send a notification email to the administrator
+	err = emailer.SendEmail(
+		c.Context,
+		fmt.Sprintf("%s<%s>", settings.COMPANY_NAME, settings.EMAIL_SENDER),
+		settings.COMPANY_ORDERS_EMAIL,
+		fmt.Sprintf("Order Updated - %s", order.CheckoutStep),
+		doc.String(),
+		"",
+	)
+
+	if err != nil {
+		log.Errorf(c.Context, "Couldn't send email: %v", err)
+	}
+
 	c.ServeJson(http.StatusOK, "")
 }
 
