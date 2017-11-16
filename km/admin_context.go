@@ -141,7 +141,10 @@ func (c *AdminContext) UpdateProduct(w web.ResponseWriter, r *web.Request) {
 		product.PricingOptions = make([]entities.PricingOption, 0)
 	}
 
-	sort.Sort(entities.ByCheapestPrice(product.PricingOptions))
+	if product.OrderByCheapestFirst {
+		sort.Sort(entities.ByCheapestPrice(product.PricingOptions))
+	}
+
 	log.Infof(c.Context, "pricingOptions: %+v:", product.PricingOptions)
 	if product.Path == "" {
 		product.Path = fmt.Sprintf("%s", product.Id)

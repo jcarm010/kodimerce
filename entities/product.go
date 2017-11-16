@@ -27,6 +27,7 @@ type Product struct {
 	NeedsPickupLocation bool `datastore:"needs_pickup_location" json:"needs_pickup_location"`
 	AvailableTimes      []AvailableTime `datastore:"available_times" json:"available_times"`
 	HasPricingOptions   bool `datastore:"has_pricing_options" json:"has_pricing_options"`
+	OrderByCheapestFirst bool `datastore:"order_by_cheapest_first" json:"order_by_cheapest_first"`
 	PricingOptions      []PricingOption `datastore:"pricing_options" json:"pricing_options"`
 	Active              bool `datastore:"active" json:"active"`
 	PriceCents          int64 `datastore:"price_cents" json:"price_cents"`
@@ -204,6 +205,7 @@ func UpdateProduct(ctx context.Context, product *Product) error {
 		p.NeedsPickupLocation = product.NeedsPickupLocation
 		p.HasPricingOptions = product.HasPricingOptions
 		p.PricingOptions = product.PricingOptions
+		p.OrderByCheapestFirst = product.OrderByCheapestFirst
 		_, err = datastore.Put(ctx, key, p)
 		return err
 	}, nil)
