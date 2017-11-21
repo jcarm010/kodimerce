@@ -119,7 +119,11 @@ func (p *Product) GetPricingLabel() string {
 func (p *Product) GetPriceCents() int64 {
 	priceCents := p.PriceCents
 	if p.HasPricingOptions && len(p.PricingOptions) > 0 {
-		priceCents = p.PricingOptions[0].PriceCents
+		for _, pricingOption := range p.PricingOptions {
+			if pricingOption.PriceCents < priceCents {
+				priceCents = pricingOption.PriceCents
+			}
+		}
 	}
 
 	return priceCents
