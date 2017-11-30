@@ -56,6 +56,12 @@ func (p *Page) SetMissingDefaults () {
 		if err == nil {
 			p.DynamicPage = dynamicPage
 		}
+
+		for _, row := range dynamicPage.Rows {
+			if row.RowSimpleComponent.ImagePosition == "" {
+				row.RowSimpleComponent.ImagePosition = "top"
+			}
+		}
 	}
 
 	if p.DynamicPage == nil {

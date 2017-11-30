@@ -32,6 +32,7 @@ type DynamicPageRowSimpleComponent struct {
 	Description template.HTML `json:"description"`
 	HasImage bool `json:"has_image"`
 	Image *DynamicPageImageComponent `json:"image"`
+	ImagePosition string `json:"image_position"`
 }
 
 func NewDynamicPage(title string, metaDescription string) *DynamicPage {
