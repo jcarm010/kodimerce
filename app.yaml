@@ -1,0 +1,18 @@
+runtime: go
+api_version: go1
+version: 3
+
+handlers:
+#- url: /(.*\.(gif|png|jpg))$
+#  static_files: static/\1
+#  upload: static/.*\.(gif|png|jpg)$
+
+- url: /assets
+  static_dir: assets
+
+- url: /bower_components/(.*\.(js|html|css|gif|png|jpg|svg|woff2|woff|ttf))$
+  static_files: bower_components/\1
+  upload: bower_components/.*\.(js|html|css|gif|png|jpg|svg|woff2|woff|ttf)$
+
+- url: /.*
+  script: _go_app
