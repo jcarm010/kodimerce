@@ -6,7 +6,6 @@ import (
 	"golang.org/x/net/context"
 	"github.com/dustin/gojson"
 	"strings"
-	"github.com/jcarm010/kodimerce/settings"
 	"fmt"
 	"html/template"
 )
@@ -190,7 +189,7 @@ func (o *OrderProduct) String() string {
 	return string(bts)
 }
 
-func CreateOrder(ctx context.Context, products []*Product, quantities []int64, productDetails []*ProductDetails) (*Order, error) {
+func CreateOrder(ctx context.Context, products []*Product, quantities []int64, productDetails []*ProductDetails, taxPercent float64) (*Order, error) {
 	noShipping := true
 	for _, product := range products {
 		if !product.NoShipping {
@@ -209,7 +208,7 @@ func CreateOrder(ctx context.Context, products []*Product, quantities []int64, p
 	order.Products = products
 	order.Quantities = quantities
 	order.NoShipping = noShipping
-	order.TaxPercent = settings.TAX_PERCENT
+	order.TaxPercent = taxPercent
 	order.ProductDetails = productDetails
 	bts, err := json.Marshal(products)
 	if err != nil {

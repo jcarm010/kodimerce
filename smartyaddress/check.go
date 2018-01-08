@@ -114,9 +114,10 @@ func CheckUSAddress(ctx context.Context, lookup *Lookup) (*Candidate, error) {
 		return nil, err
 	}
 
+	globalSettings := settings.GetGlobalSettings(ctx)
 	q := u.Query()
-	q.Add("auth-id", settings.SMARTYSTREETS_AUTH_ID)
-	q.Add("auth-token", settings.SMARTYSTREETS_AUTH_TOKEN)
+	q.Add("auth-id", globalSettings.SmartyStreetsAuthId)
+	q.Add("auth-token", globalSettings.SmartyStreetsAuthToken)
 	q.Add("street", lookup.Street)
 	q.Add("street2", lookup.Street2)
 	q.Add("city", lookup.City)

@@ -41,7 +41,8 @@ type RedirectUrls struct {
 }
 
 func getAccessToken(ctx context.Context) (string, error) {
-	u, err := url.Parse(settings.PAYPAL_API_URL)
+	generalSettings := settings.GetGlobalSettings(ctx)
+	u, err := url.Parse(generalSettings.PayPalApiUrl)
 	if err != nil {
 		return "", err
 	}
@@ -57,7 +58,7 @@ func getAccessToken(ctx context.Context) (string, error) {
 
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Accept-Language", "en_US")
-	req.SetBasicAuth(settings.PAYPAL_API_CLIENT_ID, settings.PAYPAL_API_CLIENT_SECRET)
+	req.SetBasicAuth(generalSettings.PayPalApiClientId, generalSettings.PayPalApiClientSecret)
 
 	client := getClient(ctx)
 	resp, err := client.Do(req)
@@ -170,13 +171,14 @@ func CreatePayment(ctx context.Context, order *entities.Order, companyUrl string
 		}
 	}
 
-
+	globalSettings := settings.GetGlobalSettings(ctx)
 	transaction := NewTransaction(
 		fmt.Sprintf("%v",order.Id),
-		fmt.Sprintf("An order from %s.", settings.COMPANY_NAME),
+		fmt.Sprintf("An order from %s.", globalSettings.CompanyName),
 		amount,
 		items,
 		shippingAddress,
+		globalSettings.PayPalAllowedPaymentOption,
 	)
 
 	u, err := url.Parse(companyUrl)
@@ -198,7 +200,7 @@ func CreatePayment(ctx context.Context, order *entities.Order, companyUrl string
 	paypalRequest := PaypalCreatePaymentRequest{
 		Intent: "sale",
 		Payer: map[string]string{"payment_method":"paypal"},
-		NoteToPayer: settings.PAYPAL_NOTE_TO_PAYER,
+		NoteToPayer: globalSettings.PayPalNoteToPayer,
 		Transactions: []*Transaction{transaction},
 		RedirectUrls: &RedirectUrls{
 			ReturnUrl: returnUrl,
@@ -212,7 +214,7 @@ func CreatePayment(ctx context.Context, order *entities.Order, companyUrl string
 	}
 
 	log.Infof(ctx, "Making paypal payment create request: %s", jsonStr)
-	u, err = url.Parse(settings.PAYPAL_API_URL)
+	u, err = url.Parse(globalSettings.PayPalApiUrl)
 	if err != nil {
 		return "", err
 	}
@@ -269,7 +271,8 @@ func ExecutePayment(ctx context.Context, order *entities.Order) (error) {
 		return err
 	}
 
-	u, err := url.Parse(settings.PAYPAL_API_URL)
+	globalSettings := settings.GetGlobalSettings(ctx)
+	u, err := url.Parse(globalSettings.PayPalApiUrl)
 	if err != nil {
 		return err
 	}

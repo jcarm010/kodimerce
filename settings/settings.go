@@ -5,64 +5,94 @@ import (
 	"net/http"
 	"fmt"
 	"strconv"
+	"google.golang.org/appengine/log"
+	"github.com/jcarm010/kodimerce/entities"
+	"golang.org/x/net/context"
 )
 
 var (
-	AUTHOR = os.Getenv("AUTHOR")
-	COMPANY_NAME = os.Getenv("COMPANY_NAME")
-	COMPANY_NAME_ALTERNATE = os.Getenv("COMPANY_NAME_ALTERNATE")
-	COMPANY_MAILING_ADDRESS = os.Getenv("COMPANY_MAILING_ADDRESS")
-	COMPANY_CONTACT_EMAIL = os.Getenv("COMPANY_CONTACT_EMAIL")
-	COMPANY_CONTACT_PHONE = os.Getenv("COMPANY_CONTACT_PHONE")
-	COMPANY_SUPPORT_EMAIL = os.Getenv("COMPANY_SUPPORT_EMAIL")
-	COMPANY_ORDERS_EMAIL = os.Getenv("COMPANY_ORDERS_EMAIL")
-	TAX_PERCENT float64 = 0.0
-	COMPANY_URL = os.Getenv("COMPANY_URL")
-	COMPANY_GOOGLE_MAPS_URL = os.Getenv("COMPANY_GOOGLE_MAPS_URL")
-	COMPANY_GOOGLE_MAPS_EMBED_URL = os.Getenv("COMPANY_GOOGLE_MAPS_EMBED_URL")
-	FACEBOOK_URL = os.Getenv("FACEBOOK_URL")
-	FACEBOOK_APP_ID = os.Getenv("FACEBOOK_APP_ID")
-	INSTAGRAM_URL = os.Getenv("INSTAGRAM_URL")
-	TWITTER_URL = os.Getenv("TWITTER_URL")
-	LINKEDIN_URL = os.Getenv("LINKEDIN_URL")
-	YOUTUBE_URL = os.Getenv("YOUTUBE_URL")
-	TWITTER_HANDLE = os.Getenv("TWITTER_HANDLE")
-	GOOGLE_ANALYTICS_ACCOUNT_ID = os.Getenv("GOOGLE_ANALYTICS_ACCOUNT_ID")
-	GOOGLE_TAG_MANAGER_ID = os.Getenv("GOOGLE_TAG_MANAGER_ID")
-
-	PAYPAL_ENVIRONMENT = os.Getenv("PAYPAL_ENVIRONMENT")
-	PAYPAL_API_URL = os.Getenv("PAYPAL_API_URL")
-	PAYPAL_EMAIL = os.Getenv("PAYPAL_EMAIL")
-	PAYPAL_ACCOUNT = os.Getenv("PAYPAL_ACCOUNT")
-	PAYPAL_API_CLIENT_ID = os.Getenv("PAYPAL_API_CLIENT_ID")
-	PAYPAL_API_CLIENT_SECRET = os.Getenv("PAYPAL_API_CLIENT_SECRET")
-	PAYPAL_ALLOWED_PAYMENT_OPTION = os.Getenv("PAYPAL_ALLOWED_PAYMENT_OPTION") //posible: UNRESTRICTED, INSTANT_FUNDING_SOURCE, IMMEDIATE_PAY
-	PAYPAL_NOTE_TO_PAYER = os.Getenv("PAYPAL_NOTE_TO_PAYER")
-
-	SMARTYSTREETS_AUTH_ID = os.Getenv("SMARTYSTREETS_AUTH_ID")
-	SMARTYSTREETS_AUTH_TOKEN = os.Getenv("SMARTYSTREETS_AUTH_TOKEN")
-
-	EMAIL_SENDER = os.Getenv("EMAIL_SENDER")
-	SENDGRID_KEY = os.Getenv("SENDGRID_KEY")
-
-	META_TITLE_HOME = os.Getenv("META_TITLE_HOME")
-
-	META_DESCRIPTION_HOME = os.Getenv("META_DESCRIPTION_HOME")
-	META_DESCRIPTION_STORE = os.Getenv("META_DESCRIPTION_STORE")
-	META_DESCRIPTION_REFERRALS = os.Getenv("META_DESCRIPTION_REFERRALS")
-	META_DESCRIPTION_CONTACT = os.Getenv("META_DESCRIPTION_CONTACT")
-	META_DESCRIPTION_CART = os.Getenv("META_DESCRIPTION_CART")
-	META_DESCRIPTION_BLOG = os.Getenv("META_DESCRIPTION_BLOG")
-	META_DESCRIPTION_GALLERIES = os.Getenv("META_DESCRIPTION_GALLERIES")
-
-	DESCRIPTION_BLOG_ABOUT = os.Getenv("DESCRIPTION_BLOG_ABOUT")
-	WWW_REDIRECT bool
+	globalSettings *entities.ServerSettings
 )
 
-func init() {
-	TAX_PERCENT, _ = strconv.ParseFloat(os.Getenv("TAX_PERCENT"), 64)
-	WWW_REDIRECT, _ = strconv.ParseBool(os.Getenv("WWW_REDIRECT"))
+func GetGlobalSettings(ctx context.Context) entities.ServerSettings {
+	if globalSettings != nil {
+		return *globalSettings
+	}
+
+	dbSettings, err := entities.GetServerSettings(ctx)
+	if err != nil {
+		log.Errorf(ctx, "Error getting stored server settings: %s", err)
+		envSettings := getEnvSettings()
+		dbSettings = &envSettings
+		if err == entities.ErrSettingsNotFound {
+			err = entities.StoreServerSettings(ctx, dbSettings)
+			if err != nil {
+				log.Errorf(ctx, "Error storing server settings: %s", err)
+			}
+		}
+	}
+
+	globalSettings = dbSettings
+	return *dbSettings
 }
+
+func getEnvSettings() entities.ServerSettings {
+	taxPercent, _ := strconv.ParseFloat(os.Getenv("TAX_PERCENT"), 64)
+	wwwRedirect, _ := strconv.ParseBool(os.Getenv("WWW_REDIRECT"))
+
+	return  entities.ServerSettings {
+		Author: os.Getenv("AUTHOR"),
+		CompanyName: os.Getenv("COMPANY_NAME"),
+		CompanyNameAlternate: os.Getenv("COMPANY_NAME_ALTERNATE"),
+		CompanyMailingAddress: os.Getenv("COMPANY_MAILING_ADDRESS"),
+		CompanyContactEmail: os.Getenv("COMPANY_CONTACT_EMAIL"),
+		CompanyContactPhone: os.Getenv("COMPANY_CONTACT_PHONE"),
+		CompanySupportEmail: os.Getenv("COMPANY_SUPPORT_EMAIL"),
+		CompanyOrdersEmail: os.Getenv("COMPANY_ORDERS_EMAIL"),
+		TaxPercent: taxPercent,
+		CompanyUrl: os.Getenv("COMPANY_URL"),
+		CompanyGoogleMapsUrl: os.Getenv("COMPANY_GOOGLE_MAPS_URL"),
+		CompanyGoogleMapsEmbedUrl: os.Getenv("COMPANY_GOOGLE_MAPS_EMBED_URL"),
+		FacebookUrl: os.Getenv("FACEBOOK_URL"),
+		FacebookAppId: os.Getenv("FACEBOOK_APP_ID"),
+		InstagramUrl: os.Getenv("INSTAGRAM_URL"),
+		TwitterUrl: os.Getenv("TWITTER_URL"),
+		LinkedInUrl: os.Getenv("LINKEDIN_URL"),
+		YoutubeUrl: os.Getenv("YOUTUBE_URL"),
+		TwitterHandle: os.Getenv("TWITTER_HANDLE"),
+		GoogleAnalyticsAccountId: os.Getenv("GOOGLE_ANALYTICS_ACCOUNT_ID"),
+		GoogleTagManagerId: os.Getenv("GOOGLE_TAG_MANAGER_ID"),
+
+		PayPalEnvironment: os.Getenv("PAYPAL_ENVIRONMENT"),
+		PayPalApiUrl: os.Getenv("PAYPAL_API_URL"),
+		PayPalEmail: os.Getenv("PAYPAL_EMAIL"),
+		PayPalAccount: os.Getenv("PAYPAL_ACCOUNT"),
+		PayPalApiClientId: os.Getenv("PAYPAL_API_CLIENT_ID"),
+		PayPalApiClientSecret: os.Getenv("PAYPAL_API_CLIENT_SECRET"),
+		PayPalAllowedPaymentOption: os.Getenv("PAYPAL_ALLOWED_PAYMENT_OPTION"), //posible: UNRESTRICTED, INSTANT_FUNDING_SOURCE, IMMEDIATE_PAY
+		PayPalNoteToPayer: os.Getenv("PAYPAL_NOTE_TO_PAYER"),
+
+		SmartyStreetsAuthId: os.Getenv("SMARTYSTREETS_AUTH_ID"),
+		SmartyStreetsAuthToken: os.Getenv("SMARTYSTREETS_AUTH_TOKEN"),
+
+		EmailSender: os.Getenv("EMAIL_SENDER"),
+		SendGridKey: os.Getenv("SENDGRID_KEY"),
+
+		MetaTitleHome: os.Getenv("META_TITLE_HOME"),
+
+		MetaDescriptionHome: os.Getenv("META_DESCRIPTION_HOME"),
+		MetaDescriptionStore: os.Getenv("META_DESCRIPTION_STORE"),
+		MetaDescriptionReferrals: os.Getenv("META_DESCRIPTION_REFERRALS"),
+		MetaDescriptionContact: os.Getenv("META_DESCRIPTION_CONTACT"),
+		MetaDescriptionCart: os.Getenv("META_DESCRIPTION_CART"),
+		MetaDescriptionBlog: os.Getenv("META_DESCRIPTION_BLOG"),
+		MetaDescriptionGalleries: os.Getenv("META_DESCRIPTION_GALLERIES"),
+
+		DescriptionBlogABout: os.Getenv("DESCRIPTION_BLOG_ABOUT"),
+		WwwRedirect: wwwRedirect,
+	}
+}
+
 
 func ServerUrl(r *http.Request) string {
 	httpHeader := "http"

@@ -11,12 +11,14 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"bytes"
+	"golang.org/x/net/context"
+	"github.com/jcarm010/kodimerce/entities"
 )
 
 var (
-	TEMPLATES *template.Template
-	CUSTOM_PAGES map[string]CustomPage
-	CUSTOM_REDIRECTS map[string]CustomRedirect
+	Templates       *template.Template
+	CustomPages     map[string]CustomPage
+	CustomRedirects map[string]CustomRedirect
 )
 
 var fns = template.FuncMap{
@@ -29,7 +31,7 @@ var fns = template.FuncMap{
 	"FullUrl": FullUrl,
 	"CallTemplate": func(name string, data interface{}) (ret template.HTML, err error) {
 		buf := bytes.NewBuffer([]byte{})
-		err = TEMPLATES.ExecuteTemplate(buf, name, data)
+		err = Templates.ExecuteTemplate(buf, name, data)
 		ret = template.HTML(buf.String())
 		return
 	},
@@ -50,11 +52,11 @@ type CustomRedirect struct {
 }
 
 func init() {
-	TEMPLATES = template.New("").Funcs(fns)
-	TEMPLATES.ParseGlob("views/core-templates/*")
-	TEMPLATES.ParseGlob("views/core-components/*")
-	TEMPLATES.ParseGlob("views/templates/*")
-	TEMPLATES.ParseGlob("views/components/*")
+	Templates = template.New("").Funcs(fns)
+	Templates.ParseGlob("views/core-templates/*")
+	Templates.ParseGlob("views/core-components/*")
+	Templates.ParseGlob("views/templates/*")
+	Templates.ParseGlob("views/components/*")
 
 	customPages := struct{
 		Pages map[string]CustomPage `json:"pages"`
@@ -68,13 +70,14 @@ func init() {
 	if err == nil {
 		err = json.Unmarshal(raw, &customPages)
 		if err == nil {
-			CUSTOM_PAGES = customPages.Pages
-			CUSTOM_REDIRECTS = customPages.Redirects
+			CustomPages = customPages.Pages
+			CustomRedirects = customPages.Redirects
 		}
 	}
 }
 
 type View struct {
+	ServerSettings entities.ServerSettings
 	Request *http.Request
 	Author string
 	Title string
@@ -131,7 +134,7 @@ func DateTimeFormatHTMLAttr (d time.Time ) (template.HTMLAttr) {
 
 func FullUrl(u string, r *http.Request) string {
 	log.Printf("Url U: %s", u)
-	var newUrl string = u
+	var newUrl = u
 	if strings.HasPrefix(u, "/") {
 		newUrl = settings.ServerUrl(r) + u
 	}else if !strings.HasPrefix(u, "http") {
@@ -140,7 +143,7 @@ func FullUrl(u string, r *http.Request) string {
 	return newUrl
 }
 
-func NewView(request *http.Request, title string, metaDescription string) *View {
+func NewView(request *http.Request, title string, metaDescription string, ctx context.Context) *View {
 	httpHeader := "http"
 	if request.TLS != nil {
 		httpHeader = "https"
@@ -156,29 +159,31 @@ func NewView(request *http.Request, title string, metaDescription string) *View 
 		newUrl += "?" + request.URL.RawQuery
 	}
 
+	globalSettings := settings.GetGlobalSettings(ctx)
 	return &View{
+		ServerSettings: globalSettings,
 		Request: request,
-		Author: settings.AUTHOR,
+		Author: globalSettings.Author,
 		Title: title,
 		MetaDescription: metaDescription,
-		CompanyName: settings.COMPANY_NAME,
-		CompanyNameAlternate: settings.COMPANY_NAME_ALTERNATE,
-		CompanyMailingAddress: settings.COMPANY_MAILING_ADDRESS,
-		ContactEmail: settings.COMPANY_CONTACT_EMAIL,
-		ContactPhone: settings.COMPANY_CONTACT_PHONE,
+		CompanyName: globalSettings.CompanyName,
+		CompanyNameAlternate: globalSettings.CompanyNameAlternate,
+		CompanyMailingAddress: globalSettings.CompanyMailingAddress,
+		ContactEmail: globalSettings.CompanyContactEmail,
+		ContactPhone: globalSettings.CompanyContactPhone,
 		CompanyUrl: settings.ServerUrl(request),
-		CompanyGoogleMapsUrl: settings.COMPANY_GOOGLE_MAPS_URL,
-		CompanyGoogleMapsEmbedUrl: settings.COMPANY_GOOGLE_MAPS_EMBED_URL,
+		CompanyGoogleMapsUrl: globalSettings.CompanyGoogleMapsUrl,
+		CompanyGoogleMapsEmbedUrl: globalSettings.CompanyGoogleMapsEmbedUrl,
 		CanonicalUrl: newUrl,
 		PageUrl: settings.ServerUrl(request) + request.URL.String(),
-		FacebookUrl: settings.FACEBOOK_URL,
-		FacebookAppId: settings.FACEBOOK_APP_ID,
-		InstagramUrl: settings.INSTAGRAM_URL,
-		TwitterUrl: settings.TWITTER_URL,
-		LinkedInUrl: settings.LINKEDIN_URL,
-		YouTubeUrl: settings.YOUTUBE_URL,
-		TwitterHandle: settings.TWITTER_HANDLE,
-		GoogleAnalyticsAccountId: settings.GOOGLE_ANALYTICS_ACCOUNT_ID,
-		GoogleTagManagerId: settings.GOOGLE_TAG_MANAGER_ID,
+		FacebookUrl: globalSettings.FacebookUrl,
+		FacebookAppId: globalSettings.FacebookAppId,
+		InstagramUrl: globalSettings.InstagramUrl,
+		TwitterUrl: globalSettings.TwitterUrl,
+		LinkedInUrl: globalSettings.LinkedInUrl,
+		YouTubeUrl: globalSettings.YoutubeUrl,
+		TwitterHandle: globalSettings.TwitterHandle,
+		GoogleAnalyticsAccountId: globalSettings.GoogleAnalyticsAccountId,
+		GoogleTagManagerId: globalSettings.GoogleTagManagerId,
 	}
 }

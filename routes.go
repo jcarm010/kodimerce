@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"github.com/jcarm010/kodimerce/km"
 	"github.com/jcarm010/kodimerce/views"
-	"github.com/jcarm010/kodimerce/settings"
 )
 
 func init() {
@@ -15,9 +14,8 @@ func init() {
 		Middleware((*km.ServerContext).SetRedirects).
 		Middleware((*km.ServerContext).SetCORS)
 
-	if settings.WWW_REDIRECT {
-		router = router.Middleware((*km.ServerContext).RedirectWWW)
-	}
+
+	router = router.Middleware((*km.ServerContext).RedirectWWW)
 
 	router = router.Get("/", views.HomeView).
 		Get("/contact", views.ContactView).

@@ -10,10 +10,11 @@ import (
 )
 
 func SendEmail(ctx context.Context, from string, to string, subject string, body string, bcc string) error {
+	generalSettings := settings.GetGlobalSettings(ctx)
 	toEmails := strings.Split(to, ",")
 	bccEmails := strings.Split(bcc, ",")
-	if settings.SENDGRID_KEY != "" {
-		sg := sendgrid.NewSendGridClientWithApiKey(settings.SENDGRID_KEY)
+	if generalSettings.SendGridKey != "" {
+		sg := sendgrid.NewSendGridClientWithApiKey(generalSettings.SendGridKey)
 		sg.Client = urlfetch.Client(ctx)
 		message := sendgrid.NewMail()
 		for _, email := range toEmails {

@@ -43,6 +43,7 @@ type ProductSettingsPickupLocation struct {
 
 type ServerContext struct{
 	Context context.Context
+	Settings entities.ServerSettings
 	w web.ResponseWriter
 	r *web.Request
 }
@@ -64,7 +65,7 @@ func (c *ServerContext) ParseJsonRequest(v interface{}) error {
 }
 
 func (c *ServerContext) NewView(title string, metaDescription string) *view.View {
-	return view.NewView(c.r.Request, title, metaDescription)
+	return view.NewView(c.r.Request, title, metaDescription, c.Context)
 }
 
 func (c *ServerContext) ServeJson(status int, value interface{}){
@@ -92,8 +93,8 @@ func (c *ServerContext) ServeHTMLError(status int, value interface{}){
 		Message string
 	}
 
-	err := view.TEMPLATES.ExecuteTemplate(c.w, "error-page", ErrorView {
-		View: c.NewView(fmt.Sprintf("%v | %s", status, settings.COMPANY_NAME), ""),
+	err := view.Templates.ExecuteTemplate(c.w, "error-page", ErrorView {
+		View: c.NewView(fmt.Sprintf("%v | %s", status, c.Settings.CompanyName), ""),
 		Message: fmt.Sprintf("%s", value),
 	})
 
@@ -105,13 +106,13 @@ func (c *ServerContext) ServeHTMLError(status int, value interface{}){
 }
 
 func (c *ServerContext) ServeHTMLTemplate(name string, data interface{}){
-	if view.TEMPLATES.Lookup(name) == nil {
+	if view.Templates.Lookup(name) == nil {
 		log.Errorf(c.Context, "Could not find html template: %s", name)
 		c.ServeHTMLError(http.StatusNotFound, "Page not found.")
 		return
 	}
 
-	err := view.TEMPLATES.ExecuteTemplate(c.w, name, data)
+	err := view.Templates.ExecuteTemplate(c.w, name, data)
 	if err != nil {
 		log.Errorf(c.Context, "Error parsing html template: %+v", err)
 		c.ServeHTMLError(http.StatusInternalServerError, "Unexpected error, please try again later.")
@@ -120,7 +121,7 @@ func (c *ServerContext) ServeHTMLTemplate(name string, data interface{}){
 }
 
 func (c *ServerContext) RedirectWWW(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc){
-	if !strings.HasPrefix(r.Host, "www") {
+	if c.Settings.WwwRedirect && !strings.HasPrefix(r.Host, "www") {
 		httpHeader := "http"
 		if r.TLS != nil {
 			httpHeader = "https"
@@ -140,6 +141,7 @@ func (c *ServerContext) RedirectWWW(w web.ResponseWriter, r *web.Request, next w
 
 func (c *ServerContext) InitServerContext(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc){
 	c.Context = appengine.NewContext(r.Request)
+	c.Settings = settings.GetGlobalSettings(c.Context)
 	c.w = w
 	c.r = r
 	next(w, r)
@@ -153,13 +155,13 @@ func (c *ServerContext) SetRedirects(w web.ResponseWriter, r *web.Request, next 
 	}
 
 	log.Infof(c.Context, "Checking for redirect: %s", pagePath)
-	if customRedirect, exist := view.CUSTOM_REDIRECTS[pagePath] ; exist {
+	if customRedirect, exist := view.CustomRedirects[pagePath] ; exist {
 		log.Infof(c.Context, "Custom Redirect found: %+v", customRedirect)
 		http.Redirect(w, r.Request, customRedirect.ToPath, customRedirect.StatusCode)
 		return
 	}
 
-	if customRedirect, exist := view.CUSTOM_REDIRECTS[pagePath] ; exist {
+	if customRedirect, exist := view.CustomRedirects[pagePath] ; exist {
 		log.Infof(c.Context, "Custom Redirect found: %+v", customRedirect)
 		http.Redirect(w, r.Request, customRedirect.ToPath, customRedirect.StatusCode)
 		return
@@ -239,10 +241,10 @@ func (c *ServerContext) RegisterUser(w web.ResponseWriter, r *web.Request){
 
 	err = emailer.SendEmail(
 		c.Context,
-		fmt.Sprintf("%s<%s>", settings.COMPANY_NAME, settings.EMAIL_SENDER),
+		fmt.Sprintf("%s<%s>", c.Settings.CompanyName, c.Settings.EmailSender),
 		user.Email,
-		fmt.Sprintf("Welcome to %s", settings.COMPANY_NAME),
-		fmt.Sprintf("Thank you for registering to %s", settings.COMPANY_NAME),
+		fmt.Sprintf("Welcome to %s", c.Settings.CompanyName),
+		fmt.Sprintf("Thank you for registering to %s", c.Settings.CompanyName),
 		"",
 	)
 
@@ -355,7 +357,7 @@ func (c *ServerContext) CreateOrder(w web.ResponseWriter, r *web.Request){
 		return
 	}
 
-	order, err := entities.CreateOrder(c.Context, products, quantities, productDetails)
+	order, err := entities.CreateOrder(c.Context, products, quantities, productDetails, c.Settings.TaxPercent)
 	if err != nil {
 		log.Errorf(c.Context, "Error creating order: %+v", err)
 		c.ServeJson(http.StatusInternalServerError, "Could not create the order at this moment. Please try again later.")
@@ -449,6 +451,7 @@ func (c *ServerContext) UpdateOrder(w web.ResponseWriter, r *web.Request){
 	if r.Request.TLS != nil {
 		proto = "https"
 	}
+
 	serverRoot := fmt.Sprintf("%s://%s", proto, r.Host)
 	orderUrl := fmt.Sprintf("%s/admin/orders/%v", serverRoot, order.Id)
 	var templates = template.Must(template.ParseGlob("emailer/templates/*")) // cache this globally
@@ -459,10 +462,10 @@ func (c *ServerContext) UpdateOrder(w web.ResponseWriter, r *web.Request){
 		ContactEmail string
 		Order 		 *entities.Order
 	}{
-		CompanyName:  settings.COMPANY_NAME,
+		CompanyName:  c.Settings.CompanyName,
 		OrderUrl:     orderUrl,
 		HostRoot:     serverRoot,
-		ContactEmail: settings.COMPANY_SUPPORT_EMAIL,
+		ContactEmail: c.Settings.CompanySupportEmail,
 		Order:		  order,
 	}
 
@@ -478,8 +481,8 @@ func (c *ServerContext) UpdateOrder(w web.ResponseWriter, r *web.Request){
 	//send a notification email to the administrator
 	err = emailer.SendEmail(
 		c.Context,
-		fmt.Sprintf("%s<%s>", settings.COMPANY_NAME, settings.EMAIL_SENDER),
-		settings.COMPANY_ORDERS_EMAIL,
+		fmt.Sprintf("%s<%s>", c.Settings.CompanyName, c.Settings.EmailSender),
+		c.Settings.CompanyOrdersEmail,
 		fmt.Sprintf("Order Updated - %s", order.CheckoutStep),
 		doc.String(),
 		"",
@@ -725,10 +728,10 @@ func (c *ServerContext) ExecutePaypalPayment(w web.ResponseWriter, r *web.Reques
 		HostRoot string
 		ContactEmail string
 	}{
-		CompanyName: settings.COMPANY_NAME,
+		CompanyName: c.Settings.CompanyName,
 		ConfirmationUrl: confirmationUrl,
 		HostRoot: serverRoot,
-		ContactEmail: settings.COMPANY_SUPPORT_EMAIL,
+		ContactEmail: c.Settings.CompanySupportEmail,
 	}
 
 	var doc bytes.Buffer
@@ -743,11 +746,11 @@ func (c *ServerContext) ExecutePaypalPayment(w web.ResponseWriter, r *web.Reques
 	//send a notification email to the buyer
 	err = emailer.SendEmail(
 		c.Context,
-		fmt.Sprintf("%s<%s>", settings.COMPANY_NAME, settings.EMAIL_SENDER),
+		fmt.Sprintf("%s<%s>", c.Settings.CompanyName, c.Settings.EmailSender),
 		order.Email,
 		"Order Confirmation",
 		doc.String(),
-		settings.COMPANY_ORDERS_EMAIL,
+		c.Settings.CompanyOrdersEmail,
 	)
 
 	if err != nil {
@@ -762,10 +765,10 @@ func (c *ServerContext) ExecutePaypalPayment(w web.ResponseWriter, r *web.Reques
 		ContactEmail string
 		Order *entities.Order
 	}{
-		CompanyName: settings.COMPANY_NAME,
+		CompanyName: c.Settings.CompanyName,
 		ConfirmationUrl: confirmationUrl,
 		HostRoot: serverRoot,
-		ContactEmail: settings.COMPANY_SUPPORT_EMAIL,
+		ContactEmail: c.Settings.CompanySupportEmail,
 		Order: order,
 	}
 
@@ -778,8 +781,8 @@ func (c *ServerContext) ExecutePaypalPayment(w web.ResponseWriter, r *web.Reques
 
 	err = emailer.SendEmail(
 		c.Context,
-		fmt.Sprintf("%s<%s>", settings.COMPANY_NAME, settings.EMAIL_SENDER),
-		settings.COMPANY_ORDERS_EMAIL,
+		fmt.Sprintf("%s<%s>", c.Settings.CompanyName, c.Settings.EmailSender),
+		c.Settings.CompanyOrdersEmail,
 		"Order Pending",
 		ndoc.String(),
 		"",
@@ -895,11 +898,12 @@ func (c *ServerContext) PostContactMessage(w web.ResponseWriter, r *web.Request)
 	if phone != "" {
 		phonePart = " - " + phone
 	}
+
 	body := fmt.Sprintf("Customer %s (%s%s) has sent you a message: %s", name, email, phonePart, message)
 	err := emailer.SendEmail(
 		c.Context,
-		fmt.Sprintf("%s<%s>", settings.COMPANY_NAME, settings.EMAIL_SENDER),
-		settings.COMPANY_SUPPORT_EMAIL,
+		fmt.Sprintf("%s<%s>", c.Settings.CompanyName, c.Settings.EmailSender),
+		c.Settings.CompanySupportEmail,
 		"Customer Message",
 		body,
 		"",
@@ -967,14 +971,14 @@ func (c *ServerContext) GetSiteMap(w web.ResponseWriter, r *web.Request){
 	pages, err := entities.ListPages(c.Context, true, -1)
 	if err == nil {
 		for _, page := range pages {
-			if page.Provider == entities.PROVIDER_REDIRECT_PAGE{
+			if page.Provider == entities.ProviderRedirectPage {
 				continue
 			}
 			sm.Add(stm.URL{"loc": "/" + page.Path, "changefreq": "weekly", "priority": 1})
 		}
 	}
 
-	for path, page := range view.CUSTOM_PAGES {
+	for path, page := range view.CustomPages {
 		if page.InSiteMap {
 			sm.Add(stm.URL{"loc": "/" + path, "changefreq": page.ChangeFrequency, "priority": page.Priority})
 		}

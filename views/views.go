@@ -39,10 +39,11 @@ func HomeView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		featuredCategories = []*entities.Category{}
 	}
 
+	globalSettings := settings.GetGlobalSettings(c.Context)
 	log.Debugf(c.Context, "FeaturedCategories: %+v", featuredCategories)
-	title := settings.COMPANY_NAME
-	if settings.META_TITLE_HOME != "" {
-		title = settings.META_TITLE_HOME
+	title := globalSettings.CompanyName
+	if globalSettings.MetaTitleHome != "" {
+		title = globalSettings.MetaTitleHome
 	}
 
 	p := struct{
@@ -50,7 +51,7 @@ func HomeView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		Categories []*entities.Category
 
 	}{
-		View: c.NewView(title, settings.META_DESCRIPTION_HOME),
+		View: c.NewView(title, globalSettings.MetaDescriptionHome),
 		Categories: featuredCategories,
 	}
 
@@ -58,16 +59,18 @@ func HomeView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 }
 
 func ContactView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
+	globalSettings := settings.GetGlobalSettings(c.Context)
 	p := struct {
 		*view.View
 	}{
-		View: c.NewView("Contact | " + settings.COMPANY_NAME, settings.META_DESCRIPTION_CONTACT),
+		View: c.NewView("Contact | " + globalSettings.CompanyName, globalSettings.MetaDescriptionContact),
 	}
 
 	c.ServeHTMLTemplate("contact-page", p)
 }
 
 func ReferralsView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
+	globalSettings := settings.GetGlobalSettings(c.Context)
 	products, err := entities.ListProducts(c.Context)
 	if err != nil {
 		log.Errorf(c.Context, "Error listing products: %s", err)
@@ -85,7 +88,7 @@ func ReferralsView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		*view.View
 		Products	[]*entities.Product
 	}{
-		View: c.NewView("Referrals | " + settings.COMPANY_NAME, settings.META_DESCRIPTION_REFERRALS),
+		View: c.NewView("Referrals | " + globalSettings.CompanyName, globalSettings.MetaDescriptionReferrals),
 		Products: activeProducts,
 	}
 
@@ -94,6 +97,7 @@ func ReferralsView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 }
 
 func ProductView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
+	globalSettings := settings.GetGlobalSettings(c.Context)
 	productIdStr := r.URL.Query().Get("p")
 	if productIdStr == "" {
 		productIdStr = r.PathParams["productId"]
@@ -129,7 +133,7 @@ func ProductView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		Domain string
 		ProductSettings *km.ProductSettings
 	}{
-		View: c.NewView(selectedProduct.Name + " | " + settings.COMPANY_NAME, selectedProduct.MetaDescription),
+		View: c.NewView(selectedProduct.Name + " | " + globalSettings.CompanyName, selectedProduct.MetaDescription),
 		Product: selectedProduct,
 		ProductFound: productFound,
 		CanonicalUrl: fmt.Sprintf("%s://%s/product/%s", httpHeader, r.Host, selectedProduct.Path),
@@ -147,6 +151,7 @@ func ProductView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 }
 
 func StoreView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
+	globalSettings := settings.GetGlobalSettings(c.Context)
 	category := r.URL.Query().Get("c")
 	if category == "" {
 		category = r.PathParams["category"]
@@ -201,8 +206,8 @@ func StoreView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 	}
 
 	options := make([]CategoryOption, len(featuredCategories))
-	var metaDescription string = settings.META_DESCRIPTION_STORE
-	var categoryName string = "Store"
+	var metaDescription = globalSettings.MetaDescriptionStore
+	var categoryName = "Store"
 	for index, cat := range featuredCategories {
 		options[index] = CategoryOption{
 			Name: cat.Name,
@@ -217,7 +222,7 @@ func StoreView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		}
 	}
 
-	var title string = categoryName + " | " + settings.COMPANY_NAME
+	var title string = categoryName + " | " + globalSettings.CompanyName
 	p := struct {
 		*view.View
 		Products []*entities.Product
@@ -237,12 +242,13 @@ func StoreView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 }
 
 func AdminView(c *km.AdminContext, w web.ResponseWriter, r *web.Request) {
+	globalSettings := settings.GetGlobalSettings(c.Context)
 	log.Infof(c.Context, "Serving admin path: %s", r.URL.Path)
 	if (r.URL.Path == "/admin" || r.URL.Path == "/admin/") && c.User.LastVisitedPath != "" && c.User.LastVisitedPath != r.URL.Path {
 		http.Redirect(w, r.Request, c.User.LastVisitedPath, http.StatusFound)
 		return
 	}
-	p := c.NewView("Admin | " + settings.COMPANY_NAME, "")
+	p := c.NewView("Admin | " + globalSettings.CompanyName, "")
 	t, err := template.ParseFiles("views/admin.html") // cache this globally
 	if err != nil {
 		log.Errorf(c.Context, "Error parsing admin html file: %+v", err)
@@ -254,7 +260,8 @@ func AdminView(c *km.AdminContext, w web.ResponseWriter, r *web.Request) {
 }
 
 func RegisterView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
-	p := c.NewView("Register | " + settings.COMPANY_NAME, "")
+	globalSettings := settings.GetGlobalSettings(c.Context)
+	p := c.NewView("Register | " + globalSettings.CompanyName, "")
 
 	t, err := template.ParseFiles("views/register.html") // cache this globally
 	if err != nil {
@@ -267,7 +274,8 @@ func RegisterView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 }
 
 func LoginView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
-	p := c.NewView("Login | " + settings.COMPANY_NAME, "")
+	globalSettings := settings.GetGlobalSettings(c.Context)
+	p := c.NewView("Login | " + globalSettings.CompanyName, "")
 
 	t, err := template.ParseFiles("views/login.html") // cache this globally
 	if err != nil {
@@ -279,16 +287,18 @@ func LoginView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 	t.Execute(w, p)
 }
 func CartView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
+	globalSettings := settings.GetGlobalSettings(c.Context)
 	c.ServeHTMLTemplate("cart-page", struct{
 		*view.View
 		TaxPercent float64
 	}{
-		View: c.NewView("Shopping Cart | " + settings.COMPANY_NAME, settings.META_DESCRIPTION_CART),
-		TaxPercent: settings.TAX_PERCENT,
+		View: c.NewView("Shopping Cart | " + globalSettings.CompanyName, globalSettings.MetaDescriptionCart),
+		TaxPercent: globalSettings.TaxPercent,
 	})
 }
 
 func OrderReviewView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
+	globalSettings := settings.GetGlobalSettings(c.Context)
 	orderIdStr := r.URL.Query().Get("id")
 	if orderIdStr == "" {
 		log.Errorf(c.Context, "Missing order id")
@@ -317,13 +327,14 @@ func OrderReviewView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) 
 		Order *entities.Order
 		TaxPercent float64
 	}{
-		View: c.NewView("Order Details | " + settings.COMPANY_NAME, ""),
+		View: c.NewView("Order Details | " + globalSettings.CompanyName, ""),
 		Order: order,
-		TaxPercent: settings.TAX_PERCENT,
+		TaxPercent: globalSettings.TaxPercent,
 	})
 }
 
 func BlogView(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
+	globalSettings := settings.GetGlobalSettings(c.Context)
 	posts, err := entities.ListPosts(c.Context, true, -1)
 	if err != nil {
 		log.Errorf(c.Context, "Error getting posts: %s", err)
@@ -336,7 +347,7 @@ func BlogView(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
 		*view.View
 		Posts []*entities.Post
 	}{
-		View: c.NewView("Blog | " + settings.COMPANY_NAME, settings.META_DESCRIPTION_BLOG),
+		View: c.NewView("Blog | " + globalSettings.CompanyName, globalSettings.MetaDescriptionBlog),
 		Posts: posts,
 	})
 }
@@ -362,7 +373,7 @@ func GetAmpDynamicPage(c *km.ServerContext, w web.ResponseWriter, r *web.Request
 func GetDynamicPage(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
 	postPath := r.PathParams["post"]
 	log.Infof(c.Context, "Serving Dynamic Page: %s", postPath)
-	if customPage, exist := view.CUSTOM_PAGES[postPath] ; exist {
+	if customPage, exist := view.CustomPages[postPath] ; exist {
 		log.Infof(c.Context, "Custom Page found: %+v", customPage)
 		v := c.NewView(customPage.Title, customPage.MetaDescription)
 		c.ServeHTMLTemplate(customPage.TemplateName, v)
@@ -397,6 +408,7 @@ func GetDynamicPage(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
 }
 
 func servePost(c *km.ServerContext, w web.ResponseWriter, r *web.Request, post *entities.Post, isAmp bool) {
+	globalSettings := settings.GetGlobalSettings(c.Context)
 	posts, err := entities.ListPosts(c.Context, true, 10)
 	if err != nil {
 		log.Errorf(c.Context, "Error getting previous posts: %+v", err)
@@ -433,17 +445,18 @@ func servePost(c *km.ServerContext, w web.ResponseWriter, r *web.Request, post *
 		AboutBlog    string
 		AmpImports   []AmpImport
 	}{
-		View:         c.NewView(post.Title + " | " + settings.COMPANY_NAME, post.MetaDescription),
+		View:         c.NewView(post.Title + " | " + globalSettings.CompanyName, post.MetaDescription),
 		CanonicalUrl: fmt.Sprintf("%s://%s/%s", httpHeader, r.Host, post.Path),
 		Post:         post,
 		LatestPosts:  posts,
-		AboutBlog:    settings.DESCRIPTION_BLOG_ABOUT,
+		AboutBlog:    globalSettings.DescriptionBlogABout,
 		AmpImports:   ampImports,
 	})
 }
 
 func servePage(c *km.ServerContext, w web.ResponseWriter, r *web.Request, page *entities.Page)  {
-	if page.Provider == entities.PROVIDER_SHALLOW_MIRROR {
+	globalSettings := settings.GetGlobalSettings(c.Context)
+	if page.Provider == entities.ProviderShallowMirror {
 		resp, err := urlfetch.Client(c.Context).Get(page.ShallowMirrorUrl)
 		if err != nil {
 			log.Errorf(c.Context, "Error fetching mirrored page: %+v", err)
@@ -462,15 +475,15 @@ func servePage(c *km.ServerContext, w web.ResponseWriter, r *web.Request, page *
 			c.ServeHTMLError(http.StatusInternalServerError, "Unexpected error, please try again later.")
 			return
 		}
-	} else if page.Provider == entities.PROVIDER_CUSTOM_PAGE{
+	} else if page.Provider == entities.ProviderCustomPage {
 		c.ServeHTMLTemplate("custom-page", struct{
 			*view.View
-			CustomPage *view.DynamicPage
+			CustomPage *entities.DynamicPage
 		}{
-			View: c.NewView(page.DynamicPage.Title + " | " + settings.COMPANY_NAME, page.DynamicPage.MetaDescription),
+			View: c.NewView(page.DynamicPage.Title + " | " + globalSettings.CompanyName, page.DynamicPage.MetaDescription),
 			CustomPage: page.DynamicPage,
 		})
-	} else if page.Provider == entities.PROVIDER_REDIRECT_PAGE{
+	} else if page.Provider == entities.ProviderRedirectPage {
 		http.Redirect(w, r.Request, page.RedirectUrl, page.RedirectStatusCode)
 	}else {
 		log.Errorf(c.Context, "Page provider is not supported: %+v", page)
@@ -576,6 +589,7 @@ func traverse(ctx context.Context, n *html.Node) (neededAmpImports map[string]Am
 }
 
 func GetBlogRss(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
+	globalSettings := settings.GetGlobalSettings(c.Context)
 	posts, err := entities.ListPosts(c.Context, true, -1)
 	if err != nil {
 		log.Errorf(c.Context, "Error getting posts: %s", err)
@@ -587,10 +601,10 @@ func GetBlogRss(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
 	//sort.Sort(entities.ByNewestFirst(posts))
 	now := time.Now()
 	feed := &feeds.Feed{
-		Title:       settings.COMPANY_NAME + " Blog",
+		Title:       globalSettings.CompanyName + " Blog",
 		Link:        &feeds.Link{Href: serverUrl + "/blog"},
-		Description: settings.META_DESCRIPTION_BLOG,
-		Author:      &feeds.Author{Name: settings.COMPANY_NAME, Email: settings.COMPANY_SUPPORT_EMAIL},
+		Description: globalSettings.MetaDescriptionBlog,
+		Author:      &feeds.Author{Name: globalSettings.CompanyName, Email: globalSettings.CompanySupportEmail},
 		Created:     now,
 	}
 	feed.Items = make([]*feeds.Item, len(posts))
@@ -617,6 +631,7 @@ func GetBlogRss(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
 }
 
 func ThankYouView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
+	globalSettings := settings.GetGlobalSettings(c.Context)
 	orderIdStr := r.URL.Query().Get("order")
 	var order *entities.Order
 	if orderIdStr != "" {
@@ -642,13 +657,14 @@ func ThankYouView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		Order *entities.Order `json:"order"`
 		HasOrder bool `json:"has_order"`
 	}{
-		View: c.NewView("Thank You | " + settings.COMPANY_NAME, "Thank you."),
+		View: c.NewView("Thank You | " + globalSettings.CompanyName, "Thank you."),
 		Order: order,
 		HasOrder: order != nil,
 	})
 }
 
 func GalleriesView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
+	globalSettings := settings.GetGlobalSettings(c.Context)
 	galleries, err := entities.ListGalleries(c.Context, true, -1)
 	if err != nil {
 		log.Errorf(c.Context, "Error getting galleries: %+v", err)
@@ -660,12 +676,13 @@ func GalleriesView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		*view.View
 		Galleries []*entities.Gallery `json:"galleries"`
 	}{
-		View: c.NewView("Galleries | " + settings.COMPANY_NAME, settings.META_DESCRIPTION_GALLERIES),
+		View: c.NewView("Galleries | " + globalSettings.CompanyName, globalSettings.MetaDescriptionGalleries),
 		Galleries: galleries,
 	})
 }
 
 func GalleryView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
+	globalSettings := settings.GetGlobalSettings(c.Context)
 	galleryPath := r.PathParams["galleryPath"]
 	gallery, err := entities.GetGalleryByPath(c.Context, galleryPath)
 	if err == entities.ErrGalleryNotFound {
@@ -683,7 +700,7 @@ func GalleryView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		*view.View
 		Gallery *entities.Gallery `json:"gallery"`
 	}{
-		View: c.NewView(gallery.Title + " | " + settings.COMPANY_NAME, gallery.MetaDescription),
+		View: c.NewView(gallery.Title + " | " + globalSettings.CompanyName, gallery.MetaDescription),
 		Gallery: gallery,
 	})
 }

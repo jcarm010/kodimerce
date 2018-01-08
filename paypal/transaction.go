@@ -1,7 +1,6 @@
 package paypal
 
 import (
-	"github.com/jcarm010/kodimerce/settings"
 	"fmt"
 )
 
@@ -62,7 +61,7 @@ type PaymentOptions struct {
 	AllowedPaymentMethod string `json:"allowed_payment_method"`
 }
 
-func NewTransaction (invoiceNumber string, description string, amount *Amount, items []*Item, shippingAddress *ShippingAddress) *Transaction {
+func NewTransaction (invoiceNumber string, description string, amount *Amount, items []*Item, shippingAddress *ShippingAddress, allowedPaymentMethod string) *Transaction {
 	return &Transaction{
 		Amount: amount,
 		Description: description,
@@ -70,7 +69,7 @@ func NewTransaction (invoiceNumber string, description string, amount *Amount, i
 		//	Email: settings.PAYPAL_EMAIL,
 		//},
 		InvoiceNumber: invoiceNumber,
-		PaymentOptions: &PaymentOptions{AllowedPaymentMethod:settings.PAYPAL_ALLOWED_PAYMENT_OPTION},
+		PaymentOptions: &PaymentOptions{AllowedPaymentMethod:allowedPaymentMethod},
 		ItemList: &ItemList{
 			Items: items,
 			ShippingAddress: shippingAddress,

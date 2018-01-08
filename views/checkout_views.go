@@ -5,7 +5,6 @@ import (
 	"github.com/jcarm010/kodimerce/km"
 	"google.golang.org/appengine/log"
 	"net/http"
-	"github.com/jcarm010/kodimerce/settings"
 	"github.com/dustin/gojson"
 	"strconv"
 	"github.com/jcarm010/kodimerce/entities"
@@ -92,11 +91,11 @@ func RenderCheckoutView(c *km.ServerContext, w web.ResponseWriter, r *web.Reques
 		Order *entities.Order `json:"order"`
 		PaypalEnvironment string `json:"paypal_environment"`
 	}{
-		View: c.NewView("Checkout | " + settings.COMPANY_NAME, ""),
+		View: c.NewView("Checkout | " + c.Settings.CompanyName, ""),
 		CheckoutSteps:checkoutSteps,
 		CurrentStep:currentStep,
 		NextStep: nextStep,
 		Order: order,
-		PaypalEnvironment: settings.PAYPAL_ENVIRONMENT,
+		PaypalEnvironment: c.Settings.PayPalEnvironment,
 	})
 }
