@@ -87,9 +87,14 @@ func GetUser(ctx context.Context, email string) (*User, error) {
 }
 
 func CreateUserSession(ctx context.Context, email string) (*UserSession, error) {
-	userSession := NewUserSession(uuid.NewV4().String(), email)
+	nUdid, err := uuid.NewV4()
+	if err != nil {
+		return nil, err
+	}
+
+	userSession := NewUserSession(nUdid.String(), email)
 	key := datastore.NewKey(ctx, ENTITY_USER_SESSION, userSession.SessionToken, 0, nil)
-	_, err := datastore.Put(ctx, key, userSession)
+	_, err = datastore.Put(ctx, key, userSession)
 	if err != nil{
 		return nil, err
 	}
