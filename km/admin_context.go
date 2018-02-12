@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"sort"
 	"time"
+	"github.com/jcarm010/kodimerce/settings"
 )
 
 type AdminContext struct {
@@ -695,4 +696,25 @@ func (c *AdminContext) SaveLastVisitedPath(w web.ResponseWriter, r *web.Request)
 	}
 
 	c.ServeJson(http.StatusOK, "")
+}
+
+func (c *AdminContext) UpdateGeneralSettings(w web.ResponseWriter, r *web.Request) {
+	newGeneralSettings := entities.ServerSettings{}
+	err := c.ParseJsonRequest(&newGeneralSettings)
+	if err != nil {
+		log.Errorf(c.Context, "Could not parse settings: %s", err)
+		c.ServeJson(http.StatusBadRequest, "Could not parse settings.")
+		return
+	}
+
+	log.Infof(c.Context, "GeneralSettings: %+v", newGeneralSettings)
+	err = entities.StoreServerSettings(c.Context, &newGeneralSettings)
+	if err != nil {
+		log.Errorf(c.Context, "Error storing settings: %s", err)
+		c.ServeJson(http.StatusBadRequest, "Error storing settings.")
+		return
+	}
+
+	generalSettings := settings.GetAndReloadGlobalSettings(c.Context)
+	c.ServeJson(http.StatusOK, generalSettings)
 }

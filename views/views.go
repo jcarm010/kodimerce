@@ -248,7 +248,13 @@ func AdminView(c *km.AdminContext, w web.ResponseWriter, r *web.Request) {
 		http.Redirect(w, r.Request, c.User.LastVisitedPath, http.StatusFound)
 		return
 	}
-	p := c.NewView("Admin | " + globalSettings.CompanyName, "")
+	p := struct {
+		*view.View
+		GlobalSettings entities.ServerSettings
+	}{
+		View: c.NewView("Admin | " + globalSettings.CompanyName, ""),
+		GlobalSettings: globalSettings,
+	}
 	t, err := template.ParseFiles("views/admin.html") // cache this globally
 	if err != nil {
 		log.Errorf(c.Context, "Error parsing admin html file: %+v", err)

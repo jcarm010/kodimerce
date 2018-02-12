@@ -80,6 +80,7 @@ func init() {
 		Get("/gallery/upload/url", (*km.AdminContext).GetGalleryUploadUrl).
 		Get("/order", (*km.AdminContext).GetOrders).
 		Put("/order", (*km.AdminContext).OverrideOrder).
+		Put("/settings", (*km.AdminContext).UpdateGeneralSettings).
 		Get("/", views.AdminView).
 		/* Write new admin endpoints above. These two need to be the last admin endpoints. */
 		Get("/:page", views.AdminView).

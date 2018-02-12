@@ -14,11 +14,7 @@ var (
 	globalSettings *entities.ServerSettings
 )
 
-func GetGlobalSettings(ctx context.Context) entities.ServerSettings {
-	if globalSettings != nil {
-		return *globalSettings
-	}
-
+func GetAndReloadGlobalSettings(ctx context.Context) entities.ServerSettings {
 	dbSettings, err := entities.GetServerSettings(ctx)
 	if err != nil {
 		log.Errorf(ctx, "Error getting stored server settings: %s", err)
@@ -34,6 +30,14 @@ func GetGlobalSettings(ctx context.Context) entities.ServerSettings {
 
 	globalSettings = dbSettings
 	return *dbSettings
+}
+
+func GetGlobalSettings(ctx context.Context) entities.ServerSettings {
+	if globalSettings != nil {
+		return *globalSettings
+	}
+
+	return GetAndReloadGlobalSettings(ctx)
 }
 
 func getEnvSettings() entities.ServerSettings {
