@@ -53,10 +53,12 @@ type CustomRedirect struct {
 
 func init() {
 	Templates = template.New("").Funcs(fns)
-	Templates.ParseGlob("views/core-templates/*")
-	Templates.ParseGlob("views/core-components/*")
-	Templates.ParseGlob("views/templates/*")
-	Templates.ParseGlob("views/components/*")
+	for _, path := range []string{"views/core-templates/*", "views/core-components/*", "views/templates/*", "views/components/*"} {
+		_, err := Templates.ParseGlob(path)
+		if err != nil {
+			print(fmt.Sprintf("error parsing: %s: %s", path, err))
+		}
+	}
 
 	customPages := struct{
 		Pages map[string]CustomPage `json:"pages"`
