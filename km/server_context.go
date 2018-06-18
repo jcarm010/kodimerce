@@ -826,6 +826,7 @@ func (c *ServerContext) PostContactMessage(w web.ResponseWriter, r *web.Request)
 	var email string
 	var phone string
 	var message string
+	var companyUrlHiddenField = ""
 	if strings.HasPrefix(contentType, "multipart/form-data"){
 		err := r.ParseMultipartForm(32 << 20 )// 32 MB
 		if err != nil {
@@ -860,6 +861,10 @@ func (c *ServerContext) PostContactMessage(w web.ResponseWriter, r *web.Request)
 			return
 		}
 		message = q.Value["message"][0]
+
+		if q.Value["company_url"] != nil {
+			companyUrlHiddenField = q.Value["company_url"][0]
+		}
 	}else {
 		err := r.ParseForm()
 		if err != nil {
@@ -873,6 +878,13 @@ func (c *ServerContext) PostContactMessage(w web.ResponseWriter, r *web.Request)
 		email = q.Get("email")
 		phone = q.Get("phone")
 		message = q.Get("message")
+		companyUrlHiddenField = q.Get("company_url")
+	}
+
+	if companyUrlHiddenField != "" {
+		log.Errorf(c.Context, "hidden field filled in, this request was done by a bot: name[%s] email[%s] phone[%s] message[%s]", name, email, phone, message)
+		c.ServeJson(http.StatusForbidden, "Beep-boop. You look like a bot.")
+		return
 	}
 
 	if name == "" {
