@@ -106,6 +106,10 @@ type View struct {
 	GoogleTagManagerId string
 }
 
+func (v *View) GetBannerPath () (string) {
+	return "/assets/images/og-banner.png"
+}
+
 func (v *View) DateTimeFormat (d time.Time ) (string) {
 	return DateTimeFormat(d)
 }
@@ -188,4 +192,37 @@ func NewView(request *http.Request, title string, metaDescription string, ctx co
 		GoogleAnalyticsAccountId: globalSettings.GoogleAnalyticsAccountId,
 		GoogleTagManagerId: globalSettings.GoogleTagManagerId,
 	}
+}
+
+
+type BlogPostView struct{
+	*View
+	CanonicalUrl string
+	Post         *entities.Post
+	LatestPosts  []*entities.Post
+	AboutBlog    string
+	AmpImports   []AmpImport
+}
+
+type AmpImport struct {
+	Name string
+	URL  string
+}
+
+func (v BlogPostView) GetBannerPath () (string) {
+	return v.Post.Banner
+}
+
+type CustomPageView struct{
+	*View
+	CustomPage *entities.DynamicPage
+}
+
+func (v CustomPageView) GetBannerPath () (string) {
+	//page.DynamicPage.Banner.Path
+	if v.CustomPage.Banner == nil {
+		return v.View.GetBannerPath()
+	}
+
+	return v.CustomPage.Banner.Path
 }

@@ -22,11 +22,6 @@ import (
 	"net/url"
 )
 
-type AmpImport struct {
-	Name string
-	URL  string
-}
-
 type OrderView struct {
 	Title string
 	Order *entities.Order `json:"order"`
@@ -426,7 +421,7 @@ func servePost(c *km.ServerContext, w web.ResponseWriter, r *web.Request, post *
 		httpHeader = "https"
 	}
 
-	ampImports := []AmpImport{}
+	ampImports := make([]view.AmpImport, 0)
 	var targetTemplate string
 	if isAmp {
 		targetTemplate = "amp-post-page"
@@ -443,14 +438,7 @@ func servePost(c *km.ServerContext, w web.ResponseWriter, r *web.Request, post *
 		targetTemplate = "post-page"
 	}
 
-	c.ServeHTMLTemplate(targetTemplate, struct{
-		*view.View
-		CanonicalUrl string
-		Post         *entities.Post
-		LatestPosts  []*entities.Post
-		AboutBlog    string
-		AmpImports   []AmpImport
-	}{
+	c.ServeHTMLTemplate(targetTemplate, view.BlogPostView {
 		View:         c.NewView(post.Title + " | " + globalSettings.CompanyName, post.MetaDescription),
 		CanonicalUrl: fmt.Sprintf("%s://%s/%s", httpHeader, r.Host, post.Path),
 		Post:         post,
@@ -482,10 +470,7 @@ func servePage(c *km.ServerContext, w web.ResponseWriter, r *web.Request, page *
 			return
 		}
 	} else if page.Provider == entities.ProviderCustomPage {
-		c.ServeHTMLTemplate("custom-page", struct{
-			*view.View
-			CustomPage *entities.DynamicPage
-		}{
+		c.ServeHTMLTemplate("custom-page", view.CustomPageView{
 			View: c.NewView(page.DynamicPage.Title + " | " + globalSettings.CompanyName, page.DynamicPage.MetaDescription),
 			CustomPage: page.DynamicPage,
 		})
@@ -497,13 +482,13 @@ func servePage(c *km.ServerContext, w web.ResponseWriter, r *web.Request, page *
 	}
 }
 
-func htmlToAmp(ctx context.Context, htmlContent template.HTML) (content template.HTML, ampImports []AmpImport, err error) {
+func htmlToAmp(ctx context.Context, htmlContent template.HTML) (content template.HTML, ampImports []view.AmpImport, err error) {
 	nodes, err := html.ParseFragment(strings.NewReader(string(htmlContent)), nil)
 	if err != nil {
 		return template.HTML(""), nil, err
 	}
 
-	neededImportsMap := make(map[string]AmpImport)
+	neededImportsMap := make(map[string]view.AmpImport)
 	ampCurrentContent := ""
 	for _, node := range nodes {
 		additionalImportsMap := traverse(ctx, node)
@@ -520,7 +505,7 @@ func htmlToAmp(ctx context.Context, htmlContent template.HTML) (content template
 		ampCurrentContent += c
 	}
 
-	neededImports := make([]AmpImport, len(neededImportsMap))
+	neededImports := make([]view.AmpImport, len(neededImportsMap))
 	index := 0
 	for _, ampImport := range neededImportsMap {
 		neededImports[index] = ampImport
@@ -538,8 +523,8 @@ func renderNode(n *html.Node) string {
 	return buf.String()
 }
 
-func traverse(ctx context.Context, n *html.Node) (neededAmpImports map[string]AmpImport) {
-	neededAmpImports = make(map[string]AmpImport)
+func traverse(ctx context.Context, n *html.Node) (neededAmpImports map[string]view.AmpImport) {
+	neededAmpImports = make(map[string]view.AmpImport)
 	if n.Data == "img" {
 		log.Infof(ctx, "ImageFound: %+v", n)
 		isGif := false
@@ -560,7 +545,7 @@ func traverse(ctx context.Context, n *html.Node) (neededAmpImports map[string]Am
 
 		if isGif {
 			n.Data = "amp-anim"
-			neededAmpImports["amp-anim"] = AmpImport{
+			neededAmpImports["amp-anim"] = view.AmpImport{
 				Name: "amp-anim",
 				URL:  "https://cdn.ampproject.org/v0/amp-anim-0.1.js",
 			}
