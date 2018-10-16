@@ -116,6 +116,11 @@ func ProductView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		productFound = false
 	}
 
+	if selectedProduct.HasRedirect {
+		http.Redirect(w, r.Request, selectedProduct.RedirectUrl, http.StatusMovedPermanently)
+		return
+	}
+
 	httpHeader := "http"
 	if r.TLS != nil {
 		httpHeader = "https"
