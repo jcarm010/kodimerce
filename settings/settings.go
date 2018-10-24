@@ -67,6 +67,8 @@ func getEnvSettings() entities.ServerSettings {
 		GoogleAnalyticsAccountId: os.Getenv("GOOGLE_ANALYTICS_ACCOUNT_ID"),
 		GoogleTagManagerId: os.Getenv("GOOGLE_TAG_MANAGER_ID"),
 
+		FareHarborShortName: os.Getenv("FAREHARBOR_SHORT_NAME"),
+
 		PayPalEnvironment: os.Getenv("PAYPAL_ENVIRONMENT"),
 		PayPalApiUrl: os.Getenv("PAYPAL_API_URL"),
 		PayPalEmail: os.Getenv("PAYPAL_EMAIL"),

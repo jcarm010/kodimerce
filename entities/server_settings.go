@@ -33,6 +33,8 @@ type ServerSettings struct {
 	GoogleAnalyticsAccountId string `json:"google_analytics_account_id"`
 	GoogleTagManagerId string `json:"google_tag_manager_id"`
 
+	FareHarborShortName string `json:"fareharbor_short_name"`
+
 	PayPalEnvironment string `json:"pay_pal_environment"`
 	PayPalApiUrl string `json:"pay_pal_api_url"`
 	PayPalEmail string `json:"pay_pal_email"`
