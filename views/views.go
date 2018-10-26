@@ -27,27 +27,26 @@ type OrderView struct {
 	Order *entities.Order `json:"order"`
 }
 
+// Homeview controller
 func HomeView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
-	featuredCategories, err := entities.ListCategoriesByFeatured(c.Context, true)
+	posts, err := entities.ListPosts(c.Context, true, 1)
 	if err != nil {
-		log.Errorf(c.Context, "Error getting featured categories: %+v", err)
-		featuredCategories = []*entities.Category{}
+		log.Errorf(c.Context, "Error getting latest post: %s", err)
+		return
 	}
 
 	globalSettings := settings.GetGlobalSettings(c.Context)
-	log.Debugf(c.Context, "FeaturedCategories: %+v", featuredCategories)
 	title := globalSettings.CompanyName
 	if globalSettings.MetaTitleHome != "" {
 		title = globalSettings.MetaTitleHome
 	}
 
-	p := struct{
+	p := struct {
 		*view.View
-		Categories []*entities.Category
-
+		Posts []*entities.Post
 	}{
-		View: c.NewView(title, globalSettings.MetaDescriptionHome),
-		Categories: featuredCategories,
+		View:  c.NewView(title, globalSettings.MetaDescriptionHome),
+		Posts: posts,
 	}
 
 	c.ServeHTMLTemplate("home-page", p)
