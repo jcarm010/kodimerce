@@ -36,6 +36,12 @@ func HomeView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 	}
 	log.Debugf(c.Context, "Posts: %+v", posts)
 
+	posts, err := entities.ListPosts(c.Context, true, 1)
+	if err != nil {
+		log.Errorf(c.Context, "Error getting latest post: %s", err)
+		return
+	}
+
 	globalSettings := settings.GetGlobalSettings(c.Context)
 	title := globalSettings.CompanyName
 	if globalSettings.MetaTitleHome != "" {
@@ -44,9 +50,11 @@ func HomeView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 
 	p := struct {
 		*view.View
+		Categories []*entities.Category
 		Posts []*entities.Post
 	}{
 		View:  c.NewView(title, globalSettings.MetaDescriptionHome),
+		Categories: featuredCategories,
 		Posts: posts,
 	}
 
