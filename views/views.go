@@ -116,6 +116,17 @@ func ProductView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		productFound = false
 	}
 
+	if selectedProduct.FareHarborId != "" && globalSettings.FareHarborShortName != "" {
+		fareHarborUrl := fmt.Sprintf("https://fareharbor.com/%s/items/%s/", globalSettings.FareHarborShortName, selectedProduct.FareHarborId)
+		http.Redirect(w, r.Request, fareHarborUrl, http.StatusMovedPermanently)
+		return
+	}
+
+	if selectedProduct.HasRedirect {
+		http.Redirect(w, r.Request, selectedProduct.RedirectUrl, http.StatusMovedPermanently)
+		return
+	}
+
 	httpHeader := "http"
 	if r.TLS != nil {
 		httpHeader = "https"

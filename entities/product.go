@@ -21,6 +21,9 @@ type Product struct {
 	Path string `datastore:"path" json:"path"`
 	IsInfinite          bool `datastore:"is_infinite" json:"is_infinite"`
 	Quantity            int `datastore:"quantity" json:"quantity"`
+	FareHarborId        string `datastore:"fareharbor_id" json:"fareharbor_id"`
+	HasRedirect         bool `datastore:"has_redirect" json:"has_redirect"`
+	RedirectUrl         string `datastore:"redirect_url" json:"redirect_url"`
 	NoShipping          bool `datastore:"no_shipping" json:"no_shipping"`
 	NeedsDate           bool `datastore:"needs_date" json:"needs_date"`
 	NeedsTime           bool `datastore:"needs_time" json:"needs_time"`
@@ -211,6 +214,9 @@ func UpdateProduct(ctx context.Context, product *Product) error {
 		p.HasPricingOptions = product.HasPricingOptions
 		p.PricingOptions = product.PricingOptions
 		p.OrderByCheapestFirst = product.OrderByCheapestFirst
+		p.HasRedirect = product.HasRedirect
+		p.FareHarborId = product.FareHarborId
+		p.RedirectUrl = product.RedirectUrl
 		_, err = datastore.Put(ctx, key, p)
 		return err
 	}, nil)

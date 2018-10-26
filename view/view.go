@@ -104,6 +104,7 @@ type View struct {
 	TwitterHandle string
 	GoogleAnalyticsAccountId string
 	GoogleTagManagerId string
+	FareHarborShortName string
 }
 
 func (v *View) GetBannerPath () (string) {
@@ -191,6 +192,7 @@ func NewView(request *http.Request, title string, metaDescription string, ctx co
 		TwitterHandle: globalSettings.TwitterHandle,
 		GoogleAnalyticsAccountId: globalSettings.GoogleAnalyticsAccountId,
 		GoogleTagManagerId: globalSettings.GoogleTagManagerId,
+		FareHarborShortName: globalSettings.FareHarborShortName,
 	}
 }
 
