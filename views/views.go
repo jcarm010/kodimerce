@@ -29,11 +29,12 @@ type OrderView struct {
 
 // Homeview controller
 func HomeView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
-	featuredCategories, err := entities.ListCategoriesByFeatured(c.Context, true)
+	posts, err := entities.ListPosts(c.Context, true, 1)
 	if err != nil {
-		log.Errorf(c.Context, "Error getting featured categories: %+v", err)
-		featuredCategories = []*entities.Category{}
+		log.Errorf(c.Context, "Error getting latest post: %s", err)
+		return
 	}
+	log.Debugf(c.Context, "Posts: %+v", posts)
 
 	posts, err := entities.ListPosts(c.Context, true, 1)
 	if err != nil {
