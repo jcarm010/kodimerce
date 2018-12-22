@@ -114,6 +114,15 @@ func (p *Product) SetMissingDefaults () {
 	}
 }
 
+func (p *Product) GetStorePricingLabel() string {
+	priceCents := p.GetPriceCents()
+	if p.HasPricingOptions && len(p.PricingOptions) > 0 {
+		return fmt.Sprintf("from $%.2f", float64(priceCents)/100)
+	}
+
+	return fmt.Sprintf("$%.2f", float64(priceCents)/100)
+}
+
 func (p *Product) GetPricingLabel() string {
 	priceCents := p.GetPriceCents()
 	return fmt.Sprintf("%.2f", float64(priceCents)/100)
