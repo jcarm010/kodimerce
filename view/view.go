@@ -111,6 +111,10 @@ func (v *View) GetBannerPath () (string) {
 	return "/assets/images/og-banner.png"
 }
 
+func (v *View) CurrentYear () (string) {
+	return fmt.Sprintf("%v", time.Now().Year())
+}
+
 func (v *View) DateTimeFormat (d time.Time ) (string) {
 	return DateTimeFormat(d)
 }
@@ -121,6 +125,14 @@ func (v *View) DateTimeFormatJSStr (d time.Time ) (template.JSStr) {
 
 func (v *View) DateTimeFormatHTMLAttr (d time.Time ) (template.HTMLAttr) {
 	return DateTimeFormatHTMLAttr(d)
+}
+
+func (v *View) IsPathRoot() bool {
+	return v.Request.URL.Path == "" || v.Request.URL.Path == "/"
+}
+
+func (v *View) PathContains(u string) bool {
+	return strings.Contains(v.Request.URL.Path, u)
 }
 
 func (v *View) FullUrl(u string) string {
