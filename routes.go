@@ -17,7 +17,8 @@ func init() {
 
 	router = router.Middleware((*km.ServerContext).RedirectWWW)
 
-	router = router.Get("/", views.HomeView).
+	router = router.Get("/robots.txt", views.RobotsFile).
+		Get("/", views.HomeView).
 		Get("/contact", views.ContactView).
 		Get("/referrals", views.ReferralsView).
 		Post("/contact", (*km.ServerContext).PostContactMessage).

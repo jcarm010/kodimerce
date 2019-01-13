@@ -27,6 +27,12 @@ type OrderView struct {
 	Order *entities.Order `json:"order"`
 }
 
+func RobotsFile(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
+	w.Write([]byte(fmt.Sprintf("Sitemap: %s/sitemap.xml\n", settings.ServerUrl(r.Request))))
+	w.Write([]byte("User-agent: *\n"))
+	w.Write([]byte("Disallow: /cart\n"))
+}
+
 // Homeview controller
 func HomeView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 	featuredCategories, err := entities.ListCategoriesByFeatured(c.Context, true)
