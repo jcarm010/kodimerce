@@ -160,6 +160,7 @@ func ProductView(c *km.ServerContext, w web.ResponseWriter, r *web.Request) {
 		ProductSettings: km.PRODUCT_SETTINGS,
 	}
 
+	p.View.OgImagePath = selectedProduct.Thumbnail
 	log.Debugf(c.Context, "CanonicalUrl: %s", p.CanonicalUrl)
 	log.Debugf(c.Context, "ProductSettings: %s", p.ProductSettings)
 	if !productFound {
@@ -462,14 +463,20 @@ func servePost(c *km.ServerContext, w web.ResponseWriter, r *web.Request, post *
 		targetTemplate = "post-page"
 	}
 
-	c.ServeHTMLTemplate(targetTemplate, view.BlogPostView {
+	v := view.BlogPostView {
 		View:         c.NewView(post.Title + " | " + globalSettings.CompanyName, post.MetaDescription),
 		CanonicalUrl: fmt.Sprintf("%s://%s/%s", httpHeader, r.Host, post.Path),
 		Post:         post,
 		LatestPosts:  posts,
 		AboutBlog:    globalSettings.DescriptionBlogABout,
 		AmpImports:   ampImports,
-	})
+	}
+
+	if post.Banner != "" {
+		v.View.OgImagePath = post.Banner
+	}
+	
+	c.ServeHTMLTemplate(targetTemplate, v)
 }
 
 func servePage(c *km.ServerContext, w web.ResponseWriter, r *web.Request, page *entities.Page)  {

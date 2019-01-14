@@ -105,9 +105,14 @@ type View struct {
 	GoogleAnalyticsAccountId string
 	GoogleTagManagerId string
 	FareHarborShortName string
+	OgImagePath string
 }
 
 func (v *View) GetBannerPath () (string) {
+	if v.OgImagePath != "" {
+		return v.OgImagePath
+	}
+
 	return "/assets/images/og-banner.png"
 }
 
