@@ -930,6 +930,61 @@ func (c *ServerContext) PostContactMessage(w web.ResponseWriter, r *web.Request)
 	c.ServeJson(http.StatusOK, "")
 }
 
+
+/* 
+ * This handles 3 different forms on the /partners page
+ * so just send an email with whatever post params are sent from
+ * the browser
+*/
+func (c *ServerContext) PostPartnerMessage(w web.ResponseWriter, r *web.Request){
+	err := r.ParseForm()
+
+	if err != nil {
+		log.Errorf(c.Context, "Error parsing form request: %s", err)
+		c.ServeJson(http.StatusBadRequest, "There was an error receiving your message")
+		return
+	}
+
+	// check Referer as a weak test that it's not a bot
+	ref := r.Header.Get("Referer")
+	if ref == "" {
+		c.ServeJson(http.StatusBadRequest, "There was an error receiving your message")
+		return
+	}
+
+	f := r.Form
+
+	// hidden input "purpose" also used as the email subject
+	if f.Get("purpose") == "" {
+		log.Errorf(c.Context, "Missing input for subject line. Maybe not sent from www site form.")
+		c.ServeJson(http.StatusInternalServerError, "Could not send message.")
+		return
+	}
+
+	var body string
+	for key, value := range r.Form {
+		body += fmt.Sprintf("%s: %s\n", key, value)
+	}
+
+	mail_err := emailer.SendEmail(
+		c.Context,
+		fmt.Sprintf("%s<%s>", c.Settings.CompanyName, c.Settings.EmailSender),
+		"partners@addigy.com",
+		r.Form.Get("purpose"),
+		body,
+		"",
+	)
+
+	if mail_err != nil {
+		log.Errorf(c.Context, "Error Sending email: %+v", mail_err)
+		c.ServeJson(http.StatusInternalServerError, "Could not send message at this time. Please try again later.")
+		return
+	}
+
+	http.Redirect(w, r.Request, r.Header.Get("Referer"), 302)
+}
+
+
 func (c *ServerContext) GetSiteMap(w web.ResponseWriter, r *web.Request){
 	sm := stm.NewSitemap()
 	url := settings.ServerUrl(r.Request)

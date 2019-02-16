@@ -22,6 +22,7 @@ func init() {
 		Get("/contact", views.ContactView).
 		Get("/referrals", views.ReferralsView).
 		Post("/contact", (*km.ServerContext).PostContactMessage).
+		Post("/partnermessage", (*km.ServerContext).PostPartnerMessage).
 		Get("/product", views.ProductView).
 		Get("/product/:productId", views.ProductView).
 		Get("/store", views.StoreView).
