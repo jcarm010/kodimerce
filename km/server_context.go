@@ -981,7 +981,7 @@ func (c *ServerContext) PostPartnerMessage(w web.ResponseWriter, r *web.Request)
 		return
 	}
 
-	http.Redirect(w, r.Request, r.Header.Get("Referer"), 302)
+	http.Redirect(w, r.Request, "partners?success=true", 302)
 }
 
 
