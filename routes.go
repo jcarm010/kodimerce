@@ -49,7 +49,7 @@ func init() {
 		Get("/blog", views.BlogView).
 		Get("/blog/rss", views.GetBlogRss).
 		Get("/amp/:path", views.GetAmpDynamicPage).
-		Get("/:post", views.GetDynamicPage)
+		Get("/:*", views.GetDynamicPage)
 
 	router.Subrouter(km.ServerContext{}, "/api").
 		Get("/product", (*km.ServerContext).GetProducts)

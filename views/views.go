@@ -397,7 +397,11 @@ func GetAmpDynamicPage(c *km.ServerContext, w web.ResponseWriter, r *web.Request
 }
 
 func GetDynamicPage(c *km.ServerContext, w web.ResponseWriter, r *web.Request){
-	postPath := r.PathParams["post"]
+	postPath := r.URL.Path//r.PathParams["post"]
+	if strings.HasPrefix(postPath,"/") {
+		postPath = strings.Replace(postPath, "/", "", 1)
+	}
+
 	log.Infof(c.Context, "Serving Dynamic Page: %s", postPath)
 	if customPage, exist := view.CustomPages[postPath] ; exist {
 		log.Infof(c.Context, "Custom Page found: %+v", customPage)
