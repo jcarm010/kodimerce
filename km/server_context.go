@@ -931,29 +931,29 @@ func (c *ServerContext) PostContactMessage(w web.ResponseWriter, r *web.Request)
 }
 
 func (c *ServerContext) GetSiteMap(w web.ResponseWriter, r *web.Request){
-	sm := stm.NewSitemap()
+	sm := stm.NewSitemap(1)
 	url := settings.ServerUrl(r.Request)
 	sm.SetDefaultHost(url)
 
 	sm.Create()
-	sm.Add(stm.URL{"loc": "/", "changefreq": "monthly", "priority": 1})
-	sm.Add(stm.URL{"loc": "/contact", "changefreq": "monthly", "priority": 0.5})
+	sm.Add(stm.URL{{"loc", "/"}, {"changefreq", "monthly"}, {"priority", 1}})
+	sm.Add(stm.URL{{"loc", "/contact"}, {"changefreq", "monthly"}, {"priority", 0.5}})
 	featuredCategories, err := entities.ListCategoriesByFeatured(c.Context, true)
 	if err == nil {
 		for _, category := range featuredCategories {
-			sm.Add(stm.URL{"loc": "/store/" + category.Path, "changefreq": "weekly", "priority": 1})
+			sm.Add(stm.URL{{"loc", "/store/" + category.Path}, {"changefreq", "weekly"}, {"priority", 1}})
 		}
 	}
 
 	products, err := entities.ListProducts(c.Context)
 	if err == nil {
 		if len(products) > 0 {
-			sm.Add(stm.URL{"loc": "/store", "changefreq": "weekly", "priority": 1})
+			sm.Add(stm.URL{{"loc", "/store"}, {"changefreq", "weekly"}, {"priority", 1}})
 		}
 
 		for _, product := range products {
 			if product.Active {
-				sm.Add(stm.URL{"loc": "/product/" + product.Path, "changefreq": "weekly", "priority": 1})
+				sm.Add(stm.URL{{"loc", "/product/" + product.Path}, {"changefreq", "weekly"}, {"priority", 1}})
 			}
 		}
 	}
@@ -961,22 +961,22 @@ func (c *ServerContext) GetSiteMap(w web.ResponseWriter, r *web.Request){
 	posts, err := entities.ListPosts(c.Context, true, -1)
 	if err == nil {
 		if len(posts) >0 {
-			sm.Add(stm.URL{"loc": "/blog", "changefreq": "daily", "priority": 1})
+			sm.Add(stm.URL{{"loc", "/blog"}, {"changefreq", "daily"}, {"priority", 1}})
 		}
 
 		for _, post := range posts {
-			sm.Add(stm.URL{"loc": "/" + post.Path, "changefreq": "daily", "priority": 1})
+			sm.Add(stm.URL{{"loc", "/" + post.Path}, {"changefreq", "daily"}, {"priority", 1}})
 		}
 	}
 
 	galleries, err := entities.ListGalleries(c.Context, true, -1)
 	if err == nil {
 		if len(galleries) > 0 {
-			sm.Add(stm.URL{"loc": "/gallery", "changefreq": "weekly", "priority": 1})
+			sm.Add(stm.URL{{"loc", "/gallery"}, {"changefreq", "weekly"}, {"priority", 1}})
 		}
 
 		for _, gallery := range galleries {
-			sm.Add(stm.URL{"loc": "/gallery/" + gallery.Path, "changefreq": "weekly", "priority": 1})
+			sm.Add(stm.URL{{"loc", "/gallery/" + gallery.Path}, {"changefreq", "weekly"}, {"priority", 1}})
 		}
 	}
 
@@ -986,17 +986,15 @@ func (c *ServerContext) GetSiteMap(w web.ResponseWriter, r *web.Request){
 			if page.Provider == entities.ProviderRedirectPage {
 				continue
 			}
-			sm.Add(stm.URL{"loc": "/" + page.Path, "changefreq": "weekly", "priority": 1})
+			sm.Add(stm.URL{{"loc", "/" + page.Path}, {"changefreq", "weekly"}, {"priority", 1}})
 		}
 	}
 
 	for path, page := range view.CustomPages {
 		if page.InSiteMap {
-			sm.Add(stm.URL{"loc": "/" + path, "changefreq": page.ChangeFrequency, "priority": page.Priority})
+			sm.Add(stm.URL{{"loc", "/" + path}, {"changefreq", page.ChangeFrequency}, {"priority", page.Priority}})
 		}
 	}
-
-	//sm.Add(stm.URL{"loc": "/referrals", "changefreq": "weekly", "priority": 0.4})
 
 	w.Header().Add("Content-Type:","text/xml; charset=utf-8")
 	w.Write(sm.XMLContent())
