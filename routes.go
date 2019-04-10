@@ -2,9 +2,9 @@ package server
 
 import (
 	"github.com/gocraft/web"
-	"km"
+	"github.com/jcarm010/kodimerce/km"
 	"net/http"
-	"views"
+	"github.com/jcarm010/kodimerce/views"
 )
 
 func init() {

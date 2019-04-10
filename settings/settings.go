@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strconv"
 	"google.golang.org/appengine/log"
-	"entities"
+	"github.com/jcarm010/kodimerce/entities"
 	"golang.org/x/net/context"
 )
 

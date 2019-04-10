@@ -3,10 +3,10 @@ package paypal
 import (
 	"golang.org/x/net/context"
 	"path"
-	"settings"
+	"github.com/jcarm010/kodimerce/settings"
 	"encoding/json"
 	"google.golang.org/appengine/log"
-	"entities"
+	"github.com/jcarm010/kodimerce/entities"
 	"fmt"
 	"bytes"
 	"errors"
@@ -199,7 +199,7 @@ func CreatePayment(ctx context.Context, order *entities.Order, companyUrl string
 
 	paypalRequest := PaypalCreatePaymentRequest{
 		Intent: "sale",
-		Payer: map[string]string{"payment_method":"paypal"},
+		Payer: map[string]string{"payment_method":"github.com/jcarm010/kodimerce/paypal"},
 		NoteToPayer: globalSettings.PayPalNoteToPayer,
 		Transactions: []*Transaction{transaction},
 		RedirectUrls: &RedirectUrls{

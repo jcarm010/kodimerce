@@ -2,13 +2,13 @@ package views
 
 import (
 	"github.com/gocraft/web"
-	"km"
+	"github.com/jcarm010/kodimerce/km"
 	"google.golang.org/appengine/log"
 	"net/http"
 	"github.com/dustin/gojson"
 	"strconv"
-	"entities"
-	"view"
+	"github.com/jcarm010/kodimerce/entities"
+	"github.com/jcarm010/kodimerce/view"
 )
 
 type CheckoutStep struct {

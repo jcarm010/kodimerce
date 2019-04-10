@@ -1,14 +1,14 @@
 package km
 
 import (
-	"entities"
+	"github.com/jcarm010/kodimerce/entities"
 	"fmt"
 	"github.com/gocraft/web"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/blobstore"
 	"google.golang.org/appengine/log"
 	"net/http"
-	"settings"
+	"github.com/jcarm010/kodimerce/settings"
 	"sort"
 	"strconv"
 	"strings"
