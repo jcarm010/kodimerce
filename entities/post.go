@@ -1,47 +1,49 @@
 package entities
 
 import (
-	"time"
-	"html/template"
-	"strings"
+	"errors"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
-	"errors"
+	"html/template"
+	"strings"
+	"time"
 )
 
 const ENTITY_POST = "post"
+
 var (
 	ErrPostNotFound = errors.New("Not Found.")
 )
 
 type Post struct {
-	Id int64 `datastore:"-" json:"id"`
-	Title string `datastore:"title" json:"title"`
-	Path string `datastore:"path" json:"path"`
-	Content template.HTML `datastore:"content,noindex" json:"content"`
-	ShortDescription string `datastore:"short_description,noindex" json:"short_description"`
-	MetaDescription string `datastore:"meta_description,noindex" json:"meta_description"`
-	Banner string `datastore:"banner,noindex" json:"banner"`
-	Published bool `datastore:"published" json:"published"`
-	PublishedDate time.Time `datastore:"published_date" json:"published_date"`
-	UpdatedDate time.Time `datastore:"updated_date" json:"updated_date"`
-	Created time.Time `datastore:"created" json:"created"`
+	Id               int64         `datastore:"-" json:"id"`
+	Title            string        `datastore:"title" json:"title"`
+	Path             string        `datastore:"path" json:"path"`
+	Content          template.HTML `datastore:"content,noindex" json:"content"`
+	ShortDescription string        `datastore:"short_description,noindex" json:"short_description"`
+	MetaDescription  string        `datastore:"meta_description,noindex" json:"meta_description"`
+	Banner           string        `datastore:"banner,noindex" json:"banner"`
+	Published        bool          `datastore:"published" json:"published"`
+	PublishedDate    time.Time     `datastore:"published_date" json:"published_date"`
+	UpdatedDate      time.Time     `datastore:"updated_date" json:"updated_date"`
+	Created          time.Time     `datastore:"created" json:"created"`
 }
 
 type ByNewestFirst []*Post
+
 func (a ByNewestFirst) Len() int           { return len(a) }
 func (a ByNewestFirst) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByNewestFirst) Less(i, j int) bool { return a[j].PublishedDate.Unix() < a[i].PublishedDate.Unix() }
 
-func (p *Post) FormattedPublishedDate () (string) {
+func (p *Post) FormattedPublishedDate() (string) {
 	return p.FormattedDateDMY(p.PublishedDate)
 }
 
-func (p *Post) FormattedDateDMY (dte time.Time) (string) {
+func (p *Post) FormattedDateDMY(dte time.Time) (string) {
 	return dte.Format("_2 Jan 2006")
 }
 
-func (p *Post) SetMissingDefaults () {
+func (p *Post) SetMissingDefaults() {
 	t := time.Time{}
 	if p.UpdatedDate == t {
 		p.UpdatedDate = p.PublishedDate
@@ -50,7 +52,7 @@ func (p *Post) SetMissingDefaults () {
 
 func NewPost(title string) *Post {
 	return &Post{
-		Title: title,
+		Title:   title,
 		Created: time.Now(),
 	}
 }
@@ -114,7 +116,7 @@ func ListPosts(ctx context.Context, published bool, limit int) ([]*Post, error) 
 	if published {
 		q = q.Filter("published=", published).
 			Order("-published_date")
-	}else {
+	} else {
 		q = q.Order("-created")
 	}
 

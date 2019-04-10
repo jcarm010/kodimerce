@@ -1,14 +1,14 @@
 package entities
 
 import (
-	"golang.org/x/net/context"
-	"google.golang.org/appengine/datastore"
 	"errors"
 	"github.com/satori/go.uuid"
+	"golang.org/x/net/context"
+	"google.golang.org/appengine/datastore"
 )
 
-const(
-	ENTITY_USER = "user"
+const (
+	ENTITY_USER         = "user"
 	ENTITY_USER_SESSION = "user_session"
 )
 
@@ -17,28 +17,28 @@ var (
 )
 
 type User struct {
-	Email string `json:"email" datastore:"-"`
-	PasswordHash string `json:"password_hash" datastore:"password_hash,noindex"`
-	UserType string `json:"user_type" datastore:"user_type"`
+	Email           string `json:"email" datastore:"-"`
+	PasswordHash    string `json:"password_hash" datastore:"password_hash,noindex"`
+	UserType        string `json:"user_type" datastore:"user_type"`
 	LastVisitedPath string `json:"last_visited_path" datastore:"last_visited_path"`
 }
 
 func NewUser(email string) *User {
 	return &User{
-		Email: email,
+		Email:    email,
 		UserType: "regular",
 	}
 }
 
 type UserSession struct {
-	Email string `json:"email" datastore:"email"`
+	Email        string `json:"email" datastore:"email"`
 	SessionToken string `json:"session_token" datastore:"-"`
 }
 
 func NewUserSession(sessionToken string, email string) *UserSession {
 	return &UserSession{
 		SessionToken: sessionToken,
-		Email: email,
+		Email:        email,
 	}
 }
 
@@ -49,7 +49,7 @@ func CreateUser(ctx context.Context, user *User) error {
 		err := datastore.Get(ctx, key, u)
 		if err != nil && err != datastore.ErrNoSuchEntity {
 			return err
-		}else if err == nil {
+		} else if err == nil {
 			return ErrUserAlreadyExists
 		}
 
@@ -95,7 +95,7 @@ func CreateUserSession(ctx context.Context, email string) (*UserSession, error) 
 	userSession := NewUserSession(nUdid.String(), email)
 	key := datastore.NewKey(ctx, ENTITY_USER_SESSION, userSession.SessionToken, 0, nil)
 	_, err = datastore.Put(ctx, key, userSession)
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 
@@ -106,7 +106,7 @@ func GetUserSession(ctx context.Context, sessionToken string) (*UserSession, err
 	key := datastore.NewKey(ctx, ENTITY_USER_SESSION, sessionToken, 0, nil)
 	userSession := &UserSession{}
 	err := datastore.Get(ctx, key, userSession)
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 

@@ -1,25 +1,25 @@
 package entities
 
 import (
-	"time"
+	"fmt"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
-	"fmt"
 	"strings"
+	"time"
 )
 
 const ENTITY_CATEGORY = "category"
 const ENTITY_CATEGORY_PRODUCT = "category_product"
 
 type Category struct {
-	Id int64 `datastore:"-" json:"id"`
-	Name string `datastore:"name" json:"name"`
-	Path string `datastore:"path" json:"path"`
-	Description string `datastore:"description,noindex" json:"description"`
-	MetaDescription string `datastore:"meta_description,noindex" json:"meta_description"`
-	Created time.Time `datastore:"created" json:"created"`
-	Thumbnail string `datastore:"thumbnail,noindex" json:"thumbnail"`
-	Featured bool `datastore:"featured" json:"featured"`
+	Id              int64     `datastore:"-" json:"id"`
+	Name            string    `datastore:"name" json:"name"`
+	Path            string    `datastore:"path" json:"path"`
+	Description     string    `datastore:"description,noindex" json:"description"`
+	MetaDescription string    `datastore:"meta_description,noindex" json:"meta_description"`
+	Created         time.Time `datastore:"created" json:"created"`
+	Thumbnail       string    `datastore:"thumbnail,noindex" json:"thumbnail"`
+	Featured        bool      `datastore:"featured" json:"featured"`
 }
 
 func (c *Category) SetMissingDefaults() {
@@ -38,16 +38,17 @@ func (c *Category) String() string {
 
 func NewCategory(name string) *Category {
 	return &Category{
-		Name: name,
-		Created: time.Now(),
+		Name:      name,
+		Created:   time.Now(),
 		Thumbnail: "/assets/images/stock.jpeg",
 	}
 }
 
 type CategoryProduct struct {
 	CategoryId int64 `datastore:"category_id" json:"category_id"`
-	ProductId int64 `datastore:"product_id" json:"product_id"`
+	ProductId  int64 `datastore:"product_id" json:"product_id"`
 }
+
 func (cp *CategoryProduct) String() string {
 	return fmt.Sprintf("%v-%v", cp.CategoryId, cp.ProductId)
 }
@@ -96,9 +97,9 @@ func UpdateCategory(ctx context.Context, category *Category) error {
 }
 
 func SetCategoryProducts(ctx context.Context, categoryProducts []*CategoryProduct) error {
-	keys := make([]*datastore.Key,0)
+	keys := make([]*datastore.Key, 0)
 	for _, cp := range categoryProducts {
-		keys = append(keys,datastore.NewKey(ctx, ENTITY_CATEGORY_PRODUCT, fmt.Sprintf("%v_%v", cp.CategoryId, cp.ProductId), 0, nil))
+		keys = append(keys, datastore.NewKey(ctx, ENTITY_CATEGORY_PRODUCT, fmt.Sprintf("%v_%v", cp.CategoryId, cp.ProductId), 0, nil))
 	}
 
 	_, err := datastore.PutMulti(ctx, keys, categoryProducts)
@@ -110,9 +111,9 @@ func SetCategoryProducts(ctx context.Context, categoryProducts []*CategoryProduc
 }
 
 func UnsetCategoryProducts(ctx context.Context, categoryProducts []*CategoryProduct) error {
-	keys := make([]*datastore.Key,0)
+	keys := make([]*datastore.Key, 0)
 	for _, cp := range categoryProducts {
-		keys = append(keys,datastore.NewKey(ctx, ENTITY_CATEGORY_PRODUCT, fmt.Sprintf("%v_%v", cp.CategoryId, cp.ProductId), 0, nil))
+		keys = append(keys, datastore.NewKey(ctx, ENTITY_CATEGORY_PRODUCT, fmt.Sprintf("%v_%v", cp.CategoryId, cp.ProductId), 0, nil))
 	}
 
 	err := datastore.DeleteMulti(ctx, keys)

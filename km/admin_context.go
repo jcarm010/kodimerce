@@ -1,18 +1,18 @@
 package km
 
 import (
+	"entities"
+	"fmt"
 	"github.com/gocraft/web"
-	"github.com/jcarm010/kodimerce/entities"
+	"google.golang.org/appengine"
+	"google.golang.org/appengine/blobstore"
 	"google.golang.org/appengine/log"
 	"net/http"
+	"settings"
+	"sort"
 	"strconv"
 	"strings"
-	"google.golang.org/appengine/blobstore"
-	"google.golang.org/appengine"
-	"fmt"
-	"sort"
 	"time"
-	"github.com/jcarm010/kodimerce/settings"
 )
 
 type AdminContext struct {
@@ -32,19 +32,18 @@ func (c *AdminContext) Auth(w web.ResponseWriter, r *web.Request, next web.NextM
 	if sessionToken == "" {
 		if r.Method == "GET" {
 			http.Redirect(w, r.Request, "/login", http.StatusTemporaryRedirect)
-		}else {
+		} else {
 			c.ServeJson(http.StatusUnauthorized, "Missing session.")
 		}
 		return
 	}
-
 
 	userSession, err := entities.GetUserSession(c.Context, sessionToken)
 	if err != nil {
 		log.Errorf(c.Context, "Error getting session: %+v", err)
 		if r.Method == "GET" {
 			http.Redirect(w, r.Request, "/login", http.StatusTemporaryRedirect)
-		}else {
+		} else {
 			c.ServeJson(http.StatusUnauthorized, "Session not found.")
 		}
 
@@ -56,7 +55,7 @@ func (c *AdminContext) Auth(w web.ResponseWriter, r *web.Request, next web.NextM
 		log.Errorf(c.Context, "Error getting user: %+v", err)
 		if r.Method == "GET" {
 			http.Redirect(w, r.Request, "/login", http.StatusTemporaryRedirect)
-		}else {
+		} else {
 			c.ServeJson(http.StatusUnauthorized, "Session not found.")
 		}
 		return
@@ -66,7 +65,7 @@ func (c *AdminContext) Auth(w web.ResponseWriter, r *web.Request, next web.NextM
 		log.Errorf(c.Context, "User is not admin: %+v", user)
 		if r.Method == "GET" {
 			http.Redirect(w, r.Request, "/login", http.StatusTemporaryRedirect)
-		}else {
+		} else {
 			c.ServeJson(http.StatusForbidden, "Not allowed.")
 		}
 		return
@@ -255,7 +254,7 @@ func (c *AdminContext) SetCategoryProducts(w web.ResponseWriter, r *web.Request)
 
 		log.Debugf(c.Context, "%v => %v", categoryId, productId)
 		categoryProducts = append(categoryProducts, &entities.CategoryProduct{
-			ProductId: productId,
+			ProductId:  productId,
 			CategoryId: categoryId,
 		})
 	}
@@ -294,7 +293,7 @@ func (c *AdminContext) UnsetCategoryProducts(w web.ResponseWriter, r *web.Reques
 
 			categoryProducts = append(categoryProducts, &entities.CategoryProduct{
 				CategoryId: categoryId,
-				ProductId: productId,
+				ProductId:  productId,
 			})
 		}
 	}
@@ -352,7 +351,16 @@ func (c *AdminContext) DeleteGalleryUpload(w web.ResponseWriter, r *web.Request)
 }
 
 func (c *AdminContext) GetGalleryUploads(w web.ResponseWriter, r *web.Request) {
-	blobs, err := entities.ListUploads(c.Context)
+	q := r.URL.Query()
+	cursor := q.Get("cursor")
+	limit, err := strconv.ParseInt(q.Get("limit"), 10, 64)
+	if err != nil {
+		log.Errorf(c.Context, "Error parsing limit to int %s", err)
+		c.ServeJson(http.StatusInternalServerError, "Error parsing limit to int")
+		return
+	}
+
+	blobs, err := entities.ListUploads(c.Context, cursor, int(limit))
 	if err != nil {
 		log.Errorf(c.Context, "Error fetching blobs: %+v", err)
 		c.ServeJson(http.StatusInternalServerError, "Unexpected error getting uploads")
@@ -424,7 +432,7 @@ func (c *AdminContext) GetOrders(w web.ResponseWriter, r *web.Request) {
 	c.ServeJson(http.StatusOK, orders)
 }
 
-func (c *AdminContext) OverrideOrder(w web.ResponseWriter, r *web.Request){
+func (c *AdminContext) OverrideOrder(w web.ResponseWriter, r *web.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		log.Errorf(c.Context, "Error parsing form: %+v", err)
@@ -500,7 +508,7 @@ func (c *AdminContext) OverrideOrder(w web.ResponseWriter, r *web.Request){
 	c.ServeJson(http.StatusOK, "")
 }
 
-func (c *AdminContext) GetPosts(w web.ResponseWriter, r *web.Request){
+func (c *AdminContext) GetPosts(w web.ResponseWriter, r *web.Request) {
 	posts, err := entities.ListPosts(c.Context, false, -1)
 	if err != nil {
 		log.Errorf(c.Context, "Error loading posts: %s", err)
@@ -511,7 +519,7 @@ func (c *AdminContext) GetPosts(w web.ResponseWriter, r *web.Request){
 	c.ServeJson(http.StatusOK, posts)
 }
 
-func (c *AdminContext) CreatePost(w web.ResponseWriter, r *web.Request){
+func (c *AdminContext) CreatePost(w web.ResponseWriter, r *web.Request) {
 	data := struct {
 		Title string `json:"title"`
 	}{}
@@ -539,7 +547,7 @@ func (c *AdminContext) CreatePost(w web.ResponseWriter, r *web.Request){
 	c.ServeJson(http.StatusOK, post)
 }
 
-func (c *AdminContext) UpdatePost(w web.ResponseWriter, r *web.Request){
+func (c *AdminContext) UpdatePost(w web.ResponseWriter, r *web.Request) {
 	data := struct {
 		Post *entities.Post `json:"post"`
 	}{}
@@ -562,7 +570,7 @@ func (c *AdminContext) UpdatePost(w web.ResponseWriter, r *web.Request){
 	c.ServeJson(http.StatusOK, "")
 }
 
-func (c *AdminContext) GetGalleries(w web.ResponseWriter, r *web.Request){
+func (c *AdminContext) GetGalleries(w web.ResponseWriter, r *web.Request) {
 	galleries, err := entities.ListGalleries(c.Context, false, -1)
 	if err != nil {
 		log.Errorf(c.Context, "Error listing galleries: %+v", err)
@@ -573,8 +581,7 @@ func (c *AdminContext) GetGalleries(w web.ResponseWriter, r *web.Request){
 	c.ServeJson(http.StatusOK, galleries)
 }
 
-
-func (c *AdminContext) CreateGallery(w web.ResponseWriter, r *web.Request){
+func (c *AdminContext) CreateGallery(w web.ResponseWriter, r *web.Request) {
 	data := struct {
 		Title string `json:"title"`
 	}{}
@@ -596,7 +603,7 @@ func (c *AdminContext) CreateGallery(w web.ResponseWriter, r *web.Request){
 	c.ServeJson(http.StatusOK, gallery)
 }
 
-func (c *AdminContext) UpdateGallery(w web.ResponseWriter, r *web.Request){
+func (c *AdminContext) UpdateGallery(w web.ResponseWriter, r *web.Request) {
 	data := struct {
 		Gallery *entities.Gallery `json:"gallery"`
 	}{}
@@ -618,7 +625,7 @@ func (c *AdminContext) UpdateGallery(w web.ResponseWriter, r *web.Request){
 	c.ServeJson(http.StatusOK, "")
 }
 
-func (c *AdminContext) CreatePage(w web.ResponseWriter, r *web.Request){
+func (c *AdminContext) CreatePage(w web.ResponseWriter, r *web.Request) {
 	data := struct {
 		Title string `json:"title"`
 	}{}
@@ -640,7 +647,7 @@ func (c *AdminContext) CreatePage(w web.ResponseWriter, r *web.Request){
 	c.ServeJson(http.StatusOK, page)
 }
 
-func (c *AdminContext) GetPages(w web.ResponseWriter, r *web.Request){
+func (c *AdminContext) GetPages(w web.ResponseWriter, r *web.Request) {
 	pages, err := entities.ListPages(c.Context, false, -1)
 	if err != nil {
 		log.Errorf(c.Context, "Error listing pages: %+v", err)
@@ -651,7 +658,7 @@ func (c *AdminContext) GetPages(w web.ResponseWriter, r *web.Request){
 	c.ServeJson(http.StatusOK, pages)
 }
 
-func (c *AdminContext) UpdatePage(w web.ResponseWriter, r *web.Request){
+func (c *AdminContext) UpdatePage(w web.ResponseWriter, r *web.Request) {
 	data := struct {
 		Page *entities.Page `json:"page"`
 	}{}
@@ -674,7 +681,7 @@ func (c *AdminContext) UpdatePage(w web.ResponseWriter, r *web.Request){
 	c.ServeJson(http.StatusOK, "")
 }
 
-func (c *AdminContext) SaveLastVisitedPath(w web.ResponseWriter, r *web.Request){
+func (c *AdminContext) SaveLastVisitedPath(w web.ResponseWriter, r *web.Request) {
 	data := struct {
 		LastPath string `json:"last_path"`
 	}{}

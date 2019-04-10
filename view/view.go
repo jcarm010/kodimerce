@@ -1,7 +1,7 @@
 package view
 
 import (
-	"github.com/jcarm010/kodimerce/settings"
+	"settings"
 	"net/http"
 	"fmt"
 	"strings"
@@ -12,7 +12,7 @@ import (
 	"encoding/json"
 	"bytes"
 	"golang.org/x/net/context"
-	"github.com/jcarm010/kodimerce/entities"
+	"entities"
 )
 
 var (

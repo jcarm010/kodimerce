@@ -1,14 +1,14 @@
 package entities
 
 import (
-	"time"
+	"encoding/json"
 	"errors"
-	"html/template"
-	"strings"
+	"fmt"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
-	"encoding/json"
-	"fmt"
+	"html/template"
+	"strings"
+	"time"
 )
 
 const (
@@ -17,65 +17,66 @@ const (
 	ProviderCustomPage    = "dynamic_page"
 	ProviderRedirectPage  = "redirect_page"
 )
+
 var (
 	ErrPageNotFound = errors.New("not found")
 )
 
 type Page struct {
-	Id int64 `datastore:"-" json:"id"`
-	Title string `datastore:"title" json:"title"`
-	Provider string `datastore:"provider" json:"provider"`
-	Path string `datastore:"path" json:"path"`
-	Content template.HTML `datastore:"content,noindex" json:"content"`
-	MetaDescription string `datastore:"meta_description,noindex" json:"meta_description"`
-	Published bool `datastore:"published" json:"published"`
-	PublishedDate time.Time `datastore:"published_date" json:"published_date"`
-	Created time.Time `datastore:"created" json:"created"`
-	ShallowMirrorUrl string `datastore:"shallow_mirror_url,noindex" json:"shallow_mirror_url"`
-	DynamicPage *DynamicPage `datastore:"-" json:"dynamic_page"`
-	RawDynamicPage []byte `datastore:"raw_dynamic_page,noindex" json:"-"`
-	RedirectUrl string `datastore:"redirect_url,noindex" json:"redirect_url"`
-	RedirectStatusCode int `datastore:"redirect_status_code,noindex" json:"redirect_status_code"`
+	Id                 int64         `datastore:"-" json:"id"`
+	Title              string        `datastore:"title" json:"title"`
+	Provider           string        `datastore:"provider" json:"provider"`
+	Path               string        `datastore:"path" json:"path"`
+	Content            template.HTML `datastore:"content,noindex" json:"content"`
+	MetaDescription    string        `datastore:"meta_description,noindex" json:"meta_description"`
+	Published          bool          `datastore:"published" json:"published"`
+	PublishedDate      time.Time     `datastore:"published_date" json:"published_date"`
+	Created            time.Time     `datastore:"created" json:"created"`
+	ShallowMirrorUrl   string        `datastore:"shallow_mirror_url,noindex" json:"shallow_mirror_url"`
+	DynamicPage        *DynamicPage  `datastore:"-" json:"dynamic_page"`
+	RawDynamicPage     []byte        `datastore:"raw_dynamic_page,noindex" json:"-"`
+	RedirectUrl        string        `datastore:"redirect_url,noindex" json:"redirect_url"`
+	RedirectStatusCode int           `datastore:"redirect_status_code,noindex" json:"redirect_status_code"`
 }
 
 type DynamicPage struct {
-	Title string `json:"title"`
-	MetaDescription string `json:"meta_description"`
-	HasNavigation bool `json:"has_navigation"`
-	HasBanner bool `json:"has_banner"`
-	Banner *DynamicPageImageComponent `json:"banner"`
-	Rows []*DynamicPageRow `json:"rows"`
+	Title           string                     `json:"title"`
+	MetaDescription string                     `json:"meta_description"`
+	HasNavigation   bool                       `json:"has_navigation"`
+	HasBanner       bool                       `json:"has_banner"`
+	Banner          *DynamicPageImageComponent `json:"banner"`
+	Rows            []*DynamicPageRow          `json:"rows"`
 }
 
 type DynamicPageRow struct {
-	ComponentName string `json:"component_name"` //this should be the name of the component to use
+	ComponentName      string                         `json:"component_name"` //this should be the name of the component to use
 	RowSimpleComponent *DynamicPageRowSimpleComponent `json:"row_simple_component"`
-	SeparatorTop bool `json:"separator_top"`
-	SeparatorBottom bool `json:"separator_bottom"`
+	SeparatorTop       bool                           `json:"separator_top"`
+	SeparatorBottom    bool                           `json:"separator_bottom"`
 }
 
 type DynamicPageImageComponent struct {
-	Path string `json:"path"`
+	Path    string `json:"path"`
 	AltText string `json:"alt_text"`
-	SetSize bool `json:"set_size"`
-	Width string `json:"width"`
-	Height string `json:"height"`
+	SetSize bool   `json:"set_size"`
+	Width   string `json:"width"`
+	Height  string `json:"height"`
 }
 
 type DynamicPageRowSimpleComponent struct {
-	Header string `json:"header"`
-	IsMainHeader bool `json:"is_main_header"`
-	Description template.HTML `json:"description"`
-	HasImage bool `json:"has_image"`
-	Image *DynamicPageImageComponent `json:"image"`
-	ImagePosition string `json:"image_position"`
+	Header        string                     `json:"header"`
+	IsMainHeader  bool                       `json:"is_main_header"`
+	Description   template.HTML              `json:"description"`
+	HasImage      bool                       `json:"has_image"`
+	Image         *DynamicPageImageComponent `json:"image"`
+	ImagePosition string                     `json:"image_position"`
 }
 
 func NewDynamicPage(title string, metaDescription string) *DynamicPage {
 	return &DynamicPage{
-		Title: title,
+		Title:           title,
 		MetaDescription: metaDescription,
-		Rows: make([]*DynamicPageRow, 0),
+		Rows:            make([]*DynamicPageRow, 0),
 	}
 }
 
@@ -84,11 +85,11 @@ func (p *Page) String() string {
 	return fmt.Sprintf("%s", bts)
 }
 
-func (p *Page) FormattedPublishedDate () (string) {
+func (p *Page) FormattedPublishedDate() (string) {
 	return p.PublishedDate.Format("_2 Jan 2006")
 }
 
-func (p *Page) SetMissingDefaults () {
+func (p *Page) SetMissingDefaults() {
 	if p.RawDynamicPage != nil && len(p.RawDynamicPage) != 0 {
 		dynamicPage := &DynamicPage{}
 		fmt.Printf("Marshalling dynamic page: %s\n", p.RawDynamicPage)
@@ -211,7 +212,6 @@ func UpdatePage(ctx context.Context, page *Page) error {
 
 	return nil
 }
-
 
 func GetPageByPath(ctx context.Context, path string) (*Page, error) {
 	pages := make([]*Page, 0)

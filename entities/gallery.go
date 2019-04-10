@@ -1,44 +1,45 @@
 package entities
 
 import (
-	"time"
+	"encoding/json"
 	"errors"
-	"html/template"
-	"strings"
+	"fmt"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
-	"encoding/json"
-	"fmt"
+	"html/template"
+	"strings"
+	"time"
 )
 
 const ENTITY_GALLERY = "gallery"
+
 var (
 	ErrGalleryNotFound = errors.New("Not Found.")
 )
 
 type Gallery struct {
-	Id int64 `datastore:"-" json:"id"`
-	Title string `datastore:"title" json:"title"`
-	Path string `datastore:"path" json:"path"`
-	Description template.HTML `datastore:"description,noindex" json:"description"`
-	MetaDescription string `datastore:"meta_description,noindex" json:"meta_description"`
-	Published bool `datastore:"published" json:"published"`
-	PublishedDate time.Time `datastore:"published_date" json:"published_date"`
-	Images []*Image `datastore:"-" json:"images"`
-	Created time.Time `datastore:"created" json:"created"`
-	ImagesJson string `datastore:"images_json,noindex" json:"-"`
+	Id              int64         `datastore:"-" json:"id"`
+	Title           string        `datastore:"title" json:"title"`
+	Path            string        `datastore:"path" json:"path"`
+	Description     template.HTML `datastore:"description,noindex" json:"description"`
+	MetaDescription string        `datastore:"meta_description,noindex" json:"meta_description"`
+	Published       bool          `datastore:"published" json:"published"`
+	PublishedDate   time.Time     `datastore:"published_date" json:"published_date"`
+	Images          []*Image      `datastore:"-" json:"images"`
+	Created         time.Time     `datastore:"created" json:"created"`
+	ImagesJson      string        `datastore:"images_json,noindex" json:"-"`
 }
 
 type Image struct {
-	Url string `datastore:"url" json:"url"`
+	Url    string `datastore:"url" json:"url"`
 	AltTag string `datastore:"alt_tag" json:"alt_tag"`
 }
 
-func (p *Gallery) FormattedPublishedDate () (string) {
+func (p *Gallery) FormattedPublishedDate() (string) {
 	return p.PublishedDate.Format("_2 Jan 2006")
 }
 
-func (p *Gallery) SetMissingDefaults () {
+func (p *Gallery) SetMissingDefaults() {
 	images := make([]*Image, 0)
 	json.Unmarshal([]byte(p.ImagesJson), &images)
 	p.Images = images
@@ -46,17 +47,17 @@ func (p *Gallery) SetMissingDefaults () {
 
 func (p *Gallery) FirstImage() *Image {
 	if len(p.Images) == 0 {
-		return &Image{Url:"/assets/images/stock.jpeg", AltTag:"stock image"}
-	}else {
+		return &Image{Url: "/assets/images/stock.jpeg", AltTag: "stock image"}
+	} else {
 		return p.Images[0]
 	}
 }
 
 func NewGallery(title string) *Gallery {
 	return &Gallery{
-		Title: title,
+		Title:   title,
 		Created: time.Now(),
-		Images: make([]*Image, 0),
+		Images:  make([]*Image, 0),
 	}
 }
 

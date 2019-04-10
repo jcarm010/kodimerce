@@ -2,15 +2,15 @@ package views
 
 import (
 	"github.com/gocraft/web"
-	"github.com/jcarm010/kodimerce/km"
+	"km"
 	"google.golang.org/appengine/log"
 	"net/http"
-	"github.com/jcarm010/kodimerce/settings"
-	"github.com/jcarm010/kodimerce/entities"
+	"settings"
+	"entities"
 	"strconv"
 	"fmt"
 	"html/template"
-	"github.com/jcarm010/kodimerce/view"
+	"view"
 	"github.com/jcarm010/feeds"
 	"time"
 	"google.golang.org/appengine/urlfetch"
@@ -479,7 +479,7 @@ func servePost(c *km.ServerContext, w web.ResponseWriter, r *web.Request, post *
 	if post.Banner != "" {
 		v.View.OgImagePath = post.Banner
 	}
-	
+
 	c.ServeHTMLTemplate(targetTemplate, v)
 }
 

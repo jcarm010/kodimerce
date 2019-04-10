@@ -1,65 +1,66 @@
 package entities
 
 import (
-	"time"
+	"encoding/json"
+	"fmt"
+	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/log"
-	"fmt"
-	"encoding/json"
 	"html/template"
-	"github.com/pkg/errors"
 	"strings"
+	"time"
 )
 
 const ENTITY_PRODUCT = "product"
 
 type Product struct {
 	//todo: add details that are not part of the description if html shows up in search engine.
-	Id int64 `datastore:"-" json:"id"`
-	Name string `datastore:"name" json:"name"`
-	Path string `datastore:"path" json:"path"`
-	IsInfinite          bool `datastore:"is_infinite" json:"is_infinite"`
-	Quantity            int `datastore:"quantity" json:"quantity"`
-	FareHarborId        string `datastore:"fareharbor_id" json:"fareharbor_id"`
-	HasRedirect         bool `datastore:"has_redirect" json:"has_redirect"`
-	RedirectUrl         string `datastore:"redirect_url" json:"redirect_url"`
-	NoShipping          bool `datastore:"no_shipping" json:"no_shipping"`
-	NeedsDate           bool `datastore:"needs_date" json:"needs_date"`
-	NeedsTime           bool `datastore:"needs_time" json:"needs_time"`
-	NeedsPickupLocation bool `datastore:"needs_pickup_location" json:"needs_pickup_location"`
-	AvailableTimes      []AvailableTime `datastore:"available_times" json:"available_times"`
-	HasPricingOptions   bool `datastore:"has_pricing_options" json:"has_pricing_options"`
-	OrderByCheapestFirst bool `datastore:"order_by_cheapest_first" json:"order_by_cheapest_first"`
-	PricingOptions      []PricingOption `datastore:"pricing_options" json:"pricing_options"`
-	Active              bool `datastore:"active" json:"active"`
-	PriceCents          int64 `datastore:"price_cents" json:"price_cents"`
-	Pictures            []string `datastore:"pictures,noindex" json:"pictures"`
-	Description         template.HTML `datastore:"description,noindex" json:"description"`
-	MetaDescription     string `datastore:"meta_description,noindex" json:"meta_description"`
-	Created             time.Time `datastore:"created" json:"created"`
+	Id                   int64           `datastore:"-" json:"id"`
+	Name                 string          `datastore:"name" json:"name"`
+	Path                 string          `datastore:"path" json:"path"`
+	IsInfinite           bool            `datastore:"is_infinite" json:"is_infinite"`
+	Quantity             int             `datastore:"quantity" json:"quantity"`
+	FareHarborId         string          `datastore:"fareharbor_id" json:"fareharbor_id"`
+	HasRedirect          bool            `datastore:"has_redirect" json:"has_redirect"`
+	RedirectUrl          string          `datastore:"redirect_url" json:"redirect_url"`
+	NoShipping           bool            `datastore:"no_shipping" json:"no_shipping"`
+	NeedsDate            bool            `datastore:"needs_date" json:"needs_date"`
+	NeedsTime            bool            `datastore:"needs_time" json:"needs_time"`
+	NeedsPickupLocation  bool            `datastore:"needs_pickup_location" json:"needs_pickup_location"`
+	AvailableTimes       []AvailableTime `datastore:"available_times" json:"available_times"`
+	HasPricingOptions    bool            `datastore:"has_pricing_options" json:"has_pricing_options"`
+	OrderByCheapestFirst bool            `datastore:"order_by_cheapest_first" json:"order_by_cheapest_first"`
+	PricingOptions       []PricingOption `datastore:"pricing_options" json:"pricing_options"`
+	Active               bool            `datastore:"active" json:"active"`
+	PriceCents           int64           `datastore:"price_cents" json:"price_cents"`
+	Pictures             []string        `datastore:"pictures,noindex" json:"pictures"`
+	Description          template.HTML   `datastore:"description,noindex" json:"description"`
+	MetaDescription      string          `datastore:"meta_description,noindex" json:"meta_description"`
+	Created              time.Time       `datastore:"created" json:"created"`
 	//these fields are here to help building the UI
 	PriceLabel string `datastore:"-" json:"price_label"`
-	Thumbnail string `datastore:"-" json:"thumbnail"`
-	Last bool `datastore:"-" json:"-"`
+	Thumbnail  string `datastore:"-" json:"thumbnail"`
+	Last       bool   `datastore:"-" json:"-"`
 }
 
 type PricingOption struct {
-	Label string `datastore:"label" json:"label"`
-	PriceCents int64 `datastore:"price_cents" json:"price_cents"`
+	Label      string `datastore:"label" json:"label"`
+	PriceCents int64  `datastore:"price_cents" json:"price_cents"`
 }
 
 type ByCheapestPrice []PricingOption
+
 func (a ByCheapestPrice) Len() int           { return len(a) }
 func (a ByCheapestPrice) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByCheapestPrice) Less(i, j int) bool { return a[i].PriceCents < a[j].PriceCents }
 
 type AvailableTime struct {
-	Hour int `datastore:"hour" json:"hour"`
+	Hour   int `datastore:"hour" json:"hour"`
 	Minute int `datastore:"minute" json:"minute"`
 }
 
-func (t *AvailableTime) String () string {
+func (t *AvailableTime) String() string {
 	hour := fmt.Sprintf("%v", t.Hour)
 	if t.Hour < 10 {
 		hour = fmt.Sprintf("0%v", t.Hour)
@@ -69,7 +70,6 @@ func (t *AvailableTime) String () string {
 	if t.Minute < 10 {
 		minute = fmt.Sprintf("0%v", t.Minute)
 	}
-
 
 	amHour := t.Hour % 12
 	amHourLabel := fmt.Sprintf("%v", amHour)
@@ -86,11 +86,12 @@ func (t *AvailableTime) String () string {
 }
 
 type ByAvailableTime []AvailableTime
+
 func (a ByAvailableTime) Len() int           { return len(a) }
 func (a ByAvailableTime) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a ByAvailableTime) Less(i, j int) bool { return a[i].Hour * 60 + a[i].Minute < a[j].Hour * 60 + a[j].Minute }
+func (a ByAvailableTime) Less(i, j int) bool { return a[i].Hour*60+a[i].Minute < a[j].Hour*60+a[j].Minute }
 
-func (p *Product) SetMissingDefaults () {
+func (p *Product) SetMissingDefaults() {
 	if p.Pictures == nil {
 		p.Pictures = make([]string, 0)
 	}
@@ -157,9 +158,9 @@ func (p *Product) PicturesJson() string {
 
 func NewProduct(name string) *Product {
 	return &Product{
-		Name: name,
-		Created: time.Now(),
-		Pictures: make([]string,0),
+		Name:           name,
+		Created:        time.Now(),
+		Pictures:       make([]string, 0),
 		AvailableTimes: make([]AvailableTime, 0),
 	}
 }
@@ -323,7 +324,7 @@ func GetProducts(ctx context.Context, productIds []int64) ([]*Product, error) {
 	return products, nil
 }
 
-func GetProductsInCategories(ctx context.Context, categories []*Category) ([]*Product, error){
+func GetProductsInCategories(ctx context.Context, categories []*Category) ([]*Product, error) {
 	log.Debugf(ctx, "Finding products in categories: %+v", categories)
 	query := datastore.NewQuery(ENTITY_CATEGORY_PRODUCT)
 	keyLookup := map[int64]bool{}

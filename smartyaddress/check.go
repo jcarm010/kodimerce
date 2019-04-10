@@ -3,7 +3,7 @@ package smartyaddress
 import (
 	"google.golang.org/appengine/urlfetch"
 	"net/url"
-	"github.com/jcarm010/kodimerce/settings"
+	"settings"
 	"io/ioutil"
 	"google.golang.org/appengine/log"
 	"net/http"

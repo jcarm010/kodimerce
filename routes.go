@@ -2,9 +2,9 @@ package server
 
 import (
 	"github.com/gocraft/web"
+	"km"
 	"net/http"
-	"github.com/jcarm010/kodimerce/km"
-	"github.com/jcarm010/kodimerce/views"
+	"views"
 )
 
 func init() {
@@ -13,7 +13,6 @@ func init() {
 		Middleware((*km.ServerContext).InitServerContext).
 		Middleware((*km.ServerContext).SetRedirects).
 		Middleware((*km.ServerContext).SetCORS)
-
 
 	router = router.Middleware((*km.ServerContext).RedirectWWW)
 
