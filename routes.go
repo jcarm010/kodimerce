@@ -3,8 +3,8 @@ package server
 import (
 	"github.com/gocraft/web"
 	"github.com/jcarm010/kodimerce/km"
-	"net/http"
 	"github.com/jcarm010/kodimerce/views"
+	"net/http"
 )
 
 func init() {
@@ -76,6 +76,7 @@ func init() {
 		Put("/km/gallery", (*km.AdminContext).UpdateGallery).
 		Get("/gallery/upload", (*km.AdminContext).GetGalleryUploads).
 		Post("/gallery/upload", (*km.AdminContext).PostGalleryUpload).
+		Get("/gallery/upload/init", (*km.AdminContext).InitSearchAPI).
 		Delete("/gallery/upload", (*km.AdminContext).DeleteGalleryUpload).
 		Get("/gallery/upload/url", (*km.AdminContext).GetGalleryUploadUrl).
 		Get("/order", (*km.AdminContext).GetOrders).

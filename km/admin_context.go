@@ -1,14 +1,14 @@
 package km
 
 import (
-	"github.com/jcarm010/kodimerce/entities"
 	"fmt"
 	"github.com/gocraft/web"
+	"github.com/jcarm010/kodimerce/entities"
+	"github.com/jcarm010/kodimerce/settings"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/blobstore"
 	"google.golang.org/appengine/log"
 	"net/http"
-	"github.com/jcarm010/kodimerce/settings"
 	"sort"
 	"strconv"
 	"strings"
@@ -353,6 +353,7 @@ func (c *AdminContext) DeleteGalleryUpload(w web.ResponseWriter, r *web.Request)
 func (c *AdminContext) GetGalleryUploads(w web.ResponseWriter, r *web.Request) {
 	q := r.URL.Query()
 	cursor := q.Get("cursor")
+	search := q.Get("search")
 	limit, err := strconv.ParseInt(q.Get("limit"), 10, 64)
 	if err != nil {
 		log.Errorf(c.Context, "Error parsing limit to int %s", err)
@@ -360,7 +361,7 @@ func (c *AdminContext) GetGalleryUploads(w web.ResponseWriter, r *web.Request) {
 		return
 	}
 
-	blobs, err := entities.ListUploads(c.Context, cursor, int(limit))
+	blobs, err := entities.ListUploads(c.Context, cursor, int(limit), search)
 	if err != nil {
 		log.Errorf(c.Context, "Error fetching blobs: %+v", err)
 		c.ServeJson(http.StatusInternalServerError, "Unexpected error getting uploads")
@@ -368,6 +369,17 @@ func (c *AdminContext) GetGalleryUploads(w web.ResponseWriter, r *web.Request) {
 	}
 
 	c.ServeJson(http.StatusOK, blobs)
+}
+
+func (c *AdminContext) InitSearchAPI(w web.ResponseWriter, r *web.Request) {
+	err := entities.InitSearchAPI(c.Context)
+	if err != nil {
+		log.Errorf(c.Context, "Error initializing search api %s", err)
+		c.ServeHTML(http.StatusNotFound, "Error initializing search api")
+		return
+	}
+
+	c.ServeJson(http.StatusOK, "ok")
 }
 
 func (c *ServerContext) GetGalleryUploadByName(w web.ResponseWriter, r *web.Request) {

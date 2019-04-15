@@ -5,6 +5,8 @@ import (
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/blobstore"
 	"google.golang.org/appengine/datastore"
+	"github.com/jcarm010/kodimerce/search_api"
+	"strconv"
 	"strings"
 )
 
@@ -15,38 +17,80 @@ type BlobResponse struct {
 
 const ENTITY_BLOB = "__BlobInfo__"
 
-func ListUploads(ctx context.Context, cursorStr string, limit int) (*BlobResponse, error) {
-	query := datastore.NewQuery(ENTITY_BLOB).Limit(limit)
-	if cursorStr != "" {
-		cursor, err := datastore.DecodeCursor(cursorStr)
-		if err != nil {
-			return nil, err
-		}
-
-		query = query.Start(cursor)
-	}
-
-	t := query.Run(ctx)
+func InitSearchAPI(ctx context.Context) error {
 	blobs := make([]*blobstore.BlobInfo, 0)
-	for {
-		var blob blobstore.BlobInfo
-		key, err := t.Next(&blob)
-		if err == datastore.Done {
-			break
+	keys, err := datastore.NewQuery(ENTITY_BLOB).GetAll(ctx, &blobs)
+	if err != nil {
+		index := strings.Index(err.Error(), "datastore: cannot load field")
+		if index != 0 {
+			return err
 		}
-
-		if err != nil {
-			return nil, err
-		}
-
-		blob.BlobKey = appengine.BlobKey(key.StringID())
-		blobs = append(blobs, &blob)
 	}
 
-	if cursor, err := t.Cursor(); err == nil {
-		cursorStr = cursor.String()
+	searchClient := search_api.NewClient(ctx)
+	for i, blob := range blobs {
+		sizeString := strconv.Itoa(int(blob.Size))
+		searchBlob := search_api.SearchBlob{
+			BlobKey:      keys[i].StringID(),
+			ContentType:  blob.ContentType,
+			CreationTime: blob.CreationTime,
+			Filename:     blob.Filename,
+			MD5:          blob.MD5,
+			ObjectName:   blob.ObjectName,
+			Size:         sizeString,
+		}
+
+		err = searchClient.Init(searchBlob)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func ListUploads(ctx context.Context, cursorStr string, limit int, search string) (*BlobResponse, error) {
+	blobs := make([]*blobstore.BlobInfo, 0)
+	var err error
+	if search != "" {
+		searchClient := search_api.NewClient(ctx)
+		blobs, cursorStr, err = searchClient.GetBlobs(search, limit, cursorStr)
 		if err != nil {
 			return nil, err
+		}
+
+	} else {
+		query := datastore.NewQuery(ENTITY_BLOB).Limit(limit)
+		if cursorStr != "" {
+			cursor, err := datastore.DecodeCursor(cursorStr)
+			if err != nil {
+				return nil, err
+			}
+
+			query = query.Start(cursor)
+		}
+
+		t := query.Run(ctx)
+		for {
+			var blob blobstore.BlobInfo
+			key, err := t.Next(&blob)
+			if err == datastore.Done {
+				break
+			}
+
+			if err != nil {
+				return nil, err
+			}
+
+			blob.BlobKey = appengine.BlobKey(key.StringID())
+			blobs = append(blobs, &blob)
+		}
+
+		if cursor, err := t.Cursor(); err == nil {
+			cursorStr = cursor.String()
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -54,6 +98,7 @@ func ListUploads(ctx context.Context, cursorStr string, limit int) (*BlobRespons
 		Blobs:  blobs,
 		Cursor: cursorStr,
 	}
+
 	return &blobResp, nil
 }
 
