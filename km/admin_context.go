@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gocraft/web"
 	"github.com/jcarm010/kodimerce/entities"
+	"github.com/jcarm010/kodimerce/search_api"
 	"github.com/jcarm010/kodimerce/settings"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/blobstore"
@@ -332,6 +333,27 @@ func (c *AdminContext) PostGalleryUpload(w web.ResponseWriter, r *web.Request) {
 		return
 	}
 	//key := file[0].BlobKey
+
+	searchClient := search_api.NewClient(c.Context)
+	for _, blob := range blobs["file"] {
+		sizeString := strconv.Itoa(int(blob.Size))
+		searchBlob := search_api.SearchBlob{
+			BlobKey:      string(blob.BlobKey),
+			ContentType:  blob.ContentType,
+			CreationTime: blob.CreationTime,
+			Filename:     blob.Filename,
+			MD5:          blob.MD5,
+			ObjectName:   blob.ObjectName,
+			Size:         sizeString,
+		}
+
+		err = searchClient.PutBlob(searchBlob)
+		if err != nil {
+			log.Errorf(c.Context, "Error adding file to search api: %+v", err)
+			c.ServeJson(http.StatusInternalServerError, "Unexpected error adding file to search api")
+			return
+		}
+	}
 	c.ServeJson(http.StatusOK, file)
 }
 
@@ -346,6 +368,14 @@ func (c *AdminContext) DeleteGalleryUpload(w web.ResponseWriter, r *web.Request)
 	if err != nil {
 		log.Errorf(c.Context, "Error removing file: %+v", err)
 		c.ServeJson(http.StatusInternalServerError, "Unexpected error removing file")
+		return
+	}
+
+	searchClient := search_api.NewClient(c.Context)
+	err = searchClient.DeleteIndex(key)
+	if err != nil {
+		log.Errorf(c.Context, "Error removing file from search api: %+v", err)
+		c.ServeJson(http.StatusInternalServerError, "Unexpected error removing file from search api")
 		return
 	}
 }

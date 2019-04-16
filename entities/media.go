@@ -1,11 +1,11 @@
 package entities
 
 import (
+	"github.com/jcarm010/kodimerce/search_api"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/blobstore"
 	"google.golang.org/appengine/datastore"
-	"github.com/jcarm010/kodimerce/search_api"
 	"strconv"
 	"strings"
 )
@@ -13,6 +13,7 @@ import (
 type BlobResponse struct {
 	Blobs  []*blobstore.BlobInfo `json:"blobs"`
 	Cursor string                `json:"cursor"`
+	Total  int                   `json:"total"`
 }
 
 const ENTITY_BLOB = "__BlobInfo__"
@@ -52,14 +53,20 @@ func InitSearchAPI(ctx context.Context) error {
 func ListUploads(ctx context.Context, cursorStr string, limit int, search string) (*BlobResponse, error) {
 	blobs := make([]*blobstore.BlobInfo, 0)
 	var err error
+	var total int
 	if search != "" {
 		searchClient := search_api.NewClient(ctx)
-		blobs, cursorStr, err = searchClient.GetBlobs(search, limit, cursorStr)
+		blobs, cursorStr, total, err = searchClient.GetBlobs(search, limit, cursorStr)
 		if err != nil {
 			return nil, err
 		}
 
 	} else {
+		total, err = datastore.NewQuery(ENTITY_BLOB).Count(ctx)
+		if err != nil {
+			return nil, err
+		}
+
 		query := datastore.NewQuery(ENTITY_BLOB).Limit(limit)
 		if cursorStr != "" {
 			cursor, err := datastore.DecodeCursor(cursorStr)
@@ -97,6 +104,7 @@ func ListUploads(ctx context.Context, cursorStr string, limit int, search string
 	blobResp := BlobResponse{
 		Blobs:  blobs,
 		Cursor: cursorStr,
+		Total:  total,
 	}
 
 	return &blobResp, nil

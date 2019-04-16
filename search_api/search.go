@@ -6,6 +6,7 @@ import (
 	"google.golang.org/appengine/blobstore"
 	"google.golang.org/appengine/search"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -25,6 +26,7 @@ type SearchBlob struct {
 	MD5          string    `datastore:"md5_hash"`
 	ObjectName   string    `datastore:"gs_object_name"`
 	Size         string    `datastore:"size"`
+	Title        string    `datastore:"title"`
 }
 
 func NewClient(ctx context.Context) Client {
@@ -39,6 +41,7 @@ func (s Client) Init(blob SearchBlob) error {
 		return err
 	}
 
+	blob.Title = createTitle(blob.Filename)
 	_, err = index.Put(s.Context, blob.BlobKey, &blob)
 	if err != nil {
 		return err
@@ -47,13 +50,14 @@ func (s Client) Init(blob SearchBlob) error {
 	return nil
 }
 
-func (s Client) PutBlob(blob blobstore.BlobInfo) error {
+func (s Client) PutBlob(blob SearchBlob) error {
 	index, err := search.Open(BlobIndexName)
 	if err != nil {
 		return err
 	}
 
-	_, err = index.Put(s.Context, string(blob.BlobKey), &blob)
+	blob.Title = createTitle(blob.Filename)
+	_, err = index.Put(s.Context, blob.BlobKey, &blob)
 	if err != nil {
 		return err
 	}
@@ -61,24 +65,10 @@ func (s Client) PutBlob(blob blobstore.BlobInfo) error {
 	return nil
 }
 
-func (s Client) RemoveBlob(blob blobstore.BlobInfo) error {
+func (s Client) GetBlobs(searchKey string, limit int, cursorStr string) ([]*blobstore.BlobInfo, string, int, error) {
 	index, err := search.Open(BlobIndexName)
 	if err != nil {
-		return err
-	}
-
-	err = index.Delete(s.Context, string(blob.BlobKey))
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s Client) GetBlobs(searchKey string, limit int, cursorStr string) ([]*blobstore.BlobInfo, string, error) {
-	index, err := search.Open(BlobIndexName)
-	if err != nil {
-		return nil, "", err
+		return nil, "", 0, err
 	}
 
 	blobs := make([]*blobstore.BlobInfo, 0)
@@ -88,7 +78,8 @@ func (s Client) GetBlobs(searchKey string, limit int, cursorStr string) ([]*blob
 	}
 
 	var cursor string
-	for t := index.Search(s.Context, "Filename:"+searchKey, &options); ; {
+	var total int
+	for t := index.Search(s.Context, searchKey, &options); ; {
 		var temp SearchBlob
 		id, err := t.Next(&temp)
 		if err == search.Done {
@@ -96,12 +87,12 @@ func (s Client) GetBlobs(searchKey string, limit int, cursorStr string) ([]*blob
 		}
 
 		if err != nil {
-			return nil, "", err
+			return nil, "", 0, err
 		}
 
 		sizeInt, err := strconv.Atoi(temp.Size)
 		if err != nil {
-			return nil, "", err
+			return nil, "", 0, err
 		}
 
 		blob := blobstore.BlobInfo{
@@ -115,22 +106,27 @@ func (s Client) GetBlobs(searchKey string, limit int, cursorStr string) ([]*blob
 
 		blobs = append(blobs, &blob)
 		cursor = string(t.Cursor())
+		total = t.Count()
 	}
 
-	return blobs, cursor, nil
+	return blobs, cursor, total, nil
 
 }
 
-func (s Client) DeleteIndex(blob SearchBlob) error {
+func (s Client) DeleteIndex(key string) error {
 	index, err := search.Open(BlobIndexName)
 	if err != nil {
 		return err
 	}
 
-	err = index.Delete(s.Context, string(blob.BlobKey))
+	err = index.Delete(s.Context, key)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func createTitle(fileName string) string {
+	return strings.Replace(fileName, "-", " ", -1)
 }
