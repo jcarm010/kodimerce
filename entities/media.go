@@ -85,7 +85,7 @@ func ListUploads(ctx context.Context, cursorStr string, limit int, search string
 				break
 			}
 
-			if err != nil {
+			if err != nil && err != err.(*datastore.ErrFieldMismatch) {
 				return nil, err
 			}
 
