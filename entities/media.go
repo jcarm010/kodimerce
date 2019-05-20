@@ -57,7 +57,7 @@ func ListUploads(ctx context.Context, cursorStr string, limit int, search string
 	if search != "" {
 		searchClient := search_api.NewClient(ctx)
 		blobs, cursorStr, total, err = searchClient.GetBlobs(search, limit, cursorStr)
-		if err != nil {
+		if err != nil && err != err.(*datastore.ErrFieldMismatch){
 			return nil, err
 		}
 
