@@ -3,7 +3,6 @@ package search_api
 import (
 	"context"
 	"google.golang.org/appengine"
-	"google.golang.org/appengine/blobstore"
 	"google.golang.org/appengine/search"
 	"strconv"
 	"strings"
@@ -65,13 +64,13 @@ func (s Client) PutBlob(blob SearchBlob) error {
 	return nil
 }
 
-func (s Client) GetBlobs(searchKey string, limit int, cursorStr string) ([]*blobstore.BlobInfo, string, int, error) {
+func (s Client) GetBlobs(searchKey string, limit int, cursorStr string) ([]*BlobInfo, string, int, error) {
 	index, err := search.Open(BlobIndexName)
 	if err != nil {
 		return nil, "", 0, err
 	}
 
-	blobs := make([]*blobstore.BlobInfo, 0)
+	blobs := make([]*BlobInfo, 0)
 	options := search.SearchOptions{
 		Limit:  limit,
 		Cursor: search.Cursor(cursorStr),
@@ -95,7 +94,7 @@ func (s Client) GetBlobs(searchKey string, limit int, cursorStr string) ([]*blob
 			return nil, "", 0, err
 		}
 
-		blob := blobstore.BlobInfo{
+		blob := BlobInfo{
 			BlobKey:      appengine.BlobKey(id),
 			ContentType:  temp.ContentType,
 			CreationTime: temp.CreationTime,

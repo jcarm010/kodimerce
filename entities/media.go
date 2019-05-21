@@ -4,22 +4,21 @@ import (
 	"github.com/jcarm010/kodimerce/search_api"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine"
-	"google.golang.org/appengine/blobstore"
 	"google.golang.org/appengine/datastore"
 	"strconv"
 	"strings"
 )
 
 type BlobResponse struct {
-	Blobs  []*blobstore.BlobInfo `json:"blobs"`
-	Cursor string                `json:"cursor"`
-	Total  int                   `json:"total"`
+	Blobs  []*search_api.BlobInfo `json:"blobs"`
+	Cursor string      `json:"cursor"`
+	Total  int         `json:"total"`
 }
 
 const ENTITY_BLOB = "__BlobInfo__"
 
 func InitSearchAPI(ctx context.Context) error {
-	blobs := make([]*blobstore.BlobInfo, 0)
+	blobs := make([]*search_api.BlobInfo, 0)
 	keys, err := datastore.NewQuery(ENTITY_BLOB).GetAll(ctx, &blobs)
 	if err != nil {
 		index := strings.Index(err.Error(), "datastore: cannot load field")
@@ -51,13 +50,13 @@ func InitSearchAPI(ctx context.Context) error {
 }
 
 func ListUploads(ctx context.Context, cursorStr string, limit int, search string) (*BlobResponse, error) {
-	blobs := make([]*blobstore.BlobInfo, 0)
+	blobs := make([]*search_api.BlobInfo, 0)
 	var err error
 	var total int
 	if search != "" {
 		searchClient := search_api.NewClient(ctx)
 		blobs, cursorStr, total, err = searchClient.GetBlobs(search, limit, cursorStr)
-		if err != nil && err != err.(*datastore.ErrFieldMismatch){
+		if err != nil {
 			return nil, err
 		}
 
@@ -70,6 +69,7 @@ func ListUploads(ctx context.Context, cursorStr string, limit int, search string
 		query := datastore.NewQuery(ENTITY_BLOB).Limit(limit)
 		if cursorStr != "" {
 			cursor, err := datastore.DecodeCursor(cursorStr)
+
 			if err != nil {
 				return nil, err
 			}
@@ -79,13 +79,13 @@ func ListUploads(ctx context.Context, cursorStr string, limit int, search string
 
 		t := query.Run(ctx)
 		for {
-			var blob blobstore.BlobInfo
+			var blob search_api.BlobInfo
 			key, err := t.Next(&blob)
 			if err == datastore.Done {
 				break
 			}
 
-			if err != nil && err != err.(*datastore.ErrFieldMismatch) {
+			if err != nil {
 				return nil, err
 			}
 
@@ -110,8 +110,8 @@ func ListUploads(ctx context.Context, cursorStr string, limit int, search string
 	return &blobResp, nil
 }
 
-func GetUpload(ctx context.Context, key appengine.BlobKey) (*blobstore.BlobInfo, error) {
-	blob := &blobstore.BlobInfo{}
+func GetUpload(ctx context.Context, key appengine.BlobKey) (*search_api.BlobInfo, error) {
+	blob := &search_api.BlobInfo{}
 	k := datastore.NewKey(ctx, ENTITY_BLOB, string(key), 0, nil)
 	err := datastore.Get(ctx, k, blob)
 	if err != nil {
@@ -125,8 +125,8 @@ func GetUpload(ctx context.Context, key appengine.BlobKey) (*blobstore.BlobInfo,
 	return blob, nil
 }
 
-func GetUploadByName(ctx context.Context, name string) (*blobstore.BlobInfo, error) {
-	blobs := make([]*blobstore.BlobInfo, 0)
+func GetUploadByName(ctx context.Context, name string) (*search_api.BlobInfo, error) {
+	blobs := make([]*search_api.BlobInfo, 0)
 	keys, err := datastore.NewQuery(ENTITY_BLOB).Filter("filename=", name).Limit(1).GetAll(ctx, &blobs)
 	if err != nil {
 		index := strings.Index(err.Error(), "datastore: cannot load field")
