@@ -4,10 +4,13 @@ import (
 	"github.com/gocraft/web"
 	"github.com/jcarm010/kodimerce/km"
 	"github.com/jcarm010/kodimerce/views"
+	"math/rand"
 	"net/http"
+	"time"
 )
 
 func init() {
+	rand.Seed(time.Now().UnixNano())
 	router := web.New(km.ServerContext{}).
 		Middleware(web.LoggerMiddleware).
 		Middleware((*km.ServerContext).InitServerContext).

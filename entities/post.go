@@ -2,14 +2,14 @@ package entities
 
 import (
 	"errors"
+	"github.com/jcarm010/kodimerce/datastore"
 	"golang.org/x/net/context"
-	"google.golang.org/appengine/datastore"
 	"html/template"
 	"strings"
 	"time"
 )
 
-const ENTITY_POST = "post"
+const EntityPost = "post"
 
 var (
 	ErrPostNotFound = errors.New("Not Found.")
@@ -31,15 +31,17 @@ type Post struct {
 
 type ByNewestFirst []*Post
 
-func (a ByNewestFirst) Len() int           { return len(a) }
-func (a ByNewestFirst) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a ByNewestFirst) Less(i, j int) bool { return a[j].PublishedDate.Unix() < a[i].PublishedDate.Unix() }
+func (a ByNewestFirst) Len() int      { return len(a) }
+func (a ByNewestFirst) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a ByNewestFirst) Less(i, j int) bool {
+	return a[j].PublishedDate.Unix() < a[i].PublishedDate.Unix()
+}
 
-func (p *Post) FormattedPublishedDate() (string) {
+func (p *Post) FormattedPublishedDate() string {
 	return p.FormattedDateDMY(p.PublishedDate)
 }
 
-func (p *Post) FormattedDateDMY(dte time.Time) (string) {
+func (p *Post) FormattedDateDMY(dte time.Time) string {
 	return dte.Format("_2 Jan 2006")
 }
 
@@ -64,7 +66,7 @@ func CreatePost(ctx context.Context, title string) (*Post, error) {
 	p.Path = strings.ToLower(p.Path)
 	p.Path = strings.Replace(p.Path, " ", "-", -1)
 	p.Path = strings.Replace(p.Path, "'", "", -1)
-	key, err := datastore.Put(ctx, datastore.NewIncompleteKey(ctx, ENTITY_POST, nil), p)
+	key, err := datastore.Put(ctx, datastore.NewIncompleteKey(ctx, EntityPost, nil), p)
 	if err != nil {
 		return nil, err
 	}
@@ -75,10 +77,10 @@ func CreatePost(ctx context.Context, title string) (*Post, error) {
 }
 
 func UpdatePost(ctx context.Context, post *Post) error {
-	key := datastore.NewKey(ctx, ENTITY_POST, "", post.Id, nil)
-	err := datastore.RunInTransaction(ctx, func(ctx context.Context) error {
+	key := datastore.NewKey(ctx, EntityPost, "", post.Id, nil)
+	err := datastore.RunInTransaction(ctx, func(transaction *datastore.Transaction) error {
 		p := &Post{}
-		err := datastore.Get(ctx, key, p)
+		err := transaction.Get(key, p)
 		if err != nil {
 			return err
 		}
@@ -95,9 +97,9 @@ func UpdatePost(ctx context.Context, post *Post) error {
 		}
 		p.UpdatedDate = time.Now()
 		p.Published = post.Published
-		_, err = datastore.Put(ctx, key, p)
+		_, err = transaction.Put(key, p)
 		return err
-	}, nil)
+	})
 
 	if err != nil {
 		return err
@@ -112,7 +114,7 @@ func ListPosts(ctx context.Context, published bool, limit int) ([]*Post, error) 
 		return posts, nil
 	}
 
-	q := datastore.NewQuery(ENTITY_POST)
+	q := datastore.NewQuery(EntityPost)
 	if published {
 		q = q.Filter("published=", published).
 			Order("-published_date")
@@ -124,7 +126,7 @@ func ListPosts(ctx context.Context, published bool, limit int) ([]*Post, error) 
 		q = q.Limit(limit)
 	}
 
-	keys, err := q.GetAll(ctx, &posts)
+	keys, err := datastore.GetAll(ctx, q, &posts)
 	if err != nil {
 		return nil, err
 	}
@@ -140,10 +142,9 @@ func ListPosts(ctx context.Context, published bool, limit int) ([]*Post, error) 
 
 func GetPostByPath(ctx context.Context, path string) (*Post, error) {
 	posts := make([]*Post, 0)
-	keys, err := datastore.NewQuery(ENTITY_POST).
+	keys, err := datastore.GetAll(ctx, datastore.NewQuery(EntityPost).
 		Filter("path=", path).
-		Limit(1).
-		GetAll(ctx, &posts)
+		Limit(1), &posts)
 
 	if err != nil {
 		return nil, err

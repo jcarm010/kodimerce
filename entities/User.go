@@ -2,14 +2,14 @@ package entities
 
 import (
 	"errors"
+	"github.com/jcarm010/kodimerce/datastore"
 	"github.com/satori/go.uuid"
 	"golang.org/x/net/context"
-	"google.golang.org/appengine/datastore"
 )
 
 const (
-	ENTITY_USER         = "user"
-	ENTITY_USER_SESSION = "user_session"
+	EntityUser        = "user"
+	EntityUserSession = "user_session"
 )
 
 var (
@@ -43,23 +43,23 @@ func NewUserSession(sessionToken string, email string) *UserSession {
 }
 
 func CreateUser(ctx context.Context, user *User) error {
-	key := datastore.NewKey(ctx, ENTITY_USER, user.Email, 0, nil)
-	err := datastore.RunInTransaction(ctx, func(ctx context.Context) error {
+	key := datastore.NewKey(ctx, EntityUser, user.Email, 0, nil)
+	err := datastore.RunInTransaction(ctx, func(transaction *datastore.Transaction) error {
 		u := &User{}
-		err := datastore.Get(ctx, key, u)
+		err := transaction.Get(key, u)
 		if err != nil && err != datastore.ErrNoSuchEntity {
 			return err
 		} else if err == nil {
 			return ErrUserAlreadyExists
 		}
 
-		_, err = datastore.Put(ctx, key, user)
+		_, err = transaction.Put(key, user)
 		if err != nil {
 			return err
 		}
 
 		return nil
-	}, nil)
+	})
 
 	if err != nil {
 		return err
@@ -69,13 +69,13 @@ func CreateUser(ctx context.Context, user *User) error {
 }
 
 func UpdateUser(ctx context.Context, user *User) error {
-	key := datastore.NewKey(ctx, ENTITY_USER, user.Email, 0, nil)
+	key := datastore.NewKey(ctx, EntityUser, user.Email, 0, nil)
 	_, err := datastore.Put(ctx, key, user)
 	return err
 }
 
 func GetUser(ctx context.Context, email string) (*User, error) {
-	key := datastore.NewKey(ctx, ENTITY_USER, email, 0, nil)
+	key := datastore.NewKey(ctx, EntityUser, email, 0, nil)
 	u := &User{}
 	err := datastore.Get(ctx, key, u)
 	if err != nil {
@@ -93,7 +93,7 @@ func CreateUserSession(ctx context.Context, email string) (*UserSession, error) 
 	}
 
 	userSession := NewUserSession(nUdid.String(), email)
-	key := datastore.NewKey(ctx, ENTITY_USER_SESSION, userSession.SessionToken, 0, nil)
+	key := datastore.NewKey(ctx, EntityUserSession, userSession.SessionToken, 0, nil)
 	_, err = datastore.Put(ctx, key, userSession)
 	if err != nil {
 		return nil, err
@@ -103,7 +103,7 @@ func CreateUserSession(ctx context.Context, email string) (*UserSession, error) 
 }
 
 func GetUserSession(ctx context.Context, sessionToken string) (*UserSession, error) {
-	key := datastore.NewKey(ctx, ENTITY_USER_SESSION, sessionToken, 0, nil)
+	key := datastore.NewKey(ctx, EntityUserSession, sessionToken, 0, nil)
 	userSession := &UserSession{}
 	err := datastore.Get(ctx, key, userSession)
 	if err != nil {

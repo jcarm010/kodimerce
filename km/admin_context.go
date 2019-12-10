@@ -1,14 +1,20 @@
 package km
 
 import (
+	"context"
+	"crypto/md5"
 	"fmt"
 	"github.com/gocraft/web"
 	"github.com/jcarm010/kodimerce/entities"
+	"github.com/jcarm010/kodimerce/log"
 	"github.com/jcarm010/kodimerce/search_api"
 	"github.com/jcarm010/kodimerce/settings"
+	"github.com/jcarm010/kodimerce/storage"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/blobstore"
-	"google.golang.org/appengine/log"
+	"io"
+	"math/rand"
+	"mime/multipart"
 	"net/http"
 	"sort"
 	"strconv"
@@ -308,53 +314,80 @@ func (c *AdminContext) UnsetCategoryProducts(w web.ResponseWriter, r *web.Reques
 }
 
 func (c *AdminContext) GetGalleryUploadUrl(w web.ResponseWriter, r *web.Request) {
-	uploadURL, err := blobstore.UploadURL(c.Context, "/admin/gallery/upload", nil)
+	uploadURL := "/admin/gallery/upload"
+	log.Infof(c.Context, "Upload url: %+v", uploadURL)
+	c.ServeJson(http.StatusOK, uploadURL)
+}
+
+func createStorageFile(ctx context.Context, objectName string, file *multipart.FileHeader) (md5Hash string, err error) {
+	f, err := file.Open()
 	if err != nil {
-		log.Errorf(c.Context, "Error creating blobstore url")
-		c.ServeJson(http.StatusInternalServerError, "Unexpected error creating upload url")
-		return
+		return "", err
 	}
 
-	log.Infof(c.Context, "Upload url: %+v", uploadURL)
-	c.ServeJson(http.StatusOK, uploadURL.String())
+	defer func() {
+		_ = f.Close()
+	}()
+
+	h := md5.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return "", err
+	}
+
+	md5Hash = fmt.Sprintf("%x", h.Sum(nil))
+	_, err = f.Seek(0,0)
+	if err != nil {
+		return "", err
+	}
+
+	return md5Hash, storage.PutObject(ctx, objectName, f)
 }
 
 func (c *AdminContext) PostGalleryUpload(w web.ResponseWriter, r *web.Request) {
-	blobs, _, err := blobstore.ParseUpload(r.Request)
+	err := r.ParseMultipartForm(32 << 20 /*32 MB*/)
 	if err != nil {
-		log.Errorf(c.Context, "Error parsing upload: %+v", err)
+		log.Errorf(c.Context, "Error parsing form: %+v", err)
 		c.ServeJson(http.StatusBadRequest, "Could not parse upload.")
 		return
 	}
-	file := blobs["file"]
-	if len(file) == 0 {
-		log.Errorf(c.Context, "No file uploaded")
-		c.ServeJson(http.StatusBadRequest, "No file uploaded")
-		return
-	}
-	//key := file[0].BlobKey
 
-	searchClient := search_api.NewClient(c.Context)
-	for _, blob := range blobs["file"] {
-		sizeString := strconv.Itoa(int(blob.Size))
-		searchBlob := search_api.SearchBlob{
-			BlobKey:      string(blob.BlobKey),
-			ContentType:  blob.ContentType,
-			CreationTime: blob.CreationTime,
-			Filename:     blob.Filename,
-			MD5:          blob.MD5,
-			ObjectName:   blob.ObjectName,
-			Size:         sizeString,
-		}
-
-		err = searchClient.PutBlob(searchBlob)
+	storedFiles := make([]*search_api.BlobInfo, 0)
+	files := r.MultipartForm.File["file"]
+	for _, file := range files {
+		key := RandStringRunes(20)
+		objectName := "uploads/" + key + "/" + file.Filename
+		md5Hash, err := createStorageFile(r.Context(), objectName, file)
 		if err != nil {
-			log.Errorf(c.Context, "Error adding file to search api: %+v", err)
-			c.ServeJson(http.StatusInternalServerError, "Unexpected error adding file to search api")
+			log.Errorf(c.Context, "Error storing file: %+v", err)
+			c.ServeJson(http.StatusBadRequest, "Could not store upload.")
 			return
 		}
+
+
+		log.Infof(r.Context(), "Size: %+v", file.Size)
+		log.Infof(r.Context(), "Header: %+v", file.Header)
+		searchBlob := &search_api.BlobInfo {
+			BlobKey:      key,
+			ContentType:  file.Header.Get("Content-Type"),
+			CreationTime: time.Now(),
+			Filename:     file.Filename,
+			MD5:          md5Hash,
+			ObjectName:   objectName,
+			Size:         file.Size,
+		}
+
+		log.Infof(r.Context(), "==================File: \n%+v", searchBlob)
+		err = entities.PutUpload(r.Context(), searchBlob)
+		if err != nil {
+			log.Errorf(c.Context, "Error storing file in datastore: %+v", err)
+			c.ServeJson(http.StatusBadRequest, "Could not store upload.")
+			return
+		}
+
+		storedFiles = append(storedFiles, searchBlob)
 	}
-	c.ServeJson(http.StatusOK, file)
+
+	c.ServeJson(http.StatusOK, storedFiles)
 }
 
 func (c *AdminContext) DeleteGalleryUpload(w web.ResponseWriter, r *web.Request) {
@@ -384,11 +417,15 @@ func (c *AdminContext) GetGalleryUploads(w web.ResponseWriter, r *web.Request) {
 	q := r.URL.Query()
 	cursor := q.Get("cursor")
 	search := q.Get("search")
-	limit, err := strconv.ParseInt(q.Get("limit"), 10, 64)
-	if err != nil {
-		log.Errorf(c.Context, "Error parsing limit to int %s", err)
-		c.ServeJson(http.StatusInternalServerError, "Error parsing limit to int")
-		return
+	var limit int64 = 10
+	var err error
+	if q.Get("limit") != "" {
+		limit, err = strconv.ParseInt(q.Get("limit"), 10, 64)
+		if err != nil {
+			log.Errorf(c.Context, "Error parsing limit to int %s", err)
+			c.ServeJson(http.StatusInternalServerError, "Error parsing limit to int")
+			return
+		}
 	}
 
 	blobs, err := entities.ListUploads(c.Context, cursor, int(limit), search)
@@ -428,11 +465,21 @@ func (c *ServerContext) GetGalleryUploadByName(w web.ResponseWriter, r *web.Requ
 	}
 
 	contentType := upload.ContentType
-	//Content-Type: text/html
 	w.Header().Add("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", name))
 	w.Header().Add("Cache-Control", "max-age=2593000")
 	w.Header().Add("Content-Type", contentType)
-	blobstore.Send(w, upload.BlobKey)
+	w.Header().Add("Content-Length", fmt.Sprintf("%v", upload.Size))
+	rc, err := storage.GetObject(upload.ObjectName).NewReader(r.Context())
+	if err != nil {
+		log.Errorf(c.Context, "Error getting upload storage object: %s", err)
+		c.ServeJson(http.StatusNotFound, "Upload not found.")
+		return
+	}
+
+	defer func() {
+		_ = rc.Close()
+	}()
+	_, _ = io.Copy(w, rc)
 }
 
 func (c *ServerContext) GetGalleryUpload(w web.ResponseWriter, r *web.Request) {
@@ -445,7 +492,7 @@ func (c *ServerContext) GetGalleryUpload(w web.ResponseWriter, r *web.Request) {
 		}
 	}
 
-	upload, err := entities.GetUpload(c.Context, appengine.BlobKey(key))
+	upload, err := entities.GetUpload(c.Context, key)
 	if err != nil {
 		log.Errorf(c.Context, "Error getting upload: %s", err)
 		c.ServeJson(http.StatusNotFound, "Upload not found.")
@@ -455,12 +502,22 @@ func (c *ServerContext) GetGalleryUpload(w web.ResponseWriter, r *web.Request) {
 	name := upload.Filename
 	contentType := upload.ContentType
 	cacheUntil := time.Now().AddDate(0, 2, 0).Format(http.TimeFormat)
-	//Content-Type: text/html
 	w.Header().Add("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", name))
 	w.Header().Add("Cache-Control", "max-age=2593000")
 	w.Header().Add("Content-Type", contentType)
 	w.Header().Set("Expires", cacheUntil)
-	blobstore.Send(w, upload.BlobKey)
+	w.Header().Add("Content-Length", fmt.Sprintf("%v", upload.Size))
+	rc, err := storage.GetObject(upload.ObjectName).NewReader(r.Context())
+	if err != nil {
+		log.Errorf(c.Context, "Error getting upload storage object: %s", err)
+		c.ServeJson(http.StatusNotFound, "Upload not found.")
+		return
+	}
+
+	defer func() {
+		_ = rc.Close()
+	}()
+	_, _ = io.Copy(w, rc)
 }
 
 func (c *AdminContext) GetOrders(w web.ResponseWriter, r *web.Request) {
@@ -766,4 +823,13 @@ func (c *AdminContext) UpdateGeneralSettings(w web.ResponseWriter, r *web.Reques
 
 	generalSettings := settings.GetAndReloadGlobalSettings(c.Context)
 	c.ServeJson(http.StatusOK, generalSettings)
+}
+
+var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
+func RandStringRunes(n int) string {
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+	return string(b)
 }

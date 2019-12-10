@@ -6,17 +6,16 @@ import (
 	"fmt"
 	"github.com/gocraft/web"
 	"github.com/ikeikeikeike/go-sitemap-generator/stm"
+	"github.com/jcarm010/kodimerce/datastore"
 	"github.com/jcarm010/kodimerce/emailer"
 	"github.com/jcarm010/kodimerce/entities"
+	"github.com/jcarm010/kodimerce/log"
 	"github.com/jcarm010/kodimerce/paypal"
 	"github.com/jcarm010/kodimerce/settings"
 	"github.com/jcarm010/kodimerce/smartyaddress"
 	"github.com/jcarm010/kodimerce/view"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/net/context"
-	"google.golang.org/appengine"
-	"google.golang.org/appengine/datastore"
-	"google.golang.org/appengine/log"
 	"html/template"
 	"io/ioutil"
 	"net/http"
@@ -140,7 +139,7 @@ func (c *ServerContext) RedirectWWW(w web.ResponseWriter, r *web.Request, next w
 }
 
 func (c *ServerContext) InitServerContext(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc){
-	c.Context = appengine.NewContext(r.Request)
+	c.Context = r.Request.Context()
 	c.Settings = settings.GetGlobalSettings(c.Context)
 	c.w = w
 	c.r = r
@@ -420,7 +419,7 @@ func (c *ServerContext) UpdateOrder(w web.ResponseWriter, r *web.Request){
 		return
 	}
 
-	if order.Status != entities.ORDER_STATUS_STARTED {
+	if order.Status != entities.OrderStatusStarted {
 		log.Errorf(c.Context, "Order is not in started status[%+v]: %+v", order, err)
 		c.ServeJson(http.StatusBadRequest, "Order has already been placed.")
 		return
@@ -558,7 +557,7 @@ func (c *ServerContext) CheckOrderAddress(w web.ResponseWriter, r *web.Request){
 		return
 	}
 
-	if order.Status != entities.ORDER_STATUS_STARTED {
+	if order.Status != entities.OrderStatusStarted {
 		log.Errorf(c.Context, "Order is not in started status[%+v]: %+v", order, err)
 		c.ServeJson(http.StatusBadRequest, "Order has already been placed.")
 		return
@@ -621,7 +620,7 @@ func (c *ServerContext) CreatePaypalPayment(w web.ResponseWriter, r *web.Request
 		return
 	}
 
-	if order.Status != entities.ORDER_STATUS_STARTED {
+	if order.Status != entities.OrderStatusStarted {
 		log.Errorf(c.Context, "Order is not in started status[%+v]: %+v", order, err)
 		response.Error = "Order has already been placed."
 		c.ServeJson(http.StatusBadRequest, response)
@@ -686,7 +685,7 @@ func (c *ServerContext) ExecutePaypalPayment(w web.ResponseWriter, r *web.Reques
 		return
 	}
 
-	if order.Status != entities.ORDER_STATUS_STARTED {
+	if order.Status != entities.OrderStatusStarted {
 		log.Errorf(c.Context, "Order is not in started status [%+v]", order)
 		c.ServeJson(http.StatusBadRequest, "Order has already been placed.")
 		return
@@ -699,7 +698,7 @@ func (c *ServerContext) ExecutePaypalPayment(w web.ResponseWriter, r *web.Reques
 		return
 	}
 
-	order.Status = entities.ORDER_STATUS_PENDING
+	order.Status = entities.OrderStatusPending
 	err = entities.UpdateOrder(c.Context, order)
 	if err != nil {
 		log.Errorf(c.Context, "Error updating order status: %+v", err)

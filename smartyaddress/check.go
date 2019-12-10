@@ -1,15 +1,15 @@
 package smartyaddress
 
 import (
-	"google.golang.org/appengine/urlfetch"
-	"net/url"
-	"github.com/jcarm010/kodimerce/settings"
-	"io/ioutil"
-	"google.golang.org/appengine/log"
-	"net/http"
 	"errors"
-	"golang.org/x/net/context"
 	"github.com/dustin/gojson"
+	"github.com/jcarm010/kodimerce/log"
+	"github.com/jcarm010/kodimerce/settings"
+	"golang.org/x/net/context"
+	"google.golang.org/appengine/urlfetch"
+	"io/ioutil"
+	"net/http"
+	"net/url"
 )
 
 var ADDRESS_NOT_FOUND_ERROR error = errors.New("Address not found")

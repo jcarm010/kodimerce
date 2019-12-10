@@ -2,7 +2,6 @@ package search_api
 
 import (
 	"context"
-	"google.golang.org/appengine"
 	"google.golang.org/appengine/search"
 	"strconv"
 	"strings"
@@ -95,7 +94,7 @@ func (s Client) GetBlobs(searchKey string, limit int, cursorStr string) ([]*Blob
 		}
 
 		blob := BlobInfo{
-			BlobKey:      appengine.BlobKey(id),
+			BlobKey:      id,
 			ContentType:  temp.ContentType,
 			CreationTime: temp.CreationTime,
 			Filename:     temp.Filename,

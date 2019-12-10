@@ -1,12 +1,13 @@
 package search_api
 
 import (
-	"google.golang.org/appengine"
 	"time"
 )
 
 type BlobInfo struct {
-	BlobKey      appengine.BlobKey
+	BlobKey      string    `datastore:"-"`
+	OldBlobKey   string    `datastore:"old_blob_key"`
+	NewBlobKey   string    `datastore:"new_blob_key"`
 	ContentType  string    `datastore:"content_type"`
 	CreationTime time.Time `datastore:"creation"`
 	Filename     string    `datastore:"filename"`

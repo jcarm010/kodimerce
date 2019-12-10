@@ -1,22 +1,23 @@
 package entities
 
 import (
+	originalDataStore "cloud.google.com/go/datastore"
 	"fmt"
 	"github.com/dustin/gojson"
+	"github.com/jcarm010/kodimerce/datastore"
 	"golang.org/x/net/context"
-	"google.golang.org/appengine/datastore"
 	"html/template"
 	"strings"
 	"time"
 )
 
 const (
-	ENTITY_ORDER            = "order"
-	ORDER_STATUS_STARTED    = "started"
-	ORDER_STATUS_PENDING    = "pending"
-	ORDER_STATUS_PROCESSING = "processing"
-	ORDER_STATUS_SHIPPED    = "shipped"
-	ORDER_STATUS_PROCESSED  = "processed"
+	EntityOrder           = "order"
+	OrderStatusStarted    = "started"
+	OrderStatusPending    = "pending"
+	OrderStatusProcessing = "processing"
+	OrderStatusShipped    = "shipped"
+	OrderStatusProcessed  = "processed"
 )
 
 type Order struct {
@@ -45,8 +46,8 @@ type Order struct {
 	TaxPercent      float64           `datastore:"tax_percent" json:"tax_percent"`
 }
 
-func (o *Order) Load(ps []datastore.Property) error {
-	datastore.LoadStruct(o, ps) //todo: should probably do something about this error?
+func (o *Order) Load(ps []originalDataStore.Property) error {
+	originalDataStore.LoadStruct(o, ps) //todo: should probably do something about this error?
 	for _, ps := range ps {
 		if ps.Name == "product_details" {
 			valueBts, ok := ps.Value.([]byte)
@@ -64,18 +65,18 @@ func (o *Order) Load(ps []datastore.Property) error {
 	return nil
 }
 
-func (o *Order) Save() ([]datastore.Property, error) {
+func (o *Order) Save() ([]originalDataStore.Property, error) {
 	productDetailsBts, err := json.Marshal(o.ProductDetails)
 	if err != nil {
 		return nil, err
 	}
 
-	properties, err := datastore.SaveStruct(o)
+	properties, err := originalDataStore.SaveStruct(o)
 	if err != nil {
 		return nil, err
 	}
 
-	properties = append(properties, datastore.Property{
+	properties = append(properties, originalDataStore.Property{
 		Name:    "product_details",
 		Value:   productDetailsBts,
 		NoIndex: true,
@@ -162,7 +163,7 @@ func NewOrder() *Order {
 	return &Order{
 		Created:      time.Now(),
 		CheckoutStep: "shipinfo",
-		Status:       ORDER_STATUS_STARTED,
+		Status:       OrderStatusStarted,
 	}
 }
 
@@ -215,7 +216,7 @@ func CreateOrder(ctx context.Context, products []*Product, quantities []int64, p
 	}
 
 	order.ProductsSerial = bts
-	key, err := datastore.Put(ctx, datastore.NewIncompleteKey(ctx, ENTITY_ORDER, nil), order)
+	key, err := datastore.Put(ctx, datastore.NewIncompleteKey(ctx, EntityOrder, nil), order)
 	if err != nil {
 		return nil, err
 	}
@@ -226,7 +227,7 @@ func CreateOrder(ctx context.Context, products []*Product, quantities []int64, p
 
 func GetOrder(ctx context.Context, orderId int64) (*Order, error) {
 	order := &Order{}
-	err := datastore.Get(ctx, datastore.NewKey(ctx, ENTITY_ORDER, "", orderId, nil), order)
+	err := datastore.Get(ctx, datastore.NewKey(ctx, EntityOrder, "", orderId, nil), order)
 	if err != nil {
 		return nil, err
 	}
@@ -243,7 +244,7 @@ func GetOrder(ctx context.Context, orderId int64) (*Order, error) {
 }
 
 func UpdateOrder(ctx context.Context, order *Order) (error) {
-	_, err := datastore.Put(ctx, datastore.NewKey(ctx, ENTITY_ORDER, "", order.Id, nil), order)
+	_, err := datastore.Put(ctx, datastore.NewKey(ctx, EntityOrder, "", order.Id, nil), order)
 	if err != nil {
 		return err
 	}
@@ -253,9 +254,7 @@ func UpdateOrder(ctx context.Context, order *Order) (error) {
 
 func ListOrders(ctx context.Context) ([]*Order, error) {
 	orders := make([]*Order, 0)
-	keys, err := datastore.NewQuery(ENTITY_ORDER).
-		Order("-created").
-		GetAll(ctx, &orders)
+	keys, err := datastore.GetAll(ctx, datastore.NewQuery(EntityOrder).Order("-created"), &orders)
 	if err != nil {
 		return orders, err
 	}

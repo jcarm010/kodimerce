@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/jcarm010/kodimerce/datastore"
 	"golang.org/x/net/context"
-	"google.golang.org/appengine/datastore"
 	"html/template"
 	"strings"
 	"time"
@@ -160,7 +160,7 @@ func ListPages(ctx context.Context, published bool, limit int) ([]*Page, error) 
 		q = q.Limit(limit)
 	}
 
-	keys, err := q.GetAll(ctx, &pages)
+	keys, err := datastore.GetAll(ctx, q, &pages)
 	if err != nil {
 		return nil, err
 	}
@@ -176,9 +176,9 @@ func ListPages(ctx context.Context, published bool, limit int) ([]*Page, error) 
 
 func UpdatePage(ctx context.Context, page *Page) error {
 	key := datastore.NewKey(ctx, EntityPage, "", page.Id, nil)
-	err := datastore.RunInTransaction(ctx, func(ctx context.Context) error {
+	err := datastore.RunInTransaction(ctx, func(transaction *datastore.Transaction) error {
 		p := &Page{}
-		err := datastore.Get(ctx, key, p)
+		err := transaction.Get(key, p)
 		if err != nil {
 			return err
 		}
@@ -202,9 +202,9 @@ func UpdatePage(ctx context.Context, page *Page) error {
 
 		p.RawDynamicPage = bts
 		p.Published = page.Published
-		_, err = datastore.Put(ctx, key, p)
+		_, err = transaction.Put(key, p)
 		return err
-	}, nil)
+	})
 
 	if err != nil {
 		return err
@@ -215,10 +215,9 @@ func UpdatePage(ctx context.Context, page *Page) error {
 
 func GetPageByPath(ctx context.Context, path string) (*Page, error) {
 	pages := make([]*Page, 0)
-	keys, err := datastore.NewQuery(EntityPage).
+	keys, err := datastore.GetAll(ctx, datastore.NewQuery(EntityPage).
 		Filter("path=", path).
-		Limit(1).
-		GetAll(ctx, &pages)
+		Limit(1), &pages)
 
 	if err != nil {
 		return nil, err

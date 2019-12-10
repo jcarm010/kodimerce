@@ -2,14 +2,14 @@ package entities
 
 import (
 	"fmt"
+	"github.com/jcarm010/kodimerce/datastore"
 	"golang.org/x/net/context"
-	"google.golang.org/appengine/datastore"
 	"strings"
 	"time"
 )
 
-const ENTITY_CATEGORY = "category"
-const ENTITY_CATEGORY_PRODUCT = "category_product"
+const EntityCategory = "category"
+const EntityCategoryProduct = "category_product"
 
 type Category struct {
 	Id              int64     `datastore:"-" json:"id"`
@@ -55,7 +55,7 @@ func (cp *CategoryProduct) String() string {
 
 func ListCategories(ctx context.Context) ([]*Category, error) {
 	categories := make([]*Category, 0)
-	keys, err := datastore.NewQuery(ENTITY_CATEGORY).GetAll(ctx, &categories)
+	keys, err := datastore.GetAll(ctx, datastore.NewQuery(EntityCategory), &categories)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +77,7 @@ func CreateCategory(ctx context.Context, name string) (*Category, error) {
 	c.Path = strings.Replace(c.Path, " ", "-", -1)
 	c.Path = strings.Replace(c.Path, "'", "", -1)
 
-	key, err := datastore.Put(ctx, datastore.NewIncompleteKey(ctx, ENTITY_CATEGORY, nil), c)
+	key, err := datastore.Put(ctx, datastore.NewIncompleteKey(ctx, EntityCategory, nil), c)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +87,7 @@ func CreateCategory(ctx context.Context, name string) (*Category, error) {
 }
 
 func UpdateCategory(ctx context.Context, category *Category) error {
-	key := datastore.NewKey(ctx, ENTITY_CATEGORY, "", category.Id, nil)
+	key := datastore.NewKey(ctx, EntityCategory, "", category.Id, nil)
 	_, err := datastore.Put(ctx, key, category)
 	if err != nil {
 		return err
@@ -99,7 +99,7 @@ func UpdateCategory(ctx context.Context, category *Category) error {
 func SetCategoryProducts(ctx context.Context, categoryProducts []*CategoryProduct) error {
 	keys := make([]*datastore.Key, 0)
 	for _, cp := range categoryProducts {
-		keys = append(keys, datastore.NewKey(ctx, ENTITY_CATEGORY_PRODUCT, fmt.Sprintf("%v_%v", cp.CategoryId, cp.ProductId), 0, nil))
+		keys = append(keys, datastore.NewKey(ctx, EntityCategoryProduct, fmt.Sprintf("%v_%v", cp.CategoryId, cp.ProductId), 0, nil))
 	}
 
 	_, err := datastore.PutMulti(ctx, keys, categoryProducts)
@@ -113,7 +113,7 @@ func SetCategoryProducts(ctx context.Context, categoryProducts []*CategoryProduc
 func UnsetCategoryProducts(ctx context.Context, categoryProducts []*CategoryProduct) error {
 	keys := make([]*datastore.Key, 0)
 	for _, cp := range categoryProducts {
-		keys = append(keys, datastore.NewKey(ctx, ENTITY_CATEGORY_PRODUCT, fmt.Sprintf("%v_%v", cp.CategoryId, cp.ProductId), 0, nil))
+		keys = append(keys, datastore.NewKey(ctx, EntityCategoryProduct, fmt.Sprintf("%v_%v", cp.CategoryId, cp.ProductId), 0, nil))
 	}
 
 	err := datastore.DeleteMulti(ctx, keys)
@@ -126,7 +126,7 @@ func UnsetCategoryProducts(ctx context.Context, categoryProducts []*CategoryProd
 
 func GetCategoryProducts(ctx context.Context) ([]*CategoryProduct, error) {
 	categoryProducts := make([]*CategoryProduct, 0)
-	_, err := datastore.NewQuery(ENTITY_CATEGORY_PRODUCT).GetAll(ctx, &categoryProducts)
+	_, err := datastore.GetAll(ctx, datastore.NewQuery(EntityCategoryProduct), &categoryProducts)
 	if err != nil {
 		return nil, err
 	}
@@ -136,12 +136,12 @@ func GetCategoryProducts(ctx context.Context) ([]*CategoryProduct, error) {
 
 func ListCategoriesByName(ctx context.Context, name string) ([]*Category, error) {
 	categories := make([]*Category, 0)
-	query := datastore.NewQuery(ENTITY_CATEGORY)
+	query := datastore.NewQuery(EntityCategory)
 	if name != "" {
 		query = query.Filter("name=", name)
 	}
 
-	keys, err := query.GetAll(ctx, &categories)
+	keys, err := datastore.GetAll(ctx, query, &categories)
 	if err != nil {
 		return nil, err
 	}
@@ -156,12 +156,12 @@ func ListCategoriesByName(ctx context.Context, name string) ([]*Category, error)
 
 func ListCategoriesByPath(ctx context.Context, path string) ([]*Category, error) {
 	categories := make([]*Category, 0)
-	query := datastore.NewQuery(ENTITY_CATEGORY)
+	query := datastore.NewQuery(EntityCategory)
 	if path != "" {
 		query = query.Filter("path=", path)
 	}
 
-	keys, err := query.GetAll(ctx, &categories)
+	keys, err := datastore.GetAll(ctx, query, &categories)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +176,7 @@ func ListCategoriesByPath(ctx context.Context, path string) ([]*Category, error)
 
 func ListCategoriesByFeatured(ctx context.Context, featured bool) ([]*Category, error) {
 	categories := make([]*Category, 0)
-	keys, err := datastore.NewQuery(ENTITY_CATEGORY).Filter("featured=", featured).GetAll(ctx, &categories)
+	keys, err := datastore.GetAll(ctx, datastore.NewQuery(EntityCategory).Filter("featured=", featured), &categories)
 	if err != nil {
 		return nil, err
 	}

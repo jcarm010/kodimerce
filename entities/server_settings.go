@@ -1,9 +1,9 @@
 package entities
 
 import (
+	"github.com/jcarm010/kodimerce/datastore"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
-	"google.golang.org/appengine/datastore"
 )
 
 var (
@@ -46,6 +46,11 @@ type ServerSettings struct {
 
 	SmartyStreetsAuthId    string `json:"smarty_streets_auth_id"`
 	SmartyStreetsAuthToken string `json:"smarty_streets_auth_token"`
+
+	SMTPServer   string `json:"smtp_server"`
+	SMTPPort     int    `json:"smtp_port"`
+	SMTPUserName string `json:"smtp_user_name"`
+	SMTPPassword string `json:"smtp_password"`
 
 	EmailSender string `json:"email_sender"`
 	SendGridKey string `json:"send_grid_key"`

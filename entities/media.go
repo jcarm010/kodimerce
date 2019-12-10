@@ -1,25 +1,25 @@
 package entities
 
 import (
+	"github.com/jcarm010/kodimerce/datastore"
 	"github.com/jcarm010/kodimerce/search_api"
 	"golang.org/x/net/context"
-	"google.golang.org/appengine"
-	"google.golang.org/appengine/datastore"
+	"google.golang.org/api/iterator"
 	"strconv"
 	"strings"
 )
 
 type BlobResponse struct {
 	Blobs  []*search_api.BlobInfo `json:"blobs"`
-	Cursor string      `json:"cursor"`
-	Total  int         `json:"total"`
+	Cursor string                 `json:"cursor"`
+	Total  int                    `json:"total"`
 }
 
-const ENTITY_BLOB = "__BlobInfo__"
+const EntityBlob = "file_uploads"
 
 func InitSearchAPI(ctx context.Context) error {
 	blobs := make([]*search_api.BlobInfo, 0)
-	keys, err := datastore.NewQuery(ENTITY_BLOB).GetAll(ctx, &blobs)
+	keys, err := datastore.GetAll(ctx, datastore.NewQuery(EntityBlob), &blobs)
 	if err != nil {
 		index := strings.Index(err.Error(), "datastore: cannot load field")
 		if index != 0 {
@@ -50,6 +50,7 @@ func InitSearchAPI(ctx context.Context) error {
 }
 
 func ListUploads(ctx context.Context, cursorStr string, limit int, search string) (*BlobResponse, error) {
+	search = "" //todo: search needs to be implemented without AppEngine search
 	blobs := make([]*search_api.BlobInfo, 0)
 	var err error
 	var total int
@@ -61,12 +62,12 @@ func ListUploads(ctx context.Context, cursorStr string, limit int, search string
 		}
 
 	} else {
-		total, err = datastore.NewQuery(ENTITY_BLOB).Count(ctx)
+		total, err = datastore.Count(ctx, datastore.NewQuery(EntityBlob))
 		if err != nil {
 			return nil, err
 		}
 
-		query := datastore.NewQuery(ENTITY_BLOB).Limit(limit)
+		query := datastore.NewQuery(EntityBlob).Limit(limit)
 		if cursorStr != "" {
 			cursor, err := datastore.DecodeCursor(cursorStr)
 
@@ -77,11 +78,11 @@ func ListUploads(ctx context.Context, cursorStr string, limit int, search string
 			query = query.Start(cursor)
 		}
 
-		t := query.Run(ctx)
+		t := datastore.Run(ctx, query)
 		for {
 			var blob search_api.BlobInfo
 			key, err := t.Next(&blob)
-			if err == datastore.Done {
+			if err == iterator.Done {
 				break
 			}
 
@@ -89,15 +90,12 @@ func ListUploads(ctx context.Context, cursorStr string, limit int, search string
 				return nil, err
 			}
 
-			blob.BlobKey = appengine.BlobKey(key.StringID())
+			blob.BlobKey = key.Name
 			blobs = append(blobs, &blob)
 		}
 
 		if cursor, err := t.Cursor(); err == nil {
 			cursorStr = cursor.String()
-			if err != nil {
-				return nil, err
-			}
 		}
 	}
 
@@ -110,9 +108,9 @@ func ListUploads(ctx context.Context, cursorStr string, limit int, search string
 	return &blobResp, nil
 }
 
-func GetUpload(ctx context.Context, key appengine.BlobKey) (*search_api.BlobInfo, error) {
+func GetUpload(ctx context.Context, key string) (*search_api.BlobInfo, error) {
 	blob := &search_api.BlobInfo{}
-	k := datastore.NewKey(ctx, ENTITY_BLOB, string(key), 0, nil)
+	k := datastore.NewKey(ctx, EntityBlob, key, 0, nil)
 	err := datastore.Get(ctx, k, blob)
 	if err != nil {
 		index := strings.Index(err.Error(), "datastore: cannot load field")
@@ -127,7 +125,7 @@ func GetUpload(ctx context.Context, key appengine.BlobKey) (*search_api.BlobInfo
 
 func GetUploadByName(ctx context.Context, name string) (*search_api.BlobInfo, error) {
 	blobs := make([]*search_api.BlobInfo, 0)
-	keys, err := datastore.NewQuery(ENTITY_BLOB).Filter("filename=", name).Limit(1).GetAll(ctx, &blobs)
+	keys, err := datastore.GetAll(ctx, datastore.NewQuery(EntityBlob).Filter("filename=", name).Limit(1), &blobs)
 	if err != nil {
 		index := strings.Index(err.Error(), "datastore: cannot load field")
 		if index != 0 {
@@ -140,8 +138,14 @@ func GetUploadByName(ctx context.Context, name string) (*search_api.BlobInfo, er
 	}
 
 	for i, blob := range blobs {
-		blob.BlobKey = appengine.BlobKey(keys[i].StringID())
+		blob.BlobKey = keys[i].StringID()
 	}
 
 	return blobs[0], nil
+}
+
+func PutUpload(ctx context.Context, info *search_api.BlobInfo) error {
+	key := datastore.NewKey(ctx, EntityBlob, info.BlobKey, 0, nil)
+	_, err := datastore.Put(ctx, key, info)
+	return err
 }

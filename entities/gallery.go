@@ -4,14 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/jcarm010/kodimerce/datastore"
 	"golang.org/x/net/context"
-	"google.golang.org/appengine/datastore"
 	"html/template"
 	"strings"
 	"time"
 )
 
-const ENTITY_GALLERY = "gallery"
+const EntityGallery = "gallery"
 
 var (
 	ErrGalleryNotFound = errors.New("Not Found.")
@@ -74,7 +74,7 @@ func CreateGallery(ctx context.Context, title string) (*Gallery, error) {
 	}
 
 	p.ImagesJson = fmt.Sprintf("%s", bts)
-	key, err := datastore.Put(ctx, datastore.NewIncompleteKey(ctx, ENTITY_GALLERY, nil), p)
+	key, err := datastore.Put(ctx, datastore.NewIncompleteKey(ctx, EntityGallery, nil), p)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func ListGalleries(ctx context.Context, published bool, limit int) ([]*Gallery, 
 		return galleries, nil
 	}
 
-	q := datastore.NewQuery(ENTITY_GALLERY)
+	q := datastore.NewQuery(EntityGallery)
 	if published {
 		q = q.Filter("published=", published)
 	}
@@ -99,7 +99,7 @@ func ListGalleries(ctx context.Context, published bool, limit int) ([]*Gallery, 
 		q = q.Limit(limit)
 	}
 
-	keys, err := q.GetAll(ctx, &galleries)
+	keys, err := datastore.GetAll(ctx, q, &galleries)
 	if err != nil {
 		return nil, err
 	}
@@ -120,10 +120,10 @@ func UpdateGallery(ctx context.Context, gallery *Gallery) error {
 	}
 
 	gallery.ImagesJson = fmt.Sprintf("%s", bts)
-	key := datastore.NewKey(ctx, ENTITY_GALLERY, "", gallery.Id, nil)
-	err = datastore.RunInTransaction(ctx, func(ctx context.Context) error {
+	key := datastore.NewKey(ctx, EntityGallery, "", gallery.Id, nil)
+	err = datastore.RunInTransaction(ctx, func(transaction *datastore.Transaction) error {
 		p := &Gallery{}
-		err := datastore.Get(ctx, key, p)
+		err := transaction.Get(key, p)
 		if err != nil {
 			return err
 		}
@@ -138,9 +138,9 @@ func UpdateGallery(ctx context.Context, gallery *Gallery) error {
 
 		p.Published = gallery.Published
 		p.ImagesJson = gallery.ImagesJson
-		_, err = datastore.Put(ctx, key, p)
+		_, err = transaction.Put(key, p)
 		return err
-	}, nil)
+	})
 
 	if err != nil {
 		return err
@@ -151,10 +151,9 @@ func UpdateGallery(ctx context.Context, gallery *Gallery) error {
 
 func GetGalleryByPath(ctx context.Context, path string) (*Gallery, error) {
 	galleries := make([]*Gallery, 0)
-	keys, err := datastore.NewQuery(ENTITY_GALLERY).
+	keys, err := datastore.GetAll(ctx, datastore.NewQuery(EntityGallery).
 		Filter("path=", path).
-		Limit(1).
-		GetAll(ctx, &galleries)
+		Limit(1), &galleries)
 
 	if err != nil {
 		return nil, err

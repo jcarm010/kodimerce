@@ -3,16 +3,16 @@ package entities
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/jcarm010/kodimerce/datastore"
+	"github.com/jcarm010/kodimerce/log"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
-	"google.golang.org/appengine/datastore"
-	"google.golang.org/appengine/log"
 	"html/template"
 	"strings"
 	"time"
 )
 
-const ENTITY_PRODUCT = "product"
+const EntityProduct = "product"
 
 type Product struct {
 	//todo: add details that are not part of the description if html shows up in search engine.
@@ -87,9 +87,11 @@ func (t *AvailableTime) String() string {
 
 type ByAvailableTime []AvailableTime
 
-func (a ByAvailableTime) Len() int           { return len(a) }
-func (a ByAvailableTime) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a ByAvailableTime) Less(i, j int) bool { return a[i].Hour*60+a[i].Minute < a[j].Hour*60+a[j].Minute }
+func (a ByAvailableTime) Len() int      { return len(a) }
+func (a ByAvailableTime) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a ByAvailableTime) Less(i, j int) bool {
+	return a[i].Hour*60+a[i].Minute < a[j].Hour*60+a[j].Minute
+}
 
 func (p *Product) SetMissingDefaults() {
 	if p.Pictures == nil {
@@ -172,7 +174,7 @@ func CreateProduct(ctx context.Context, name string) (*Product, error) {
 	p.Path = strings.ToLower(p.Path)
 	p.Path = strings.Replace(p.Path, " ", "-", -1)
 	p.Path = strings.Replace(p.Path, "'", "", -1)
-	key, err := datastore.Put(ctx, datastore.NewIncompleteKey(ctx, ENTITY_PRODUCT, nil), p)
+	key, err := datastore.Put(ctx, datastore.NewIncompleteKey(ctx, EntityProduct, nil), p)
 	if err != nil {
 		return nil, err
 	}
@@ -184,13 +186,13 @@ func CreateProduct(ctx context.Context, name string) (*Product, error) {
 
 func ListProducts(ctx context.Context) ([]*Product, error) {
 	products := make([]*Product, 0)
-	keys, err := datastore.NewQuery(ENTITY_PRODUCT).GetAll(ctx, &products)
+	keys, err := datastore.GetAll(ctx, datastore.NewQuery(EntityProduct), &products)
 	if err != nil {
 		return nil, err
 	}
 
 	for index, key := range keys {
-		var product = products[index];
+		var product = products[index]
 		product.Id = key.IntID()
 		product.SetMissingDefaults()
 	}
@@ -199,10 +201,10 @@ func ListProducts(ctx context.Context) ([]*Product, error) {
 }
 
 func UpdateProduct(ctx context.Context, product *Product) error {
-	key := datastore.NewKey(ctx, ENTITY_PRODUCT, "", product.Id, nil)
-	err := datastore.RunInTransaction(ctx, func(ctx context.Context) error {
+	key := datastore.NewKey(ctx, EntityProduct, "", product.Id, nil)
+	err := datastore.RunInTransaction(ctx, func(transaction *datastore.Transaction) error {
 		p := &Product{}
-		err := datastore.Get(ctx, key, p)
+		err := transaction.Get(key, p)
 		if err != nil {
 			return err
 		}
@@ -227,9 +229,9 @@ func UpdateProduct(ctx context.Context, product *Product) error {
 		p.HasRedirect = product.HasRedirect
 		p.FareHarborId = product.FareHarborId
 		p.RedirectUrl = product.RedirectUrl
-		_, err = datastore.Put(ctx, key, p)
+		_, err = transaction.Put(key, p)
 		return err
-	}, nil)
+	})
 
 	if err != nil {
 		return err
@@ -239,10 +241,10 @@ func UpdateProduct(ctx context.Context, product *Product) error {
 }
 
 func DecreaseProductInventory(ctx context.Context, productId int64, quantity int) error {
-	key := datastore.NewKey(ctx, ENTITY_PRODUCT, "", productId, nil)
-	err := datastore.RunInTransaction(ctx, func(ctx context.Context) error {
+	key := datastore.NewKey(ctx, EntityProduct, "", productId, nil)
+	err := datastore.RunInTransaction(ctx, func(transaction *datastore.Transaction) error {
 		p := &Product{}
-		err := datastore.Get(ctx, key, p)
+		err := transaction.Get(key, p)
 		if err != nil {
 			return err
 		}
@@ -258,9 +260,9 @@ func DecreaseProductInventory(ctx context.Context, productId int64, quantity int
 			p.Quantity = 0
 		}
 
-		_, err = datastore.Put(ctx, key, p)
+		_, err = transaction.Put(key, p)
 		return err
-	}, nil)
+	})
 
 	if err != nil {
 		return err
@@ -270,7 +272,7 @@ func DecreaseProductInventory(ctx context.Context, productId int64, quantity int
 }
 
 func GetProduct(ctx context.Context, productId int64) (*Product, error) {
-	key := datastore.NewKey(ctx, ENTITY_PRODUCT, "", productId, nil)
+	key := datastore.NewKey(ctx, EntityProduct, "", productId, nil)
 	product := &Product{}
 	err := datastore.Get(ctx, key, product)
 	if err != nil {
@@ -284,10 +286,9 @@ func GetProduct(ctx context.Context, productId int64) (*Product, error) {
 
 func GetProductByPath(ctx context.Context, path string) (*Product, error) {
 	products := make([]*Product, 0)
-	keys, err := datastore.NewQuery(ENTITY_PRODUCT).
+	keys, err := datastore.GetAll(ctx, datastore.NewQuery(EntityProduct).
 		Filter("path=", path).
-		Limit(1).
-		GetAll(ctx, &products)
+		Limit(1), &products)
 
 	if err != nil {
 		return nil, err
@@ -306,7 +307,7 @@ func GetProductByPath(ctx context.Context, path string) (*Product, error) {
 func GetProducts(ctx context.Context, productIds []int64) ([]*Product, error) {
 	productKeys := make([]*datastore.Key, len(productIds))
 	for index, productId := range productIds {
-		key := datastore.NewKey(ctx, ENTITY_PRODUCT, "", productId, nil)
+		key := datastore.NewKey(ctx, EntityProduct, "", productId, nil)
 		productKeys[index] = key
 	}
 
@@ -326,12 +327,12 @@ func GetProducts(ctx context.Context, productIds []int64) ([]*Product, error) {
 
 func GetProductsInCategories(ctx context.Context, categories []*Category) ([]*Product, error) {
 	log.Debugf(ctx, "Finding products in categories: %+v", categories)
-	query := datastore.NewQuery(ENTITY_CATEGORY_PRODUCT)
+	query := datastore.NewQuery(EntityCategoryProduct)
 	keyLookup := map[int64]bool{}
 	keys := make([]*datastore.Key, 0)
 	for _, category := range categories {
 		categoryProducts := make([]*CategoryProduct, 0)
-		_, err := query.Filter("category_id=", category.Id).GetAll(ctx, &categoryProducts)
+		_, err := datastore.GetAll(ctx, query.Filter("category_id=", category.Id), &categoryProducts)
 		if err != nil {
 			return nil, err
 		}
@@ -343,7 +344,7 @@ func GetProductsInCategories(ctx context.Context, categories []*Category) ([]*Pr
 				continue
 			}
 
-			keys = append(keys, datastore.NewKey(ctx, ENTITY_PRODUCT, "", categoryProduct.ProductId, nil))
+			keys = append(keys, datastore.NewKey(ctx, EntityProduct, "", categoryProduct.ProductId, nil))
 			keyLookup[productId] = true
 		}
 	}
