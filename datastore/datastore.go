@@ -165,7 +165,7 @@ func DecodeCursor(s string) (datastore.Cursor, error) {
 func RunInTransaction(ctx context.Context, f func(tx *Transaction) error) (err error) {
 	_, err = dataStoreClient.RunInTransaction(ctx, func(tx *datastore.Transaction) error {
 		return f(&Transaction{tx})
-	}, nil)
+	})
 	return err
 }
 
