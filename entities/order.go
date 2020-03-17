@@ -40,7 +40,7 @@ type Order struct {
 	PaypalPayerId   string            `datastore:"paypal_payer_id" json:"paypal_payer_id"`
 	AddressVerified bool              `datastore:"address_verified" json:"address_verified"`
 	Products        []*Product        `datastore:"-" json:"products"`
-	ProductsSerial  []byte            `datastore:"products_serial" json:"-"`
+	ProductsSerial  []byte            `datastore:"products_serial,noindex" json:"-"`
 	NoShipping      bool              `datastore:"no_shipping" json:"no_shipping"`
 	ProductDetails  []*ProductDetails `datastore:"-" json:"product_details"`
 	TaxPercent      float64           `datastore:"tax_percent" json:"tax_percent"`
