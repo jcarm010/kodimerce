@@ -199,7 +199,7 @@ func CreatePayment(ctx context.Context, order *entities.Order, companyUrl string
 
 	paypalRequest := PaypalCreatePaymentRequest{
 		Intent: "sale",
-		Payer: map[string]string{"payment_method":"github.com/jcarm010/kodimerce/paypal"},
+		Payer: map[string]string{"payment_method":"paypal"},
 		NoteToPayer: globalSettings.PayPalNoteToPayer,
 		Transactions: []*Transaction{transaction},
 		RedirectUrls: &RedirectUrls{
