@@ -12,7 +12,6 @@ import (
 	"github.com/jcarm010/kodimerce/view"
 	"golang.org/x/net/context"
 	"golang.org/x/net/html"
-	"google.golang.org/appengine/urlfetch"
 	"html/template"
 	"io"
 	"net/http"
@@ -486,7 +485,7 @@ func servePost(c *km.ServerContext, w web.ResponseWriter, r *web.Request, post *
 func servePage(c *km.ServerContext, w web.ResponseWriter, r *web.Request, page *entities.Page)  {
 	globalSettings := settings.GetGlobalSettings(c.Context)
 	if page.Provider == entities.ProviderShallowMirror {
-		resp, err := urlfetch.Client(c.Context).Get(page.ShallowMirrorUrl)
+		resp, err := http.Get(page.ShallowMirrorUrl)
 		if err != nil {
 			log.Errorf(c.Context, "Error fetching mirrored page: %+v", err)
 			c.ServeHTMLError(http.StatusInternalServerError, "Unexpected error, please try again later.")

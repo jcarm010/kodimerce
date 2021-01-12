@@ -10,7 +10,6 @@ import (
 	"github.com/jcarm010/kodimerce/log"
 	"github.com/jcarm010/kodimerce/settings"
 	"golang.org/x/net/context"
-	"google.golang.org/appengine/urlfetch"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -91,9 +90,8 @@ func getAccessToken(ctx context.Context) (string, error) {
 }
 
 func getClient (ctx context.Context) *http.Client {
-	ctx_with_deadline, _ := context.WithTimeout(ctx, time.Duration(40) * time.Second)
 	client := &http.Client{
-		Transport:&urlfetch.Transport{Context: ctx_with_deadline},
+		Timeout: time.Minute,
 	}
 
 	if runtime.GOOS == "darwin" {

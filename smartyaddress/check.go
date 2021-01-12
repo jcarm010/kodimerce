@@ -6,7 +6,6 @@ import (
 	"github.com/jcarm010/kodimerce/log"
 	"github.com/jcarm010/kodimerce/settings"
 	"golang.org/x/net/context"
-	"google.golang.org/appengine/urlfetch"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -127,7 +126,7 @@ func CheckUSAddress(ctx context.Context, lookup *Lookup) (*Candidate, error) {
 	u.RawQuery = q.Encode()
 	uri := u.String()
 	log.Infof(ctx, "Requesting uri: %s", uri)
-	r, err := urlfetch.Client(ctx).Get(uri)
+	r, err := http.Get(uri)
 	if err != nil {
 		return nil, err
 	}
