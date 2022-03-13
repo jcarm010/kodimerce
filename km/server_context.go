@@ -27,7 +27,7 @@ import (
 var (
 	PRODUCT_SETTINGS *ProductSettings = &ProductSettings{
 		PickupLocation: &ProductSettingsPickupLocation{
-			Options:[]string{},
+			Options: []string{},
 		},
 	}
 )
@@ -40,14 +40,14 @@ type ProductSettingsPickupLocation struct {
 	Options []string `json:"options"`
 }
 
-type ServerContext struct{
-	Context context.Context
+type ServerContext struct {
+	Context  context.Context
 	Settings entities.ServerSettings
-	w web.ResponseWriter
-	r *web.Request
+	w        web.ResponseWriter
+	r        *web.Request
 }
 
-func init()  {
+func init() {
 	currProductSettings := &ProductSettings{}
 	raw, err := ioutil.ReadFile("./product-settings.json")
 	if err == nil {
@@ -67,7 +67,7 @@ func (c *ServerContext) NewView(title string, metaDescription string) *view.View
 	return view.NewView(c.r.Request, title, metaDescription, c.Context)
 }
 
-func (c *ServerContext) ServeJson(status int, value interface{}){
+func (c *ServerContext) ServeJson(status int, value interface{}) {
 	c.w.Header().Add("Content-Type", "application/json")
 	c.w.WriteHeader(status)
 	bts, err := json.Marshal(value)
@@ -77,23 +77,23 @@ func (c *ServerContext) ServeJson(status int, value interface{}){
 	fmt.Fprintf(c.w, "%s", bts)
 }
 
-func (c *ServerContext) ServeHTML(status int, value interface{}){
+func (c *ServerContext) ServeHTML(status int, value interface{}) {
 	c.w.Header().Add("Content-Type", "text/html; charset=utf-8")
 	c.w.WriteHeader(status)
 	fmt.Fprintf(c.w, "%s", value)
 }
 
-func (c *ServerContext) ServeHTMLError(status int, value interface{}){
+func (c *ServerContext) ServeHTMLError(status int, value interface{}) {
 	c.w.Header().Add("Content-Type", "text/html; charset=utf-8")
 	c.w.WriteHeader(status)
 	type ErrorView struct {
 		*view.View
-		Title string
+		Title   string
 		Message string
 	}
 
-	err := view.Templates.ExecuteTemplate(c.w, "error-page", ErrorView {
-		View: c.NewView(fmt.Sprintf("%v | %s", status, c.Settings.CompanyName), ""),
+	err := view.Templates.ExecuteTemplate(c.w, "error-page", ErrorView{
+		View:    c.NewView(fmt.Sprintf("%v | %s", status, c.Settings.CompanyName), ""),
 		Message: fmt.Sprintf("%s", value),
 	})
 
@@ -104,7 +104,7 @@ func (c *ServerContext) ServeHTMLError(status int, value interface{}){
 	}
 }
 
-func (c *ServerContext) ServeHTMLTemplate(name string, data interface{}){
+func (c *ServerContext) ServeHTMLTemplate(name string, data interface{}) {
 	if view.Templates.Lookup(name) == nil {
 		log.Errorf(c.Context, "Could not find html template: %s", name)
 		c.ServeHTMLError(http.StatusNotFound, "Page not found.")
@@ -119,7 +119,7 @@ func (c *ServerContext) ServeHTMLTemplate(name string, data interface{}){
 	}
 }
 
-func (c *ServerContext) RedirectWWW(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc){
+func (c *ServerContext) RedirectWWW(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
 	if c.Settings.WwwRedirect && !strings.HasPrefix(r.Host, "www") {
 		httpHeader := "http"
 		if r.TLS != nil {
@@ -138,7 +138,7 @@ func (c *ServerContext) RedirectWWW(w web.ResponseWriter, r *web.Request, next w
 	next(w, r)
 }
 
-func (c *ServerContext) InitServerContext(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc){
+func (c *ServerContext) InitServerContext(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
 	c.Context = r.Request.Context()
 	c.Settings = settings.GetGlobalSettings(c.Context)
 	c.w = w
@@ -146,21 +146,21 @@ func (c *ServerContext) InitServerContext(w web.ResponseWriter, r *web.Request, 
 	next(w, r)
 }
 
-func (c *ServerContext) SetRedirects(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc){
+func (c *ServerContext) SetRedirects(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
 	pagePath := r.URL.Path
 	pagePath = strings.Replace(pagePath, "/", "", 1)
 	if strings.HasSuffix(pagePath, "/") {
-		pagePath = pagePath[0:len(pagePath)-1]
+		pagePath = pagePath[0 : len(pagePath)-1]
 	}
 
 	log.Infof(c.Context, "Checking for redirect: %s", pagePath)
-	if customRedirect, exist := view.CustomRedirects[pagePath] ; exist {
+	if customRedirect, exist := view.CustomRedirects[pagePath]; exist {
 		log.Infof(c.Context, "Custom Redirect found: %+v", customRedirect)
 		http.Redirect(w, r.Request, customRedirect.ToPath, customRedirect.StatusCode)
 		return
 	}
 
-	if customRedirect, exist := view.CustomRedirects[pagePath] ; exist {
+	if customRedirect, exist := view.CustomRedirects[pagePath]; exist {
 		log.Infof(c.Context, "Custom Redirect found: %+v", customRedirect)
 		http.Redirect(w, r.Request, customRedirect.ToPath, customRedirect.StatusCode)
 		return
@@ -169,7 +169,7 @@ func (c *ServerContext) SetRedirects(w web.ResponseWriter, r *web.Request, next 
 	next(w, r)
 }
 
-func (c *ServerContext) SetCORS(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc){
+func (c *ServerContext) SetCORS(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
 	origin := r.Header.Get("origin")
 	serverUrl := settings.ServerUrl(r.Request)
 	c.w.Header().Add("AMP-Same-Origin", "true")
@@ -179,9 +179,9 @@ func (c *ServerContext) SetCORS(w web.ResponseWriter, r *web.Request, next web.N
 	allowedOrigins := map[string]bool{
 		fmt.Sprintf("https://%s.cdn.ampproject.org", strings.Replace(r.Host, ".", "-", -1)): true,
 		fmt.Sprintf("https://%s.amp.cloudflare.com", strings.Replace(r.Host, ".", "-", -1)): true,
-		fmt.Sprintf(serverUrl): true,
+		fmt.Sprintf(serverUrl):       true,
 		"https://cdn.ampproject.org": true,
-		"http://localhost:8080": true,
+		"http://localhost:8080":      true,
 	}
 
 	//log.Infof(c.Context, "Allowed Origins: %+v", allowedOrigins)
@@ -193,7 +193,7 @@ func (c *ServerContext) SetCORS(w web.ResponseWriter, r *web.Request, next web.N
 	next(w, r)
 }
 
-func (c *ServerContext) RegisterUser(w web.ResponseWriter, r *web.Request){
+func (c *ServerContext) RegisterUser(w web.ResponseWriter, r *web.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		c.ServeJson(http.StatusBadRequest, "Could not read values.")
@@ -232,7 +232,7 @@ func (c *ServerContext) RegisterUser(w web.ResponseWriter, r *web.Request){
 		log.Errorf(c.Context, "User already exists: %s", email)
 		c.ServeJson(http.StatusBadRequest, "User already exists.")
 		return
-	}else if err != nil{
+	} else if err != nil {
 		log.Errorf(c.Context, "Error creating user[%s]: %+v", email, err)
 		c.ServeJson(http.StatusInternalServerError, "Unexpected error creating user.")
 		return
@@ -252,7 +252,7 @@ func (c *ServerContext) RegisterUser(w web.ResponseWriter, r *web.Request){
 	}
 }
 
-func (c *ServerContext) LoginUser(w web.ResponseWriter, r *web.Request){
+func (c *ServerContext) LoginUser(w web.ResponseWriter, r *web.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		c.ServeJson(http.StatusBadRequest, "Could not read values.")
@@ -282,7 +282,7 @@ func (c *ServerContext) LoginUser(w web.ResponseWriter, r *web.Request){
 		log.Errorf(c.Context, "User not found: %s", email)
 		c.ServeJson(http.StatusBadRequest, "User not found.")
 		return
-	}else if(err != nil){
+	} else if err != nil {
 		log.Errorf(c.Context, "Error getting user[%s]: %+v", email, err)
 		c.ServeJson(http.StatusInternalServerError, "Unexpected error getting user.")
 		return
@@ -312,7 +312,7 @@ func (c *ServerContext) LoginUser(w web.ResponseWriter, r *web.Request){
 	c.ServeJson(http.StatusOK, "/")
 }
 
-func (c *ServerContext) CreateOrder(w web.ResponseWriter, r *web.Request){
+func (c *ServerContext) CreateOrder(w web.ResponseWriter, r *web.Request) {
 	log.Infof(c.Context, "Creating new order")
 	err := r.ParseForm()
 	if err != nil {
@@ -340,11 +340,11 @@ func (c *ServerContext) CreateOrder(w web.ResponseWriter, r *web.Request){
 		productIds = append(productIds, productId)
 		quantities = append(quantities, product.Quantity)
 		productDetails = append(productDetails, &entities.ProductDetails{
-			ProductId: product.Id,
-			Time: product.Time,
-			Date: product.Date,
+			ProductId:      product.Id,
+			Time:           product.Time,
+			Date:           product.Date,
 			PickupLocation: product.PickupLocation,
-			PricingOption: product.PricingOption,
+			PricingOption:  product.PricingOption,
 		})
 	}
 
@@ -367,7 +367,7 @@ func (c *ServerContext) CreateOrder(w web.ResponseWriter, r *web.Request){
 	c.ServeJson(http.StatusOK, order)
 }
 
-func (c *ServerContext) UpdateOrder(w web.ResponseWriter, r *web.Request){
+func (c *ServerContext) UpdateOrder(w web.ResponseWriter, r *web.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		log.Errorf(c.Context, "Error parsing form: %+v", err)
@@ -459,13 +459,13 @@ func (c *ServerContext) UpdateOrder(w web.ResponseWriter, r *web.Request){
 		OrderUrl     string
 		HostRoot     string
 		ContactEmail string
-		Order 		 *entities.Order
+		Order        *entities.Order
 	}{
 		CompanyName:  c.Settings.CompanyName,
 		OrderUrl:     orderUrl,
 		HostRoot:     serverRoot,
 		ContactEmail: c.Settings.CompanySupportEmail,
-		Order:		  order,
+		Order:        order,
 	}
 
 	var doc bytes.Buffer
@@ -494,7 +494,7 @@ func (c *ServerContext) UpdateOrder(w web.ResponseWriter, r *web.Request){
 	c.ServeJson(http.StatusOK, "")
 }
 
-func (c *ServerContext) CheckOrderAddress(w web.ResponseWriter, r *web.Request){
+func (c *ServerContext) CheckOrderAddress(w web.ResponseWriter, r *web.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		log.Errorf(c.Context, "Error parsing form: %+v", err)
@@ -564,10 +564,10 @@ func (c *ServerContext) CheckOrderAddress(w web.ResponseWriter, r *web.Request){
 	}
 
 	lookup := &smartyaddress.Lookup{
-		Street: shippingLine1,
+		Street:  shippingLine1,
 		Street2: shippingLine2,
-		City: city,
-		State: state,
+		City:    city,
+		State:   state,
 		ZIPCode: postalCode,
 	}
 
@@ -587,13 +587,13 @@ func (c *ServerContext) CheckOrderAddress(w web.ResponseWriter, r *web.Request){
 	c.ServeJson(http.StatusOK, candidate)
 }
 
-func (c *ServerContext) CreatePaypalPayment(w web.ResponseWriter, r *web.Request){
+func (c *ServerContext) CreatePaypalPayment(w web.ResponseWriter, r *web.Request) {
 	type CreatePaymentResponse struct {
-		Error string `json:"error"`
+		Error     string `json:"error"`
 		PaymentID string `json:"paymentID"`
 	}
 
-	response := CreatePaymentResponse {}
+	response := CreatePaymentResponse{}
 
 	orderIdStr := r.URL.Query().Get("order")
 	if orderIdStr == "" {
@@ -655,7 +655,7 @@ func (c *ServerContext) CreatePaypalPayment(w web.ResponseWriter, r *web.Request
 	c.ServeJson(http.StatusOK, response)
 }
 
-func (c *ServerContext) ExecutePaypalPayment(w web.ResponseWriter, r *web.Request){
+func (c *ServerContext) ExecutePaypalPayment(w web.ResponseWriter, r *web.Request) {
 	log.Infof(c.Context, "Executing Paypal payment....")
 	err := r.ParseForm()
 	if err != nil {
@@ -722,15 +722,15 @@ func (c *ServerContext) ExecutePaypalPayment(w web.ResponseWriter, r *web.Reques
 
 	var templates = template.Must(template.ParseGlob("emailer/templates/*")) // cache this globally
 	confirmationEmail := struct {
-		CompanyName string
+		CompanyName     string
 		ConfirmationUrl string
-		HostRoot string
-		ContactEmail string
+		HostRoot        string
+		ContactEmail    string
 	}{
-		CompanyName: c.Settings.CompanyName,
+		CompanyName:     c.Settings.CompanyName,
 		ConfirmationUrl: confirmationUrl,
-		HostRoot: serverRoot,
-		ContactEmail: c.Settings.CompanySupportEmail,
+		HostRoot:        serverRoot,
+		ContactEmail:    c.Settings.CompanySupportEmail,
 	}
 
 	var doc bytes.Buffer
@@ -758,17 +758,17 @@ func (c *ServerContext) ExecutePaypalPayment(w web.ResponseWriter, r *web.Reques
 
 	//send a notification email to the seller
 	notificationEmail := struct {
-		CompanyName string
+		CompanyName     string
 		ConfirmationUrl string
-		HostRoot string
-		ContactEmail string
-		Order *entities.Order
+		HostRoot        string
+		ContactEmail    string
+		Order           *entities.Order
 	}{
-		CompanyName: c.Settings.CompanyName,
+		CompanyName:     c.Settings.CompanyName,
 		ConfirmationUrl: confirmationUrl,
-		HostRoot: serverRoot,
-		ContactEmail: c.Settings.CompanySupportEmail,
-		Order: order,
+		HostRoot:        serverRoot,
+		ContactEmail:    c.Settings.CompanySupportEmail,
+		Order:           order,
 	}
 
 	var ndoc bytes.Buffer
@@ -788,7 +788,7 @@ func (c *ServerContext) ExecutePaypalPayment(w web.ResponseWriter, r *web.Reques
 	)
 }
 
-func (c *ServerContext) GetProducts(w web.ResponseWriter, r *web.Request){
+func (c *ServerContext) GetProducts(w web.ResponseWriter, r *web.Request) {
 	idsStrRaw := r.FormValue("ids")
 	idsStr := strings.Split(idsStrRaw, ",")
 	log.Infof(c.Context, "Gettting products: %s", idsStr)
@@ -819,15 +819,15 @@ func (c *ServerContext) GetProducts(w web.ResponseWriter, r *web.Request){
 	c.ServeJson(http.StatusOK, products)
 }
 
-func (c *ServerContext) PostContactMessage(w web.ResponseWriter, r *web.Request){
+func (c *ServerContext) PostContactMessage(w web.ResponseWriter, r *web.Request) {
 	contentType := r.Header.Get("content-type")
 	var name string
 	var email string
 	var phone string
 	var message string
 	var companyUrlHiddenField = ""
-	if strings.HasPrefix(contentType, "multipart/form-data"){
-		err := r.ParseMultipartForm(32 << 20 )// 32 MB
+	if strings.HasPrefix(contentType, "multipart/form-data") {
+		err := r.ParseMultipartForm(32 << 20) // 32 MB
 		if err != nil {
 			log.Errorf(c.Context, "Error parsing multipart-form request: %s", err)
 			c.ServeJson(http.StatusBadRequest, "Unexpected error parsing request")
@@ -853,7 +853,6 @@ func (c *ServerContext) PostContactMessage(w web.ResponseWriter, r *web.Request)
 			phone = q.Value["phone"][0]
 		}
 
-
 		if q.Value["message"] == nil {
 			log.Errorf(c.Context, "Missing message")
 			c.ServeJson(http.StatusBadRequest, "Please provide a message so that we can address your questions or concerns.")
@@ -864,7 +863,7 @@ func (c *ServerContext) PostContactMessage(w web.ResponseWriter, r *web.Request)
 		if q.Value["company_url"] != nil {
 			companyUrlHiddenField = q.Value["company_url"][0]
 		}
-	}else {
+	} else {
 		err := r.ParseForm()
 		if err != nil {
 			log.Errorf(c.Context, "Error parsing form request: %s", err)
@@ -929,53 +928,53 @@ func (c *ServerContext) PostContactMessage(w web.ResponseWriter, r *web.Request)
 	c.ServeJson(http.StatusOK, "")
 }
 
-func (c *ServerContext) GetSiteMap(w web.ResponseWriter, r *web.Request){
-	sm := stm.NewSitemap(1)
+func (c *ServerContext) GetSiteMap(w web.ResponseWriter, r *web.Request) {
+	sm := stm.NewSitemap()
 	url := settings.ServerUrl(r.Request)
 	sm.SetDefaultHost(url)
 
 	sm.Create()
-	sm.Add(stm.URL{{"loc", "/"}, {"changefreq", "monthly"}, {"priority", 1}})
-	sm.Add(stm.URL{{"loc", "/contact"}, {"changefreq", "monthly"}, {"priority", 0.5}})
+	sm.Add(stm.URL{"loc": "/", "changefreq": "monthly", "priority": 1})
+	sm.Add(stm.URL{"loc": "/contact", "changefreq": "monthly", "priority": 0.5})
 	featuredCategories, err := entities.ListCategoriesByFeatured(c.Context, true)
 	if err == nil {
 		for _, category := range featuredCategories {
-			sm.Add(stm.URL{{"loc", "/store/" + category.Path}, {"changefreq", "weekly"}, {"priority", 1}})
+			sm.Add(stm.URL{"loc": "/store/" + category.Path, "changefreq": "weekly", "priority": 1})
 		}
 	}
 
 	products, err := entities.ListProducts(c.Context)
 	if err == nil {
 		if len(products) > 0 {
-			sm.Add(stm.URL{{"loc", "/store"}, {"changefreq", "weekly"}, {"priority", 1}})
+			sm.Add(stm.URL{"loc": "/store", "changefreq": "weekly", "priority": 1})
 		}
 
 		for _, product := range products {
 			if product.Active {
-				sm.Add(stm.URL{{"loc", "/product/" + product.Path}, {"changefreq", "weekly"}, {"priority", 1}})
+				sm.Add(stm.URL{"loc": "/product/" + product.Path, "changefreq": "weekly", "priority": 1})
 			}
 		}
 	}
 
 	posts, err := entities.ListPosts(c.Context, true, -1)
 	if err == nil {
-		if len(posts) >0 {
-			sm.Add(stm.URL{{"loc", "/blog"}, {"changefreq", "daily"}, {"priority", 1}})
+		if len(posts) > 0 {
+			sm.Add(stm.URL{"loc": "/blog", "changefreq": "daily", "priority": 1})
 		}
 
 		for _, post := range posts {
-			sm.Add(stm.URL{{"loc", "/" + post.Path}, {"changefreq", "daily"}, {"priority", 1}})
+			sm.Add(stm.URL{"loc": "/" + post.Path, "changefreq": "daily", "priority": 1})
 		}
 	}
 
 	galleries, err := entities.ListGalleries(c.Context, true, -1)
 	if err == nil {
 		if len(galleries) > 0 {
-			sm.Add(stm.URL{{"loc", "/gallery"}, {"changefreq", "weekly"}, {"priority", 1}})
+			sm.Add(stm.URL{"loc": "/gallery", "changefreq": "weekly", "priority": 1})
 		}
 
 		for _, gallery := range galleries {
-			sm.Add(stm.URL{{"loc", "/gallery/" + gallery.Path}, {"changefreq", "weekly"}, {"priority", 1}})
+			sm.Add(stm.URL{"loc": "/gallery/" + gallery.Path, "changefreq": "weekly", "priority": 1})
 		}
 	}
 
@@ -985,16 +984,16 @@ func (c *ServerContext) GetSiteMap(w web.ResponseWriter, r *web.Request){
 			if page.Provider == entities.ProviderRedirectPage {
 				continue
 			}
-			sm.Add(stm.URL{{"loc", "/" + page.Path}, {"changefreq", "weekly"}, {"priority", 1}})
+			sm.Add(stm.URL{"loc": "/" + page.Path, "changefreq": "weekly", "priority": 1})
 		}
 	}
 
 	for path, page := range view.CustomPages {
 		if page.InSiteMap {
-			sm.Add(stm.URL{{"loc", "/" + path}, {"changefreq", page.ChangeFrequency}, {"priority", page.Priority}})
+			sm.Add(stm.URL{"loc": "/" + path, "changefreq": page.ChangeFrequency, "priority": page.Priority})
 		}
 	}
 
-	w.Header().Add("Content-Type:","text/xml; charset=utf-8")
+	w.Header().Add("Content-Type:", "text/xml; charset=utf-8")
 	w.Write(sm.XMLContent())
 }

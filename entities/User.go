@@ -2,8 +2,8 @@ package entities
 
 import (
 	"errors"
+	"github.com/google/uuid"
 	"github.com/jcarm010/kodimerce/datastore"
-	"github.com/satori/go.uuid"
 	"golang.org/x/net/context"
 )
 
@@ -87,14 +87,10 @@ func GetUser(ctx context.Context, email string) (*User, error) {
 }
 
 func CreateUserSession(ctx context.Context, email string) (*UserSession, error) {
-	nUdid, err := uuid.NewV4()
-	if err != nil {
-		return nil, err
-	}
-
-	userSession := NewUserSession(nUdid.String(), email)
+	nUdid := uuid.New().String()
+	userSession := NewUserSession(nUdid, email)
 	key := datastore.NewKey(ctx, EntityUserSession, userSession.SessionToken, 0, nil)
-	_, err = datastore.Put(ctx, key, userSession)
+	_, err := datastore.Put(ctx, key, userSession)
 	if err != nil {
 		return nil, err
 	}
