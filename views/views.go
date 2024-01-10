@@ -440,11 +440,6 @@ func servePost(c *km.ServerContext, w web.ResponseWriter, r *web.Request, post *
 		posts = make([]*entities.Post, 0)
 	}
 
-	httpHeader := "http"
-	if r.TLS != nil {
-		httpHeader = "https"
-	}
-
 	ampImports := make([]view.AmpImport, 0)
 	var targetTemplate string
 	if isAmp {
@@ -464,7 +459,7 @@ func servePost(c *km.ServerContext, w web.ResponseWriter, r *web.Request, post *
 
 	v := view.BlogPostView{
 		View:         c.NewView(post.Title+" | "+globalSettings.CompanyName, post.MetaDescription),
-		CanonicalUrl: fmt.Sprintf("%s://%s/%s", httpHeader, r.Host, post.Path),
+		CanonicalUrl: fmt.Sprintf("https://%s/%s", r.Host, post.Path),
 		Post:         post,
 		LatestPosts:  posts,
 		AboutBlog:    globalSettings.DescriptionBlogABout,
